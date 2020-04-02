@@ -1,0 +1,16 @@
+**/Dockerfile
+**/.dockerignore
+**/.gitignore
+**/.idea
+
+**/*.md
+**/*.sh
+**/*.env
+
+**/node_modules
+**/build
+**/dist
+
+api-client/notes
+api-client/storage-for-tests
+

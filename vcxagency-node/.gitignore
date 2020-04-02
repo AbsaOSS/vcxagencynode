@@ -1,0 +1,7 @@
+dist
+node_modules
+.idea
+.DS_Store
+storage-*/
+logs/
+tails/

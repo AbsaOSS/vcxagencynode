@@ -1,0 +1,11 @@
+.idea
+.DS_Store
+.remote-sync.json
+
+**/.idea
+
+**/node_modules
+**/build
+**/dist
+**/logs
+**/yarn-error.log
