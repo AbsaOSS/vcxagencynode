@@ -1,0 +1,62 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  github-actions-info:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo $GITHUB_REPOSITORY
+      - run: echo $GITHUB_REF
+      - run: echo $GITHUB_HEAD_REF
+      - run: echo $GITHUB_BASE_REF
+      - run: echo $GITHUB_WORKSPACE
+      - run: echo $GITHUB_EVENT_NAME
+      - run: echo $GITHUB_RUN_NUMBER
+      - run: echo $GITHUB_RUN_ID
+      - run: |
+          GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY_LOWERCASE)
+
+          REF_HASH=`echo -n "$GITHUB_REF-$PACKAGES_ACCESS_USERNAME" | shasum | cut -f1 -d" "`
+          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
+      - run: |
+          echo "REF_HASH = $REF_HASH"
+          echo "GITHUB_REPOSITORY_LOWERCASE = $GITHUB_REPOSITORY_LOWERCASE"
+
+
+  lint-vcxagency-node:
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Install linter
+        run: |
+          sudo npm install -g standard@12.0.1
+      - name: Lint
+        run: |
+          cd vcxagency-node && standard
+
+  lint-vcxagency-client:
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Install linter
+        run: |
+          sudo npm install -g standard@12.0.1
+      - name: Lint
+        run: |
+          cd vcxagency-client && standard
+
+  lint-easy-indysdk:
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Install linter
+        run: |
+          sudo npm install -g standard@12.0.1
+      - name: Lint
+        run: |
+          cd easy-indysdk && standard
