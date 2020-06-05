@@ -1,6 +1,8 @@
 ARG AGENCY_BASE_IMAGE=vcxagency-base:1.15.0
-FROM ${AGENCY_BASE_IMAGE} as BASE
+FROM ubuntu:16.04
+RUN echo ${AGENCY_BASE_IMAGE}
 
+FROM ${AGENCY_BASE_IMAGE} as BASE
 USER root
 RUN apt-get update && \
     apt-get install -y \
