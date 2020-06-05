@@ -29,7 +29,7 @@ COPY --chown=app:app ./vcxagency-node ./
 
 RUN chown -R app:app /home/app
 
-FROM BASE as BUILD
+#FROM BASE as BUILD
 USER root
 RUN apt-get install -y make
 RUN apt-get install -y g++
