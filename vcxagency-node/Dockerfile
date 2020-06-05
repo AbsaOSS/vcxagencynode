@@ -1,4 +1,5 @@
-FROM ubuntu-indysdk-lite:1.15.0-pgsql as BASE
+ARG AGENCY_BASE_IMAGE=vcxagency-base:1.15.0
+FROM ${AGENCY_BASE_IMAGE}
 
 USER root
 RUN apt-get update && \

@@ -11,6 +11,5 @@
 **/build
 **/dist
 
-api-client/notes
-api-client/storage-for-tests
-
+vcxagency-tester/
+dev/

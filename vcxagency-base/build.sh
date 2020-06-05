@@ -10,16 +10,10 @@ ask_continue () {
 
 SCRIPT_DIR_PATH=$(dirname "$0")
 
-INDYSDK_REPO_OWNER="hyperledger"
+INDYSDK_REPO="https://github.com/hyperledger/indy-sdk"
 INDYSDK_REVISION="1.15.0"
-NAME="pgsql"
+DOCKER_TAG="vcxagency-base:$INDYSDK_REVISION"
 
-DOCKER_TAG="ubuntu-indysdk-lite:$INDYSDK_REVISION"
-if [[ "$NAME" ]]; then
-  DOCKER_TAG="$DOCKER_TAG-$NAME"
-fi;
-
-INDYSDK_REPO="https://github.com/${INDYSDK_REPO_OWNER}/indy-sdk"
 
 echo "Going to build $DOCKER_TAG from revision v$INDYSDK_REVISION at repo: $INDYSDK_REPO"
 
@@ -28,7 +22,7 @@ ask_continue
 docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
              --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
              -t "$DOCKER_TAG" \
-             -f "$SCRIPT_DIR_PATH/Dockerfile" \
+             -f "$SCRIPT_DIR_PATH/vcxagency-base.Dockerfile" \
              .
 
 if [ "$1" == "--publish" ]; then
