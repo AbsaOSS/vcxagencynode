@@ -1,5 +1,6 @@
 ARG AGENCY_BASE_IMAGE=vcxagency-base:1.15.0
-FROM ${AGENCY_BASE_IMAGE} as BASE
+#FROM ${AGENCY_BASE_IMAGE} as BASE
+FROM ${AGENCY_BASE_IMAGE}
 
 USER root
 RUN apt-get update && \
@@ -38,17 +39,17 @@ USER app
 WORKDIR /home/app/vcxagency-node
 RUN yarn install --production
 
-FROM BASE
-USER app
+#FROM ${AGENCY_BASE_IMAGE}
+#USER app
 
-WORKDIR /home/app/easy-indysdk
-COPY --from=BUILD --chown=app:app /home/app/easy-indysdk/ ./
-
-WORKDIR /home/app/vcxagency-client
-COPY --from=BUILD --chown=app:app /home/app/vcxagency-client/ ./
-
-WORKDIR /home/app/vcxagency-node
-COPY --from=BUILD --chown=app:app /home/app/vcxagency-node/ ./
+#WORKDIR /home/app/easy-indysdk
+#COPY --from=BUILD --chown=app:app /home/app/easy-indysdk/ ./
+#
+#WORKDIR /home/app/vcxagency-client
+#COPY --from=BUILD --chown=app:app /home/app/vcxagency-client/ ./
+#
+#WORKDIR /home/app/vcxagency-node
+#COPY --from=BUILD --chown=app:app /home/app/vcxagency-node/ ./
 
 LABEL org.label-schema.schema-version="1.1.0"
 LABEL org.label-schema.name="vcxagency-node"
