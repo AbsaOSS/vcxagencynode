@@ -80,8 +80,8 @@ async function createPgStorageEntities (appStorageConfig) {
         );
     `
 
-  const msgsAgentIndex = `CREATE INDEX IF NOT EXISTS messages_agent_did ON messages (agent_did);`
-  const msgsAgentAgetConnectionIndex = `CREATE INDEX IF NOT EXISTS messages_agent_did_agent_conn_did ON messages (agent_did, agent_connection_did);`
+  const msgsAgentIndex = 'CREATE INDEX IF NOT EXISTS messages_agent_did ON messages (agent_did);'
+  const msgsAgentAgetConnectionIndex = 'CREATE INDEX IF NOT EXISTS messages_agent_did_agent_conn_did ON messages (agent_did, agent_connection_did);'
 
   await runDbQuery(createEntityRecordTable)
   await runDbQuery(createMessagesTable)
@@ -93,21 +93,21 @@ async function createPgStorageEntities (appStorageConfig) {
   // ---- ---- ---- ---- ---- ----  Agent webhooks
   async function setAgentWebhook (agentDid, webhookUrl) {
     const values = [agentDid, webhookUrl]
-    const insertQuery = `INSERT INTO agents (agent_did, webhook_url) VALUES($1, $2) ON CONFLICT (agent_did) DO UPDATE SET webhook_url = $2`
+    const insertQuery = 'INSERT INTO agents (agent_did, webhook_url) VALUES($1, $2) ON CONFLICT (agent_did) DO UPDATE SET webhook_url = $2'
     await pgPool.query(insertQuery, values)
   }
 
   async function getAgentWebhook (agentDid) {
-    const insertQuery = `SELECT * from agents WHERE agent_did = $1`
+    const insertQuery = 'SELECT * from agents WHERE agent_did = $1'
     const values = [agentDid]
     const { rows } = await pgPool.query(insertQuery, values)
     if (rows.length > 1) {
-      throw Error(`Expected to find at most 1 entity.`)
+      throw Error('Expected to find at most 1 entity.')
     }
     if (rows.length === 0) {
       return undefined
     }
-    return rows[0]['webhook_url']
+    return rows[0].webhook_url
   }
 
   // ---- ---- ---- ---- ---- ----  Messages read/write
@@ -116,7 +116,7 @@ async function createPgStorageEntities (appStorageConfig) {
    * Stores message received by agentConnection
    */
   async function storeMessage (agentDid, agentConnectionDid, uid, statusCode, dataObject) {
-    const insertQuery = `INSERT INTO messages (agent_did, agent_connection_did, uid, status_code, payload) VALUES($1, $2, $3, $4, $5) RETURNING *;`
+    const insertQuery = 'INSERT INTO messages (agent_did, agent_connection_did, uid, status_code, payload) VALUES($1, $2, $3, $4, $5) RETURNING *;'
     const values = [agentDid, agentConnectionDid, uid, statusCode, Buffer.from(JSON.stringify(dataObject))]
     await pgPool.query(insertQuery, values)
   }
@@ -141,8 +141,8 @@ async function createPgStorageEntities (appStorageConfig) {
     filterAgentConnDids = assureValidFilter(filterAgentConnDids)
     filterUids = assureValidFilter(filterUids)
     filterStatusCodes = assureValidFilter(filterStatusCodes)
-    let insertQuery = `SELECT * from messages WHERE agent_did = $1`
-    let values = [agentDid]
+    let insertQuery = 'SELECT * from messages WHERE agent_did = $1'
+    const values = [agentDid]
     if (filterAgentConnDids.length > 0) {
       values.push(filterAgentConnDids)
       insertQuery += ` AND agent_connection_did = ANY($${values.length})`
@@ -168,7 +168,7 @@ async function createPgStorageEntities (appStorageConfig) {
    */
   async function updateStatusCodeAgentConnection (agentDid, agentConnDid, uids, newStatusCode) {
     if (!agentDid || !agentConnDid) {
-      throw Error(`AgentDid or AgentConnDid was not specified.`)
+      throw Error('AgentDid or AgentConnDid was not specified.')
     }
     // todo: before we run actual update, we should port: see dummy's check_if_message_status_can_be_updated
     // see: https://github.com/hyperledger/indy-sdk/blob/d3057f1e21f01768104ca129de63a15d1b5e302e/vcx/dummy-cloud-agent/src/actors/agent_connection.rs
@@ -176,7 +176,7 @@ async function createPgStorageEntities (appStorageConfig) {
     // a strange behaviour. Rather the uid should rather be just included in failedUids portion of response?
     // dummy cloud agency always return empty array for failed uids
     const values = [newStatusCode, agentDid, uids]
-    const updateStatusQuery = `UPDATE messages SET status_code = $1 WHERE agent_did = $2 AND uid = ANY($3) RETURNING uid;`
+    const updateStatusQuery = 'UPDATE messages SET status_code = $1 WHERE agent_did = $2 AND uid = ANY($3) RETURNING uid;'
     const updateRes = await pgPool.query(updateStatusQuery, values)
     const updatedUids = updateRes.rows.map(row => row.uid)
     const failedUids = uids.filter(uid => updatedUids.includes(uid) === false)
@@ -214,11 +214,11 @@ async function createPgStorageEntities (appStorageConfig) {
    * Undefined if DID/Verkey is not matching any entity's DID/Verkey.
    */
   async function loadEntityRecord (didOrVerkey) {
-    const insertQuery = `SELECT * from entities WHERE entity_did = $1 OR entity_verkey = $1`
+    const insertQuery = 'SELECT * from entities WHERE entity_did = $1 OR entity_verkey = $1'
     const values = [didOrVerkey]
     const { rows } = await pgPool.query(insertQuery, values)
     if (rows.length > 1) {
-      throw Error(`Expected to find at most 1 entity.`)
+      throw Error('Expected to find at most 1 entity.')
     }
     return rows[0].entity_record
   }
@@ -231,7 +231,7 @@ async function createPgStorageEntities (appStorageConfig) {
    * reader to properly interpret an entity record.
    */
   async function saveEntityRecord (entityDid, entityVerkey, entityRecord) {
-    const insertQuery = `INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES($1, $2, $3) RETURNING *;`
+    const insertQuery = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES($1, $2, $3) RETURNING *;'
     const values = [entityDid, entityVerkey, entityRecord]
     await pgPool.query(insertQuery, values)
   }
@@ -245,7 +245,7 @@ async function createPgStorageEntities (appStorageConfig) {
    * @param {object} userPwDid - The "entity record", can have arbitrary structure
    */
   async function linkAgentToItsConnection (agentDid, agentConnDid, userPwDid) {
-    const insertQuery = `INSERT INTO agent_connections (agent_connection_did, user_pw_did, agent_did) VALUES($1, $2, $3)`
+    const insertQuery = 'INSERT INTO agent_connections (agent_connection_did, user_pw_did, agent_did) VALUES($1, $2, $3)'
     const values = [agentConnDid, userPwDid, agentDid]
     await pgPool.query(insertQuery, values)
   }
@@ -255,7 +255,7 @@ async function createPgStorageEntities (appStorageConfig) {
    * @param {string} agentDid - DID of an Agent owning connection
    */
   async function getAgentLinks (agentDid) {
-    const insertQuery = `SELECT * from agent_connections WHERE agent_did = $1`
+    const insertQuery = 'SELECT * from agent_connections WHERE agent_did = $1'
     const values = [agentDid]
     const { rows } = await pgPool.query(insertQuery, values)
     return rows.map(row => {
@@ -270,7 +270,7 @@ async function createPgStorageEntities (appStorageConfig) {
    * @param {string} pwDid - "User Pairwise DID" associated with the connection
    */
   async function pwDidToAconnDid (agentDid, pwDid) {
-    let res = await aconnLinkPairsByPwDids(agentDid, [pwDid])
+    const res = await aconnLinkPairsByPwDids(agentDid, [pwDid])
     if (res.length === 0) {
       return undefined
     }
@@ -283,7 +283,7 @@ async function createPgStorageEntities (appStorageConfig) {
    * @param {string} aconnDid - "User Pairwise DID" associated with the connection
    */
   async function aconnDidToPwDid (agentDid, aconnDid) {
-    let res = await aconnLinkPairsByAconnDids(agentDid, [aconnDid])
+    const res = await aconnLinkPairsByAconnDids(agentDid, [aconnDid])
     if (res.length === 0) {
       return undefined
     }
@@ -296,8 +296,8 @@ async function createPgStorageEntities (appStorageConfig) {
    * @param {array} filterUserPwDids - Filters records by "User Pairwise DIDs". Empty array disables filter.
    */
   async function aconnLinkPairsByPwDids (agentDid, filterUserPwDids) {
-    let aconnLinks = await getAgentLinks(agentDid)
-    let pairs = []
+    const aconnLinks = await getAgentLinks(agentDid)
+    const pairs = []
     for (const aconnLink of aconnLinks) {
       const { userPwDid } = aconnLink
       if (filterUserPwDids.length === 0 || filterUserPwDids.includes(userPwDid)) {
@@ -314,8 +314,8 @@ async function createPgStorageEntities (appStorageConfig) {
    * @param {array} filterAgentConnDids - Filters records by "Agent Connection DIDs". Empty array disables filter.
    */
   async function aconnLinkPairsByAconnDids (agentDid, filterAgentConnDids) {
-    let aconnLinks = await getAgentLinks(agentDid)
-    let pairs = []
+    const aconnLinks = await getAgentLinks(agentDid)
+    const pairs = []
     for (const aconnLink of aconnLinks) {
       const { agentConnDid } = aconnLink
       if (filterAgentConnDids.length === 0 || filterAgentConnDids.includes(agentConnDid)) {
@@ -334,7 +334,7 @@ async function createPgStorageEntities (appStorageConfig) {
    * If one of the agent connection DIDs cannot be mapped into pairwiseDID, the update record will be omitted in response
    */
   async function convertIntoStorageRequest (agentDid, uidsByUserPwDids) {
-    let res = []
+    const res = []
     for (const uidsByUserPwDid of uidsByUserPwDids) {
       const { pairwiseDID, uids } = uidsByUserPwDid
       const mapped = await aconnLinkPairsByPwDids(agentDid, [pairwiseDID])
@@ -354,7 +354,7 @@ async function createPgStorageEntities (appStorageConfig) {
    * If one of the agent connection DIDs cannot be mapped into pairwiseDID, the update record will be omitted in response
    */
   async function convertIntoUserUpdateResponse (agentDid, uidsByUserAgentConnDids) {
-    let res = []
+    const res = []
     for (const uidsByAgentConnDid of uidsByUserAgentConnDids) {
       const { agentConnDid, uids } = uidsByAgentConnDid
       const mapped = await aconnLinkPairsByAconnDids(agentDid, [agentConnDid])

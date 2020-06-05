@@ -37,7 +37,7 @@ beforeEach(async () => {
   clientWalletName = `unit-test-${uuid.v4()}`
   await indyCreateWallet(clientWalletName, clientWalletKey, 'RAW')
   clientWh = await indyOpenWallet(clientWalletName, clientWalletKey, 'RAW')
-  let { did } = await indyCreateAndStoreMyDid(clientWh)
+  const { did } = await indyCreateAndStoreMyDid(clientWh)
   clientDid = did
 })
 

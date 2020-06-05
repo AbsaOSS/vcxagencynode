@@ -21,12 +21,12 @@ const util = require('util')
 const pgtools = require('pgtools')
 
 async function createDb (user, password, host, port, dbName) {
-  let createPgDbAsync = util.promisify(pgtools.createdb)
+  const createPgDbAsync = util.promisify(pgtools.createdb)
   await createPgDbAsync({ user, password, host, port }, dbName)
 }
 
 async function dropDb (user, password, host, port, dbName) {
-  let dropPgDbAsync = util.promisify(pgtools.dropdb)
+  const dropPgDbAsync = util.promisify(pgtools.dropdb)
   await dropPgDbAsync({ user, password, host, port }, dbName)
 }
 

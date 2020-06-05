@@ -22,7 +22,7 @@ const { performance } = require('perf_hooks')
 
 let agencyClient
 
-const agencyUrl = process.env.AGENCY_URL || `http://localhost:8080`
+const agencyUrl = process.env.AGENCY_URL || 'http://localhost:8080'
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 100)
@@ -40,14 +40,14 @@ describe('agency info fetch', () => {
       if (i % 1000 === 0) {
         console.log(`Round ${i}`)
       }
-      let promises = []
+      const promises = []
       for (let j = 0; j < OPS_IN_ROUND; j++) {
         promises.push(agencyClient.getAgencyInfo())
       }
       await Promise.all(promises)
     }
     const tFinish = performance.now()
-    let durationSec = (tFinish - tStart) / 1000
+    const durationSec = (tFinish - tStart) / 1000
     const totalMessages = ROUNDS * OPS_IN_ROUND
     const msgsPerSec = totalMessages / durationSec
     const msgsPerMinute = msgsPerSec * 60

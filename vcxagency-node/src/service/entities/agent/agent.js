@@ -162,7 +162,7 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
   async function _handleGetMsgsByConn (msgObject) {
     const { uids, pairwiseDIDs, statusCodes } = msgObject
     const didPairs = await serviceStorage.aconnLinkPairsByPwDids(agentDid, pairwiseDIDs)
-    let msgsByConns = []
+    const msgsByConns = []
     for (const didPair of didPairs) {
       const { agentConnDid, userPwDid } = didPair
       logger.info(`Getting messages for pair ${JSON.stringify(didPair)}`)
@@ -175,7 +175,7 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
   }
 
   async function convertToUidsByPwDids (uidsByAconnDids, ignoreNotFound = false) {
-    let uidsByPwDids = []
+    const uidsByPwDids = []
     for (const rec of uidsByAconnDids) {
       const { agentConnDid, uids } = rec
       const userPwDid = await serviceStorage.aconnDidToPwDid(agentDid, agentConnDid)
@@ -196,7 +196,7 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
    * @param {boolean} ignoreNotFound - Message data
    */
   async function convertToUidsByAgentConnDids (uidsByPwDids, ignoreNotFound = false) {
-    let uidsByAconnDids = []
+    const uidsByAconnDids = []
     for (const rec of uidsByPwDids) {
       const { pairwiseDID, uids } = rec
       const agentConnDid = await serviceStorage.pwDidToAconnDid(agentDid, pairwiseDID)

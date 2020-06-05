@@ -22,8 +22,8 @@ const MSGTYPE_ARIES_BASIC_MSG = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessag
 function buildAriesFwdMessage (to, msgObject) {
   const msg = {
     '@type': MSGTYPE_ARIES_FWD,
-    'to': to,
-    'msg': msgObject
+    to: to,
+    msg: msgObject
   }
   return msg
 }
@@ -32,9 +32,9 @@ function buildAriesBasicMessage (id, msgString, sentUtime = '2019-01-15 18:42:01
   const msg = {
     '@id': '123456780',
     '@type': MSGTYPE_ARIES_BASIC_MSG,
-    '~l10n': { 'locale': 'en' },
-    'sent_time': sentUtime,
-    'content': msgString
+    '~l10n': { locale: 'en' },
+    sent_time: sentUtime,
+    content: msgString
   }
   return msg
 }

@@ -34,8 +34,8 @@ let agencyVerkey
 let agencyDid
 let sendToAgency
 
-const agencyUrl = process.env.AGENCY_URL || `http://localhost:8080`
-let vcxClients = []
+const agencyUrl = process.env.AGENCY_URL || 'http://localhost:8080'
+const vcxClients = []
 
 const ROUNDS = process.env.ROUNDS
 
@@ -47,9 +47,9 @@ beforeAll(async () => {
   // logger.debug = (data) => console.log(data)
   // logger.silly = (data) => console.log(data)
   // indySetLogger(logger)
-  let agencyClient = await buildAgencyClientNetwork(agencyUrl)
+  const agencyClient = await buildAgencyClientNetwork(agencyUrl)
   sendToAgency = agencyClient.sendToAgency
-  let agencyInfo = await agencyClient.getAgencyInfo()
+  const agencyInfo = await agencyClient.getAgencyInfo()
   agencyVerkey = agencyInfo.verkey
   agencyDid = agencyInfo.did
   await setupVcxClients(ROUNDS)
@@ -65,14 +65,14 @@ afterAll(async () => {
 })
 
 async function setupVcxClient () {
-  let walletKey = await indyGenerateWalletKey()
-  let walletName = `unit-perftest-${uuid.v4()}`
+  const walletKey = await indyGenerateWalletKey()
+  const walletName = `unit-perftest-${uuid.v4()}`
   await indyCreateWallet(walletName, walletKey, WALLET_KDF)
-  let wh = await indyOpenWallet(walletName, walletKey, WALLET_KDF)
-  let { did: client2AgencyDid, vkey: client2AgencyVerkey } = await indyCreateAndStoreMyDid(wh)
-  let userPwDids = []
+  const wh = await indyOpenWallet(walletName, walletKey, WALLET_KDF)
+  const { did: client2AgencyDid, vkey: client2AgencyVerkey } = await indyCreateAndStoreMyDid(wh)
+  const userPwDids = []
   for (let i = 0; i < 1; i++) {
-    let { did, vkey } = await indyCreateAndStoreMyDid(wh)
+    const { did, vkey } = await indyCreateAndStoreMyDid(wh)
     userPwDids.push({ did, vkey })
   }
   return {
@@ -87,7 +87,7 @@ async function setupVcxClient () {
 
 async function setupVcxClients (n) {
   for (let i = 0; i < n; i++) {
-    let client = await setupVcxClient()
+    const client = await setupVcxClient()
     vcxClients.push(client)
   }
 }
@@ -100,7 +100,7 @@ describe('onboarding', () => {
       await vcxFlowFullOnboarding(wh, sendToAgency, agencyDid, agencyVerkey, client2AgencyDid, client2AgencyVerkey)
     }
     const tFinish = performance.now()
-    let durationSec = (tFinish - tStart) / 1000
+    const durationSec = (tFinish - tStart) / 1000
     const totalRequests = ROUNDS
     const msgsPerSec = totalRequests / durationSec
     const msgsPerMinute = msgsPerSec * 60

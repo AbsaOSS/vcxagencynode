@@ -39,7 +39,7 @@ async function buildAgencyClientNetwork (agencyUrl) {
   }
 
   async function sendToAgency (msgBuffer) {
-    let msgForAgencyBuffer = await anonCrypt(anoncryptWh, msgBuffer, agencyVerkey)
+    const msgForAgencyBuffer = await anonCrypt(anoncryptWh, msgBuffer, agencyVerkey)
     const headers = { 'Content-Type': 'application/ssi-agent-wire' }
     let res
     try {
@@ -47,7 +47,7 @@ async function buildAgencyClientNetwork (agencyUrl) {
     } catch (err) {
       console.error(`Error response from agency! ${util.inspect(err)}`)
     }
-    let { data } = res
+    const { data } = res
     if (data.errorMsg) {
       throw Error(res.errorMsg)
     }
@@ -67,7 +67,7 @@ async function createAnoncryptWallet () {
   try {
     await indyCreateWallet(walletName, walletKey, walletKdf)
   } catch (err) {}
-  let anoncryptWh = await indyOpenWallet(walletName, walletKey, walletKdf)
+  const anoncryptWh = await indyOpenWallet(walletName, walletKey, walletKdf)
   return anoncryptWh
 }
 

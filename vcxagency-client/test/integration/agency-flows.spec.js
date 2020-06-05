@@ -50,7 +50,7 @@ let agencyVerkey
 let agencyDid
 let sendToAgency
 
-const agencyUrl = process.env.AGENCY_URL || `http://localhost:8080`
+const agencyUrl = process.env.AGENCY_URL || 'http://localhost:8080'
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 120)
@@ -74,7 +74,7 @@ beforeEach(async () => {
     aliceWalletName = `unit-test-${uuid.v4()}`
     await indyCreateWallet(aliceWalletName, aliceWalletKey, WALLET_KDF)
     aliceWh = await indyOpenWallet(aliceWalletName, aliceWalletKey, WALLET_KDF)
-    let { did, vkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const { did, vkey } = await indyCreateAndStoreMyDid(aliceWh)
     aliceDid = did
     aliceVerkey = vkey
   }
@@ -83,7 +83,7 @@ beforeEach(async () => {
     bobWalletName = `unit-test-${uuid.v4()}`
     await indyCreateWallet(bobWalletName, bobWalletKey, WALLET_KDF)
     bobWh = await indyOpenWallet(bobWalletName, bobWalletKey, WALLET_KDF)
-    let { did, vkey } = await indyCreateAndStoreMyDid(bobWh)
+    const { did, vkey } = await indyCreateAndStoreMyDid(bobWh)
     bobDid = did
     bobVerkey = vkey
   }
@@ -101,33 +101,33 @@ describe('onboarding', () => {
   it('should create agent and agent connection', async () => {
     // arrange
     const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
-    let { did: aliceUserPairwiseDid, vkey: aliceUserPairwiseVerkey } = await indyCreateAndStoreMyDid(aliceWh)
-    console.log(`Alice was onboarded.`)
+    const { did: aliceUserPairwiseDid, vkey: aliceUserPairwiseVerkey } = await indyCreateAndStoreMyDid(aliceWh)
+    console.log('Alice was onboarded.')
 
     const { agentDid: bobAgentDid, agentVerkey: bobAgentVerkey } = await vcxFlowFullOnboarding(bobWh, sendToAgency, agencyDid, agencyVerkey, bobDid, bobVerkey)
-    let { did: bobUserPairwiseDid, vkey: bobUserPairwiseVerkey } = await indyCreateAndStoreMyDid(bobWh)
-    console.log(`Bob was onboarded.`)
+    const { did: bobUserPairwiseDid, vkey: bobUserPairwiseVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    console.log('Bob was onboarded.')
 
     // create agent connection, both alice and bob
     console.log(`Alice is going to create agent connection. aliceAgentDid=${aliceAgentDid} aliceVerkey=${aliceVerkey} aliceUserPairwiseDid=${aliceUserPairwiseDid} aliceUserPairwiseVerkey=${aliceUserPairwiseVerkey}`)
     const alicesAconn = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceUserPairwiseDid, aliceUserPairwiseVerkey)
-    const alicesRoutingAgentDid = alicesAconn['withPairwiseDID']
-    const alicesRoutingAgentVerkey = alicesAconn['withPairwiseDIDVerKey']
-    console.log(`Alice created agent connection!`)
+    const alicesRoutingAgentDid = alicesAconn.withPairwiseDID
+    const alicesRoutingAgentVerkey = alicesAconn.withPairwiseDIDVerKey
+    console.log('Alice created agent connection!')
     await vcxFlowCreateAgentConnection(bobWh, sendToAgency, bobAgentDid, bobAgentVerkey, bobVerkey, bobUserPairwiseDid, bobUserPairwiseVerkey)
 
-    let aliceAllMsgs1 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
+    const aliceAllMsgs1 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
     console.log(`Alice queries agency for all messages, she should have none. Response = ${JSON.stringify(aliceAllMsgs1)}`)
 
     // bobs sends message to alices routing agent
-    let bobSendMsgRes1 = await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceUserPairwiseVerkey, alicesRoutingAgentVerkey, bobUserPairwiseVerkey, 'This is Bob!')
+    const bobSendMsgRes1 = await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceUserPairwiseVerkey, alicesRoutingAgentVerkey, bobUserPairwiseVerkey, 'This is Bob!')
     console.log(`Bob sends aries message to Alice's agent. Response = ${JSON.stringify(bobSendMsgRes1)}`)
 
     // alice fetches messages
-    let aliceAllMsgs2 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
+    const aliceAllMsgs2 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
     console.log(`Alice queries agency for all messages, she should have one. Response = ${JSON.stringify(aliceAllMsgs2)}`)
 
-    let aliceToBoMsgs = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, alicesRoutingAgentDid, alicesRoutingAgentVerkey, aliceUserPairwiseVerkey, [], [])
+    const aliceToBoMsgs = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, alicesRoutingAgentDid, alicesRoutingAgentVerkey, aliceUserPairwiseVerkey, [], [])
     console.log(`Alice queries agency for alice2bob messages, she should have one. Response = ${JSON.stringify(aliceToBoMsgs)}`)
 
     // alice updates message status
@@ -135,7 +135,7 @@ describe('onboarding', () => {
       { pairwiseDID: aliceUserPairwiseDid, uids: [aliceToBoMsgs.msgs[0].uid] }
     ]
     const aliceNewMsgStatus = 'MS-104'
-    let updateResponse = await vcxFlowUpdateMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceMsgsByConns, aliceNewMsgStatus)
+    const updateResponse = await vcxFlowUpdateMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceMsgsByConns, aliceNewMsgStatus)
     console.log(`Alice run msg status update for msgs ${JSON.stringify(aliceMsgsByConns)} to status ${aliceNewMsgStatus}. Response = ${JSON.stringify(updateResponse)}`)
 
     // alice tries to update msg status on connection she doesn't have
@@ -143,7 +143,7 @@ describe('onboarding', () => {
       { pairwiseDID: '4aA6TyH2Cgq7gg2wGFiRXS', uids: [aliceToBoMsgs.msgs[0].uid] }
     ]
     const aliceNewMsgStatus2 = 'MS-105'
-    let updateResponse2 = await vcxFlowUpdateMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, updateMsgForNonExistingUserPwDid, aliceNewMsgStatus2)
+    const updateResponse2 = await vcxFlowUpdateMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, updateMsgForNonExistingUserPwDid, aliceNewMsgStatus2)
     console.log(`Alice run msg status update for agent connection which does not exists on her agent. Response = ${JSON.stringify(updateResponse2)}`)
   })
 })

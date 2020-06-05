@@ -78,7 +78,7 @@ beforeEach(async () => {
     agencyUserWalletName = `unit-test-${uuid.v4()}`
     await indyCreateWallet(agencyUserWalletName, agencyUserWalletKey, WALLET_KDF)
     agencyUserWh = await indyOpenWallet(agencyUserWalletName, agencyUserWalletKey, WALLET_KDF)
-    let { did, vkey } = await indyCreateAndStoreMyDid(agencyUserWh)
+    const { did, vkey } = await indyCreateAndStoreMyDid(agencyUserWh)
     agencyUserDid = did
     agencyUserVerkey = vkey
   }
@@ -86,11 +86,11 @@ beforeEach(async () => {
   const { agentDid: aDid1, agentVerkey: aVerkey1 } = await vcxFlowFullOnboarding(agencyUserWh, sendToAgency, agencyDid, agencyVerkey, agencyUserDid, agencyUserVerkey)
   agent1Did = aDid1
   agent1Verkey = aVerkey1
-  let { did: userPairwiseDid, vkey: userPairwiseVerkey } = await indyCreateAndStoreMyDid(agencyUserWh)
+  const { did: userPairwiseDid, vkey: userPairwiseVerkey } = await indyCreateAndStoreMyDid(agencyUserWh)
   aconnUserPwVkey = userPairwiseVerkey
   const msgKeyCreated = await vcxFlowCreateAgentConnection(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, userPairwiseDid, aconnUserPwVkey)
-  aconnDid = msgKeyCreated['withPairwiseDID']
-  aconnVerkey = msgKeyCreated['withPairwiseDIDVerKey']
+  aconnDid = msgKeyCreated.withPairwiseDID
+  aconnVerkey = msgKeyCreated.withPairwiseDIDVerKey
   const otherConnectionDid = '3zM5TyH1Cgq5gg8wGFitXS'
   await serviceStorage.storeMessage(agent1Did, aconnDid, msg1Id, 'MS-103', { msg: 'hello' })
   await serviceStorage.storeMessage(agent1Did, aconnDid, msg2Id, 'MS-103', { msg: 'annyeong' })
@@ -120,7 +120,7 @@ describe('message download from agent connection', () => {
   it('should filter messages by status', async () => {
     // arrange
     // act & assert 1, filter by status
-    let msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, ['MS-103'], [])
+    const msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, ['MS-103'], [])
     expect(msgReply['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSGS')
     const { msgs } = msgReply
     expect(Array.isArray(msgs)).toBeTruthy()
@@ -138,7 +138,7 @@ describe('message download from agent connection', () => {
   })
 
   it('should get all messages', async () => {
-    let msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, [], [])
+    const msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, [], [])
     expect(msgReply['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSGS')
     const { msgs } = msgReply
     expect(msgs.length).toBe(3)
@@ -150,7 +150,7 @@ describe('message download from agent connection', () => {
   })
 
   it('should filter messages by uid', async () => {
-    let msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, [], [msg2Id])
+    const msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, [], [msg2Id])
     expect(msgReply['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSGS')
     const { msgs } = msgReply
     expect(msgs.length).toBe(1)

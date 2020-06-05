@@ -78,15 +78,15 @@ afterEach(async () => {
 describe('packing unpacking', () => {
   it('should unpack anoncrypted message', async () => {
     const messageBuffer = Buffer.from(JSON.stringify({ content: 'Hello Bob, Sincerely Alice.' }))
-    let anoncryptedMsg = await pack(aliceWh, messageBuffer, bobVerkey, undefined)
-    let parsedMsg = await parseAnoncrypted(bobWh, anoncryptedMsg)
+    const anoncryptedMsg = await pack(aliceWh, messageBuffer, bobVerkey, undefined)
+    const parsedMsg = await parseAnoncrypted(bobWh, anoncryptedMsg)
     expect(parsedMsg.content).toBe('Hello Bob, Sincerely Alice.')
   })
 
   it('should unpack authcrypted message', async () => {
     const messageBuffer = Buffer.from(JSON.stringify({ content: 'Hello Bob, Sincerely Alice.' }))
-    let anoncryptedMsg = await pack(aliceWh, messageBuffer, bobVerkey, aliceVerkey)
-    let { message, senderVerkey } = await parseAuthcrypted(bobWh, anoncryptedMsg)
+    const anoncryptedMsg = await pack(aliceWh, messageBuffer, bobVerkey, aliceVerkey)
+    const { message, senderVerkey } = await parseAuthcrypted(bobWh, anoncryptedMsg)
     expect(message.content).toBe('Hello Bob, Sincerely Alice.')
     expect(senderVerkey).toBe(aliceVerkey)
   })

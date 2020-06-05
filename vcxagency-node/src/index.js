@@ -52,20 +52,20 @@ validateAppConfig(appConfig, (err, ok) => {
 
   function getStorageInfoPgsql () {
     const storageConfig = {
-      'url': appConfig.PG_WALLET_URL,
+      url: appConfig.PG_WALLET_URL,
       // 'tls', todo: add this when tls code is merged into pgsql plugin
-      'max_connections': appConfig.PG_WALLET_MAX_CONNECTIONS, /// Sets the maximum number of connections managed by the pool.
-      'min_idle_count': appConfig.PG_WALLET_MIN_IDLE_COUNT, /// Sets the minimum idle connection count maintained by the pool.
-      'connection_timeout': appConfig.PG_WALLET_CONNECTION_TIMEOUT, /// Sets the idle timeout used by the pool.
-      'wallet_scheme': 'MultiWalletSingleTableSharedPool' // strategy used by wallet plugin
+      max_connections: appConfig.PG_WALLET_MAX_CONNECTIONS, /// Sets the maximum number of connections managed by the pool.
+      min_idle_count: appConfig.PG_WALLET_MIN_IDLE_COUNT, /// Sets the minimum idle connection count maintained by the pool.
+      connection_timeout: appConfig.PG_WALLET_CONNECTION_TIMEOUT, /// Sets the idle timeout used by the pool.
+      wallet_scheme: 'MultiWalletSingleTableSharedPool' // strategy used by wallet plugin
       // 'database_name' : todo: add support into pgsql for this when using MultiWalletSingleTableSharedPool strategy
     }
 
     const storageCredentials = {
-      'account': appConfig.PG_WALLET_ACCOUNT,
-      'password': appConfig.PG_WALLET_PASSWORD_SECRET,
-      'admin_account': appConfig.PG_WALLET_ADMIN_ACCOUNT,
-      'admin_password': appConfig.PG_WALLET_ADMIN_PASSWORD_SECRET
+      account: appConfig.PG_WALLET_ACCOUNT,
+      password: appConfig.PG_WALLET_PASSWORD_SECRET,
+      admin_account: appConfig.PG_WALLET_ADMIN_ACCOUNT,
+      admin_password: appConfig.PG_WALLET_ADMIN_PASSWORD_SECRET
     }
     return {
       storageType: 'postgres_storage',

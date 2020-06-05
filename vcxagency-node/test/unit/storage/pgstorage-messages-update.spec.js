@@ -27,7 +27,7 @@ beforeAll(async () => {
 
 let storage
 beforeEach(async () => {
-  let { info } = await createTestPgDb()
+  const { info } = await createTestPgDb()
   storage = await createPgStorageEntities(info)
 })
 
@@ -50,7 +50,7 @@ describe('storage', () => {
     await storage.storeMessage(agentDid, agentConn2Did, uid4, 'MS-105', { msg: 'hello4' })
 
     // act
-    let { failed, updated } =
+    const { failed, updated } =
       await storage.updateStatusCodes(agentDid, [{ agentConnDid: agentConn2Did, uids: [uid2, uid4] }], 'MS-106')
 
     // assert
@@ -61,7 +61,7 @@ describe('storage', () => {
     expect(updated[0].uids.find(uid => uid === uid2)).toBeDefined()
     expect(updated[0].uids.find(uid => uid === uid4)).toBeDefined()
 
-    let msgObjects = await storage.loadMessages(agentDid, agentConn2Did, [], [])
+    const msgObjects = await storage.loadMessages(agentDid, agentConn2Did, [], [])
     expect(msgObjects.length).toBe(3)
     const msg2 = msgObjects.find(m => m.metadata.uid === uid2)
     const msg3 = msgObjects.find(m => m.metadata.uid === uid3)
@@ -89,7 +89,7 @@ describe('storage', () => {
     await storage.storeMessage(agentDid, agentConn2Did, uid4, 'MS-105', { msg: 'hello4' })
 
     // act
-    let { failed, updated } =
+    const { failed, updated } =
       await storage.updateStatusCodes(agentDid, [{ agentConnDid: agentConn2Did, uids: [] }], 'MS-106')
 
     // assert

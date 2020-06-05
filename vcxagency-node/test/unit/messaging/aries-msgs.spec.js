@@ -62,7 +62,7 @@ beforeAll(async () => {
   if (process.env.ENABLE_VCX_LOGS) {
     setupVcxLogging()
   }
-  let tmpPgDb = await createTestPgDb()
+  const tmpPgDb = await createTestPgDb()
   const app = await wireUp(tmpPgDb.info, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
   serviceIndyWallets = app.serviceIndyWallets
   entityForwardAgent = app.entityForwardAgent
@@ -85,7 +85,7 @@ beforeEach(async () => {
   aliceWalletName = `unit-test-${uuid.v4()}`
   await indyCreateWallet(aliceWalletName, aliceWalletKey, WALLET_KDF)
   aliceWh = await indyOpenWallet(aliceWalletName, aliceWalletKey, WALLET_KDF)
-  let { did, vkey } = await indyCreateAndStoreMyDid(aliceWh)
+  const { did, vkey } = await indyCreateAndStoreMyDid(aliceWh)
   aliceDid = did
   aliceVerkey = vkey
 
@@ -112,17 +112,17 @@ describe('onboarding', () => {
   it('Bob should send aries message, Alice should download it', async () => {
     // arrange
     const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
-    let { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
     const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
-    const aliceToBobAconnDid = aliceAconnCreated['withPairwiseDID']
-    const aliceToBobAconnVkey = aliceAconnCreated['withPairwiseDIDVerKey']
+    const aliceToBobAconnDid = aliceAconnCreated.withPairwiseDID
+    const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
 
-    let { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
 
     await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
 
     // act
-    let msgReply = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, aliceToBobAconnDid, aliceToBobAconnVkey, aliceToBobVkey, ['MS-103'])
+    const msgReply = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, aliceToBobAconnDid, aliceToBobAconnVkey, aliceToBobVkey, ['MS-103'])
     expect(msgReply['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSGS')
     const { msgs } = msgReply
     expect(Array.isArray(msgs)).toBeTruthy()
@@ -131,8 +131,8 @@ describe('onboarding', () => {
     expect(senderVerkey).toBe(bobToAliceVerkey)
     const messageObject = JSON.parse(message)
     expect(messageObject['@type']).toBe('did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message')
-    expect(messageObject['sent_time']).toBe('2019-01-15 18:42:01Z')
-    expect(messageObject['content']).toBe('This is Bob!')
+    expect(messageObject.sent_time).toBe('2019-01-15 18:42:01Z')
+    expect(messageObject.content).toBe('This is Bob!')
   })
 
   it('Alice should receive notification when Bobs sends her a message', async () => {
@@ -153,13 +153,13 @@ describe('onboarding', () => {
 
       // set up alice's agent and agent'connection to receive message Bob
       const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
-      let { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+      const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
       const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
-      const aliceToBobAconnVkey = aliceAconnCreated['withPairwiseDIDVerKey']
+      const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
       await setWebhookUrlForAgent(aliceAgentDid, `http://localhost:${TEST_SERVER_PORT}/notifications`)
 
       // bob generates a verkey for this specific connection
-      let { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+      const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
 
       // bob sends message to alice's agent she set up for relationship with Bob
       await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')

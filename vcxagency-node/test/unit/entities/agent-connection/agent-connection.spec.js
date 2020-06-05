@@ -44,7 +44,7 @@ let clientPairwiseVkey
 beforeAll(async () => {
   jest.setTimeout(1000 * 10)
   serviceIndyWallets = await createServiceIndyWallets(undefined)
-  let { info } = await createTestPgDb()
+  const { info } = await createTestPgDb()
   serviceStorage = await createPgStorageEntities(info)
 })
 
@@ -53,11 +53,11 @@ beforeEach(async () => {
   clientWalletName = `unit-test-${uuid.v4()}`
   await indyCreateWallet(clientWalletName, clientWalletKey, 'RAW')
   clientWh = await indyOpenWallet(clientWalletName, clientWalletKey, 'RAW')
-  let { did, vkey } = await indyCreateAndStoreMyDid(clientWh)
+  const { did, vkey } = await indyCreateAndStoreMyDid(clientWh)
   clientDid = did
   clientVerkey = vkey
 
-  let { did: did2, vkey: vkey2 } = await indyCreateAndStoreMyDid(clientWh)
+  const { did: did2, vkey: vkey2 } = await indyCreateAndStoreMyDid(clientWh)
   clientPairwiseDid = did2
   clientPairwiseVkey = vkey2
 })
@@ -70,15 +70,15 @@ afterEach(async () => {
 
 describe('agent operations', () => {
   it('should create agentConnection data and retrieve entity record', async () => {
-    let { agentConnectionDid, agentConnectionVerkey } = await createAgentConnectionData('LC9mkrzZfDXb3UwjnBnm89', clientDid, clientVerkey, clientPairwiseDid, clientPairwiseVkey, serviceIndyWallets, serviceStorage)
-    let entityRecord = await serviceStorage.loadEntityRecord(agentConnectionDid)
-    let entityRecordByVkey = await serviceStorage.loadEntityRecord(agentConnectionVerkey)
+    const { agentConnectionDid, agentConnectionVerkey } = await createAgentConnectionData('LC9mkrzZfDXb3UwjnBnm89', clientDid, clientVerkey, clientPairwiseDid, clientPairwiseVkey, serviceIndyWallets, serviceStorage)
+    const entityRecord = await serviceStorage.loadEntityRecord(agentConnectionDid)
+    const entityRecordByVkey = await serviceStorage.loadEntityRecord(agentConnectionVerkey)
     expect(entityRecord).toStrictEqual(entityRecordByVkey)
   })
 
   it('should create agentConnection data and build AO', async () => {
-    let { agentConnectionDid, agentConnectionVerkey } = await createAgentConnectionData('LC9mkrzZfDXb3UwjnBnm89', clientDid, clientVerkey, clientPairwiseDid, clientPairwiseVkey, serviceIndyWallets, serviceStorage)
-    let entityRecord = await serviceStorage.loadEntityRecord(agentConnectionDid)
+    const { agentConnectionDid, agentConnectionVerkey } = await createAgentConnectionData('LC9mkrzZfDXb3UwjnBnm89', clientDid, clientVerkey, clientPairwiseDid, clientPairwiseVkey, serviceIndyWallets, serviceStorage)
+    const entityRecord = await serviceStorage.loadEntityRecord(agentConnectionDid)
 
     const agentAo = await buildAgentConnectionAO(entityRecord, serviceIndyWallets, serviceStorage)
     const info = await agentAo.loadInfo()

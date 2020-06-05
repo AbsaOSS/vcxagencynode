@@ -33,7 +33,7 @@ module.exports = function (app, forwardAgent, resolver, maxRequestSizeKb) {
   app.post('/agency/msg',
     bodyParser.raw(options),
     asyncHandler(async function (req, res) {
-      logger.info(`POST /agency/msg`)
+      logger.info('POST /agency/msg')
       logger.silly(`req = ${util.inspect(req)}`)
       const responseData = await forwardAgent.handleIncomingMessage(req.body)
       res.set('Content-Type', 'application/ssi-agent-wire')
@@ -43,9 +43,9 @@ module.exports = function (app, forwardAgent, resolver, maxRequestSizeKb) {
   app.get('/agency',
     bodyParser.json(),
     asyncHandler(async function (req, res) {
-      logger.info(`GET /agency`)
+      logger.info('GET /agency')
       const { did, verkey } = forwardAgent.getForwadAgentInfo()
-      res.status(200).send({ DID: did, 'verKey': verkey })
+      res.status(200).send({ DID: did, verKey: verkey })
     }))
 
   app.post('/agent/:agentDid',
@@ -61,7 +61,7 @@ module.exports = function (app, forwardAgent, resolver, maxRequestSizeKb) {
       }
     ),
     asyncHandler(async function (req, res) {
-      logger.info(`POST /agent/:agentDid`)
+      logger.info('POST /agent/:agentDid')
       const { agentDid } = req.params
       const { webhookUrl } = req.body
       logger.info(`Updating webhook url to ${webhookUrl} for agent ${agentDid}`)
