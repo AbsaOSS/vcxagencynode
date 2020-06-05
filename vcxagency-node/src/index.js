@@ -18,6 +18,7 @@
 
 const { validateAppConfig, stringifyAndHideSensitive } = require('./configuration/app-config')
 const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
+const util = require('util')
 
 const appConfig = buildAppConfigFromEnvVariables()
 console.log(stringifyAndHideSensitive(appConfig))
@@ -90,7 +91,7 @@ validateAppConfig(appConfig, (err, ok) => {
     }
 
     const { storageType, storageConfig, storageCredentials } = getStorageInfoPgsql()
-    logger.info(JSON.stringify(storageConfig))
+    logger.info(`Intializing postgres plugin with config: ${JSON.stringify(storageConfig)}`)
     await indyLoadPostgresPlugin(storageConfig, storageCredentials)
 
     const { entityForwardAgent, resolver } =
@@ -112,6 +113,11 @@ validateAppConfig(appConfig, (err, ok) => {
     if (appConfig.LOG_ENABLE_INDYSDK === 'true') {
       indySetLogger(logger)
     }
-    await startAgency()
+    try {
+      await startAgency()
+    } catch (e) {
+      logger.error(`Unhandled agency error: ${util.inspect(e)}`)
+      throw Error(`Unhandled agency error: ${util.inspect(e)}`)
+    }
   }
 })
