@@ -26,6 +26,8 @@ jobs:
 
   build-vcxagency-base:
     runs-on: ubuntu-16.04
+    env:
+      DOCKER_BUILDKIT: 1
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
@@ -52,16 +54,20 @@ jobs:
           docker build --cache-from "$REMOTE_TAG" \
                        --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
                        --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
+                       --build-arg BUILDKIT_INLINE_CACHE=1 \
                        -f vcxagency-base/vcxagency-base.Dockerfile \
                        -t "$LOCAL_TAG" \
                         .
           echo "Tagging $LOCAL_TAG as $REMOTE_TAG"
           docker tag "$LOCAL_TAG" "$REMOTE_TAG" && docker push "$REMOTE_TAG"
+          docker push "$REMOTE_TAG" || true
 
 
   build-image-vcxagency:
     runs-on: ubuntu-16.04
     needs: build-vcxagency-base
+    env:
+      DOCKER_BUILDKIT: 1
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
@@ -86,12 +92,14 @@ jobs:
           REMOTE_TAG_BASE_IMAGE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH"
           echo "Will build from base iamge $REMOTE_TAG_BASE_IMAGE"
           docker build --cache-from "$REMOTE_TAG" \
+                       --build-arg BUILDKIT_INLINE_CACHE=1 \
                        --build-arg AGENCY_BASE_IMAGE="$REMOTE_TAG_BASE_IMAGE" \
                        -f vcxagency-node/Dockerfile \
                        -t "$LOCAL_TAG" \
                         .
+          echo "Tagging $LOCAL_TAG as $REMOTE_TAG"
           docker tag "$LOCAL_TAG" "$REMOTE_TAG"
-          docker push "$REMOTE_TAG"
+          docker push "$REMOTE_TAG" || true
 
   lint-vcxagency-node:
     runs-on: ubuntu-16.04
