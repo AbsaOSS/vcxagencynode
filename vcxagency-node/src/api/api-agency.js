@@ -34,7 +34,7 @@ module.exports = function (app, forwardAgent, resolver, maxRequestSizeKb) {
     bodyParser.raw(options),
     asyncHandler(async function (req, res) {
       logger.info('POST /agency/msg')
-      logger.silly(`req = ${util.inspect(req)}`)
+      logger.silly(`req.headers: ${util.inspect(req.headers)}  req.route: ${util.inspect(req.route)}`)
       const responseData = await forwardAgent.handleIncomingMessage(req.body)
       res.set('Content-Type', 'application/ssi-agent-wire')
       res.status(200).send(responseData)
