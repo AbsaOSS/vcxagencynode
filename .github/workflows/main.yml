@@ -24,6 +24,74 @@ jobs:
           echo "REF_HASH = $REF_HASH"
           echo "GITHUB_REPOSITORY_LOWERCASE = $GITHUB_REPOSITORY_LOWERCASE"
 
+  build-vcxagency-base:
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Docker setup
+        run: |
+          GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY_LOWERCASE)
+
+          REF_HASH=`echo -n "$GITHUB_REF-$PACKAGES_ACCESS_USERNAME" | shasum | cut -f1 -d" "`
+          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
+
+          PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
+          echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $PACKAGES_USERNAME --password-stdin
+      - name: Pull image
+        run: docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH || true
+      - name: Build image
+        run: |
+          set -x
+          echo $REF_HASH
+          LOCAL_TAG="vcxagency-base:$REF_HASH"
+          REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH"
+          INDYSDK_REPO="https://github.com/hyperledger/indy-sdk"
+          INDYSDK_REVISION="1.15.0"
+          docker build --cache-from "$REMOTE_TAG" \
+                       --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
+                       --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
+                       -f vcxagency-base/vcxagency-base.Dockerfile \
+                       -t "$LOCAL_TAG" \
+                        .
+          echo "Tagging $LOCAL_TAG as $REMOTE_TAG"
+          docker tag "$LOCAL_TAG" "$REMOTE_TAG" && docker push "$REMOTE_TAG"
+
+
+  build-image-vcxagency:
+    runs-on: ubuntu-16.04
+    needs: build-vcxagency-base
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Docker setup
+        run: |
+          GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY_LOWERCASE)
+
+          REF_HASH=`echo -n "$GITHUB_REF-$PACKAGES_ACCESS_USERNAME" | shasum | cut -f1 -d" "`
+          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
+
+          PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
+          echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $PACKAGES_USERNAME --password-stdin
+      - name: Pull image
+        run: docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$REF_HASH || true
+      - name: Build image
+        run: |
+          set -x
+          echo $REF_HASH
+          LOCAL_TAG="vcxagency-node:$REF_HASH"
+          REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$REF_HASH"
+          REMOTE_TAG_BASE_IMAGE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH"
+          echo "Will build from base iamge $REMOTE_TAG_BASE_IMAGE"
+          docker build --cache-from "$REMOTE_TAG" \
+                       --build-arg AGENCY_BASE_IMAGE="$REMOTE_TAG_BASE_IMAGE" \
+                       -f vcxagency-node/Dockerfile \
+                       -t "$LOCAL_TAG" \
+                        .
+          docker tag "$LOCAL_TAG" "$REMOTE_TAG"
+          docker push "$REMOTE_TAG"
 
   lint-vcxagency-node:
     runs-on: ubuntu-16.04
