@@ -42,7 +42,8 @@ jobs:
           PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
           echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $PACKAGES_USERNAME --password-stdin
       - name: Pull image
-        run: docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH || true
+        run: |
+           docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH || true
       - name: Build image
         run: |
           set -x
@@ -90,10 +91,12 @@ jobs:
           LOCAL_TAG="vcxagency-node:$REF_HASH"
           REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$REF_HASH"
           REMOTE_TAG_BASE_IMAGE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH"
-          echo "Will build from base iamge $REMOTE_TAG_BASE_IMAGE"
+          LOCAL_TAG_BASE_IMAGE="vcxagency-base:$REF_HASH"
+          docker tag "$REMOTE_TAG_BASE_IMAGE" "$LOCAL_TAG_BASE_IMAGE" || true
+          echo "Will build from base image $LOCAL_TAG_BASE_IMAGE"
           docker build --cache-from "$REMOTE_TAG" \
                        --build-arg BUILDKIT_INLINE_CACHE=1 \
-                       --build-arg AGENCY_BASE_IMAGE="$REMOTE_TAG_BASE_IMAGE" \
+                       --build-arg AGENCY_BASE_IMAGE="$LOCAL_TAG_BASE_IMAGE" \
                        -f vcxagency-node/Dockerfile \
                        -t "$LOCAL_TAG" \
                         .
