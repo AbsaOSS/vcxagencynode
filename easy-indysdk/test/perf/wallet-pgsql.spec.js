@@ -37,15 +37,16 @@ const indy = require('indy-sdk')
 beforeAll(async () => {
   jest.setTimeout(1000 * 1200)
 })
-let storageType
+
+// const pgStrategy = 'MultiWalletSingleTable'
+// const pgStrategy = 'DatabasePerWallet'
+// storageType = process.env.STORAGE_TYPE || 'default'
+const storageType = 'postgres_storage'
 let storageConfig
 let storageCredentials
 
 const pgStrategy = 'MultiWalletSingleTableSharedPool'
-// const pgStrategy = 'MultiWalletSingleTable'
-// const pgStrategy = 'DatabasePerWallet'
-// storageType = process.env.STORAGE_TYPE || 'default'
-storageType = 'postgres_storage'
+
 let testMode
 if (storageType === 'postgres_storage') {
   testMode = `${storageType}-${pgStrategy}`
@@ -89,11 +90,11 @@ describe('pgsql wallet', () => {
       await indyLoadPostgresPlugin(storageConfig, storageCredentials)
     }
 
-    let walletRecord = await createAndOpenWallet()
+    const walletRecord = await createAndOpenWallet()
     try {
       // measure writes
       const PAR_IO = 3000
-      await indy.setRuntimeConfig(JSON.stringify({ 'crypto_thread_pool_size': 8 }))
+      await indy.setRuntimeConfig(JSON.stringify({ crypto_thread_pool_size: 8 }))
       await sleep(1000)
       {
         const tStart = performance.now()
@@ -106,13 +107,13 @@ describe('pgsql wallet', () => {
           }
           promises.push(indyCreateAndStoreMyDid(wh))
         }
-        console.log(`Waiting for promises to resolve`)
+        console.log('Waiting for promises to resolve')
         await Promise.all(promises)
-        console.log(`All resolved!`)
+        console.log('All resolved!')
 
         const tFinish = performance.now()
         const timeFinish = new Date().getTime()
-        let duration = (tFinish - tStart)
+        const duration = (tFinish - tStart)
         const totalOps = PAR_IO
         const perOP = duration / totalOps
         console.log(`TYPE:${testMode} -- DID Creates count ${totalOps} operations; took overally: ${duration}ms / ${perOP} per op. StartTime ${timeStart} TimeEnd ${timeFinish}`)
@@ -152,7 +153,7 @@ describe('pgsql wallet', () => {
         }
 
         const tFinish = performance.now()
-        let duration = (tFinish - tStart)
+        const duration = (tFinish - tStart)
         const totalOps = N * PAR
         const perOP = duration / totalOps
         console.log(`TYPE:${testMode} -- Opening ${totalOps} wallets; ${N}round of ${PAR} operations; took overally: ${duration}ms / ${perOP} per op`)
@@ -161,7 +162,7 @@ describe('pgsql wallet', () => {
       // measure writes
       const N_IO = 1
       const PAR_IO = 1000
-      await indy.setRuntimeConfig({ 'crypto_thread_pool_size': 8 })
+      await indy.setRuntimeConfig({ crypto_thread_pool_size: 8 })
       {
         const tStart = performance.now()
         const timeStart = new Date().getTime()
@@ -181,7 +182,7 @@ describe('pgsql wallet', () => {
 
         const tFinish = performance.now()
         const timeFinish = new Date().getTime()
-        let duration = (tFinish - tStart)
+        const duration = (tFinish - tStart)
         const totalOps = N_IO * PAR_IO
         const perOP = duration / totalOps
         console.log(`TYPE:${testMode} -- DID Creates count ${totalOps}; ${N_IO} round of ${PAR_IO} operations; took overally: ${duration}ms / ${perOP} per op. StartTime ${timeStart} TimeEnd ${timeFinish}`)

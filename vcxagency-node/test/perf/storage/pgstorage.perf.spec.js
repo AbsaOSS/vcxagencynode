@@ -31,12 +31,12 @@ beforeAll(async () => {
 // by default, generate-dataset.js will generate csv file to: /tmp/agencydata/agency-messages.csv
 // so if running pgsql in docker, simplest way is mount this data 1:1 like this:
 // docker run --name postgres -v /tmp/agencydata/:/tmp/agencydata/ -v  pgdata:/var/lib/postgresql/data -e POSTGRES_PASSWORD=mysecretpassword -d -p 5432:5432 postgres
-const importPath = process.env.IMPORT_PATH || `/tmp/agencydata/agency-messages.csv`
+const importPath = process.env.IMPORT_PATH || '/tmp/agencydata/agency-messages.csv'
 
 let storage
 let pgClient
 beforeAll(async () => {
-  let { info } = await createTestPgDb()
+  const { info } = await createTestPgDb()
   storage = await createPgStorageEntities(info)
   logger.info(`Using pgsql storage: ${JSON.stringify(info)}`)
   pgClient = new Client(info)
@@ -64,12 +64,12 @@ describe('storage', () => {
   // 1mil msgs, take   25ms to retrieve - indexes: agent_did
   // 1mil msgs, take   15ms to retrieve - indexes: agent_did, (agent_did, agent_connection_did)
   it('should store and retrieve messages of all agent connections', async () => {
-    const { rows } = await pgClient.query(`SELECT * FROM messages where id = '123'`)
+    const { rows } = await pgClient.query('SELECT * FROM messages where id = \'123\'')
     const { agent_did, agent_connection_did, uid, status_code } = rows[0] // eslint-disable-line
     const tStart = performance.now()
     await storage.loadMessages(agent_did, [agent_connection_did], [uid], []) // eslint-disable-line
     const tFinish = performance.now()
-    let durationSec = (tFinish - tStart)
+    const durationSec = (tFinish - tStart)
     logger.info(`Duration ${durationSec}ms to retrieve agent messages by status and agent-connection.`)
   })
 })

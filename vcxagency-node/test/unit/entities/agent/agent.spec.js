@@ -41,7 +41,7 @@ let clientWh
 beforeAll(async () => {
   jest.setTimeout(1000 * 10)
   serviceIndyWallets = await createServiceIndyWallets(undefined)
-  let { info } = await createTestPgDb()
+  const { info } = await createTestPgDb()
   serviceStorage = await createPgStorageEntities(info)
 })
 
@@ -50,7 +50,7 @@ beforeEach(async () => {
   clientWalletName = `unit-test-${uuid.v4()}`
   await indyCreateWallet(clientWalletName, clientWalletKey, 'RAW')
   clientWh = await indyOpenWallet(clientWalletName, clientWalletKey, 'RAW')
-  let { did, vkey } = await indyCreateAndStoreMyDid(clientWh)
+  const { did, vkey } = await indyCreateAndStoreMyDid(clientWh)
   clientDid = did
   clientVerkey = vkey
 })
@@ -63,18 +63,18 @@ afterEach(async () => {
 
 describe('agent operations', () => {
   it('should create agent data and retrieve entity record', async () => {
-    let { agentDid, agentVerkey } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
+    const { agentDid, agentVerkey } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
     expect(agentDid).toBeDefined()
     expect(agentVerkey).toBeDefined()
-    let entityRecord = await serviceStorage.loadEntityRecord(agentDid)
-    let entityRecordByVkey = await serviceStorage.loadEntityRecord(agentVerkey)
+    const entityRecord = await serviceStorage.loadEntityRecord(agentDid)
+    const entityRecordByVkey = await serviceStorage.loadEntityRecord(agentVerkey)
     expect(entityRecord).toStrictEqual(entityRecordByVkey)
   })
 
   it('should create agent data and retrieve wallet information', async () => {
-    let { agentDid: agentDidOnCreate, agentVerkey: agentVkeyOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
-    let entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
-    let agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
+    const { agentDid: agentDidOnCreate, agentVerkey: agentVkeyOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
+    const entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
+    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
     const { ownerDid, ownerVerkey, agentDid, agentVerkey } = await agentAo.loadInfo()
 
     expect(ownerDid).toBe(clientDid)

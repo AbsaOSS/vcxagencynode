@@ -27,7 +27,7 @@ beforeAll(async () => {
 
 let storage
 beforeEach(async () => {
-  let { info } = await createTestPgDb()
+  const { info } = await createTestPgDb()
   storage = await createPgStorageEntities(info)
 })
 

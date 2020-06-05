@@ -50,10 +50,10 @@ async function indyLoadPostgresPlugin (storageConfig, storageCredentials) {
  */
 function indyBuildPostgresCredentials (account, password, adminAccount, adminPassword) {
   return {
-    'account': account,
-    'password': password,
-    'admin_account': adminAccount,
-    'admin_password': adminPassword
+    account: account,
+    password: password,
+    admin_account: adminAccount,
+    admin_password: adminPassword
   }
 }
 
@@ -108,8 +108,8 @@ async function indyOpenWallet (walletName, walletKey, keyDerivationMethod, stora
 }
 
 async function indyDeleteWallet (walletName, walletKey, keyDerivationMethod, storageType = 'default', storageConfig = null, storageCredentials = null) {
-  let walletConfig = buildWalletConfig(walletName, storageType, storageConfig, storageConfig)
-  let walletCredentials = buildWalletCredentials(walletKey, keyDerivationMethod, storageCredentials)
+  const walletConfig = buildWalletConfig(walletName, storageType, storageConfig, storageConfig)
+  const walletCredentials = buildWalletCredentials(walletKey, keyDerivationMethod, storageCredentials)
   await indy.deleteWallet(walletConfig, walletCredentials)
 }
 

@@ -27,7 +27,7 @@ beforeAll(async () => {
 
 let storage
 beforeEach(async () => {
-  let { info } = await createTestPgDb()
+  const { info } = await createTestPgDb()
   storage = await createPgStorageEntities(info)
 })
 
@@ -52,7 +52,7 @@ describe('storage', () => {
     await storage.storeMessage(agentDid2, a2Conn1Did, uid3, 'MS-105', { msg: 'a2hello3' })
 
     // assert
-    let agent2Msgs = await storage.loadMessages(agentDid2, [], [], [])
+    const agent2Msgs = await storage.loadMessages(agentDid2, [], [], [])
     expect(agent2Msgs.length).toBe(3)
     const msg1 = agent2Msgs.find(m => m.metadata.uid === uid1)
     expect(msg1.metadata.statusCode).toBe('MS-103')
@@ -90,7 +90,7 @@ describe('storage', () => {
     await storage.storeMessage(agentDid2, a2Conn1Did, uid3, 'MS-105', { msg: 'a2hello3' })
 
     // assert
-    let msgObjects = await storage.loadMessages(agentDid, [a1Conn1Did, a1Conn3Did], [], [])
+    const msgObjects = await storage.loadMessages(agentDid, [a1Conn1Did, a1Conn3Did], [], [])
     expect(msgObjects.length).toBe(2)
     expect(msgObjects.find(m => m.metadata.uid === uid1)).toBeDefined()
     expect(msgObjects.find(m => m.metadata.uid === uid4)).toBeDefined()
@@ -115,10 +115,10 @@ describe('storage', () => {
     await storage.storeMessage(agentDid2, a2Conn1Did, uid3, 'MS-105', { msg: 'xxxxxxx3' })
 
     // assert
-    let msgObjects = await storage.loadMessages(agentDid, [], [uid1, uid3], [])
+    const msgObjects = await storage.loadMessages(agentDid, [], [uid1, uid3], [])
     expect(msgObjects.length).toBe(2)
-    let storedMsg1 = msgObjects.find(m => m.metadata.uid === uid1)
-    let storedMsg3 = msgObjects.find(m => m.metadata.uid === uid3)
+    const storedMsg1 = msgObjects.find(m => m.metadata.uid === uid1)
+    const storedMsg3 = msgObjects.find(m => m.metadata.uid === uid3)
     expect(storedMsg1.payload.msg).toBe('msg1')
     expect(storedMsg3.payload.msg).toBe('msg3')
   })
@@ -142,7 +142,7 @@ describe('storage', () => {
     await storage.storeMessage(agentDid2, a2Conn1Did, uid3, 'MS-105', { msg: 'xxxxxxx3' })
 
     // assert
-    let msgObjects = await storage.loadMessages(agentDid, [], [], ['MS-105'])
+    const msgObjects = await storage.loadMessages(agentDid, [], [], ['MS-105'])
     expect(msgObjects.length).toBe(1)
     expect(msgObjects.find(m => m.payload.msg === 'msg3')).toBeDefined()
   })
@@ -182,15 +182,15 @@ describe('storage', () => {
     await storage.storeMessage(agentDid2, a2Conn1Did, uid6, 'MS-105', { msg: 'xxxxxxx3' })
 
     // assert
-    let res1 = await storage.loadMessages(agentDid, [a1Conn1Did], [uid1], ['MS-103'])
+    const res1 = await storage.loadMessages(agentDid, [a1Conn1Did], [uid1], ['MS-103'])
     expect(res1.length).toBe(1)
     expect(res1.find(m => m.payload.msg === 'msg1')).toBeDefined()
 
-    let res2 = await storage.loadMessages(agentDid, [a1Conn1Did, a1Conn2Did], [], ['MS-103', 'MS-105'])
+    const res2 = await storage.loadMessages(agentDid, [a1Conn1Did, a1Conn2Did], [], ['MS-103', 'MS-105'])
     expect(res2.length).toBe(3)
-    let res2msg1 = res2.find(m => m.metadata.uid === uid1)
-    let res2msg2 = res2.find(m => m.metadata.uid === uid2)
-    let res2msg7 = res2.find(m => m.metadata.uid === uid7)
+    const res2msg1 = res2.find(m => m.metadata.uid === uid1)
+    const res2msg2 = res2.find(m => m.metadata.uid === uid2)
+    const res2msg7 = res2.find(m => m.metadata.uid === uid7)
     expect(res2msg1.payload.msg === 'msg1').toBeDefined()
     expect(res2msg2.payload.msg === 'msg2').toBeDefined()
     expect(res2msg7.payload.msg === 'msg7').toBeDefined()

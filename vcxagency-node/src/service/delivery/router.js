@@ -28,7 +28,7 @@ function createRouter (resolver) {
     logger.info(`Router routing a message to '${msgAddress}'.`)
     const entityAO = await resolver.resolveEntityAO(msgAddress) // we could version recipientData so we could support new representations of agents?
     if (!entityAO) {
-      throw Error(`Recipient not found.`)
+      throw Error('Recipient not found.')
     }
     return entityAO.handleRoutedMessage(msgBuffer)
   }

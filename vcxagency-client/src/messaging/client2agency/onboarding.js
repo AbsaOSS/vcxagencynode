@@ -31,8 +31,8 @@ const MSGTYPE_KEY_CREATED = 'did:sov:123456789abcdefghi1234;spec/pairwise/1.0/KE
 function buildMsgVcxV2Connect (fromDid, fromDidVerkey) {
   const msg = {
     '@type': MSGTYPE_CONNECT,
-    'fromDID': fromDid,
-    'fromDIDVerKey': fromDidVerkey
+    fromDID: fromDid,
+    fromDIDVerKey: fromDidVerkey
   }
   return msg
 }
@@ -40,8 +40,8 @@ function buildMsgVcxV2Connect (fromDid, fromDidVerkey) {
 function buildMsgVcxV2Connected (fwacDid, fwacVerkey) {
   const msg = {
     '@type': MSGTYPE_CONNECTED,
-    'withPairwiseDID': fwacDid,
-    'withPairwiseDIDVerKey': fwacVerkey
+    withPairwiseDID: fwacDid,
+    withPairwiseDIDVerKey: fwacVerkey
   }
   return msg
 }
@@ -64,8 +64,8 @@ function buildMsgVcxV2CreateAgent () {
 function buildMsgVcxV2AgentCreated (agentDid, agentVerkey) {
   const msg = {
     '@type': MSGTYPE_AGENT_CREATED,
-    'withPairwiseDID': agentDid,
-    'withPairwiseDIDVerKey': agentVerkey
+    withPairwiseDID: agentDid,
+    withPairwiseDIDVerKey: agentVerkey
   }
   return msg
 }
@@ -73,8 +73,8 @@ function buildMsgVcxV2AgentCreated (agentDid, agentVerkey) {
 function buildMsgVcxV2CreateKey (userPairwiseDid, userPairwiseVerkey) {
   const msg = {
     '@type': MSGTYPE_CREATE_KEY,
-    'forDID': userPairwiseDid,
-    'forDIDVerKey': userPairwiseVerkey
+    forDID: userPairwiseDid,
+    forDIDVerKey: userPairwiseVerkey
   }
   return msg
 }
@@ -82,8 +82,8 @@ function buildMsgVcxV2CreateKey (userPairwiseDid, userPairwiseVerkey) {
 function buildMsgVcxV2KeyCreated (agentConnectionDid, agentConnectionVerkey) {
   const msg = {
     '@type': MSGTYPE_KEY_CREATED,
-    'withPairwiseDID': agentConnectionDid,
-    'withPairwiseDIDVerKey': agentConnectionVerkey
+    withPairwiseDID: agentConnectionDid,
+    withPairwiseDIDVerKey: agentConnectionVerkey
   }
   return msg
 }

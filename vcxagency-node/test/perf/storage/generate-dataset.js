@@ -21,7 +21,7 @@ const fs = require('fs')
 const logger = require('../../tools/logger')(__filename)
 const mkdirp = require('mkdirp')
 
-const exportPath = process.env.EXPORT_PATH || `/tmp/agencydata/agency-messages.csv`
+const exportPath = process.env.EXPORT_PATH || '/tmp/agencydata/agency-messages.csv'
 
 const AGENT_CNT = 100
 const CONNECTIONS_PER_AGENT = 100
@@ -86,7 +86,7 @@ async function generateCsvDirectly (csvExportPath, msgRecordGenerator) {
 
 async function run () {
   await mkdirp('/tmp/agencydata/')
-  let recordGenerator = createMsgRecordsGenerator(AGENT_CNT, CONNECTIONS_PER_AGENT, MSGS_PER_AGENT_CONNECTION)
+  const recordGenerator = createMsgRecordsGenerator(AGENT_CNT, CONNECTIONS_PER_AGENT, MSGS_PER_AGENT_CONNECTION)
   logger.info(`Going to generate ${TOTAL_RECORDS} message records`)
   await generateCsvDirectly(exportPath, recordGenerator)
   process.exit(0)

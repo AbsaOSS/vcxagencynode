@@ -40,7 +40,7 @@ describe('storage', () => {
   beforeAll(async () => {
     jest.setTimeout(1000 * 5)
     // arrange
-    let { info } = await createTestPgDb()
+    const { info } = await createTestPgDb()
     storage = await createPgStorageEntities(info)
 
     await storage.linkAgentToItsConnection(A1, A1Conn1, A1Conn1Pw)
@@ -52,39 +52,39 @@ describe('storage', () => {
 
   it('should link create Agent-AgentConnection links, then map UserPwDids to AgentConnDids', async () => {
     // assert
-    let res1 = await storage.aconnLinkPairsByPwDids(A1, [A1Conn1Pw, A1Conn3Pw])
+    const res1 = await storage.aconnLinkPairsByPwDids(A1, [A1Conn1Pw, A1Conn3Pw])
     expect(res1.length).toBe(2)
     expect(res1.find(link => link.agentConnDid === A1Conn1 && link.userPwDid === A1Conn1Pw)).toBeDefined()
     expect(res1.find(link => link.agentConnDid === A1Conn3 && link.userPwDid === A1Conn3Pw)).toBeDefined()
 
-    let res2 = await storage.aconnLinkPairsByPwDids(A1, [A1Conn2Pw])
+    const res2 = await storage.aconnLinkPairsByPwDids(A1, [A1Conn2Pw])
     expect(res2.length).toBe(1)
     expect(res2.find(link => link.agentConnDid === A1Conn2 && link.userPwDid === A1Conn2Pw)).toBeDefined()
 
-    let res3 = await storage.aconnLinkPairsByPwDids(A2, [A1Conn2Pw])
+    const res3 = await storage.aconnLinkPairsByPwDids(A2, [A1Conn2Pw])
     expect(res3.length).toBe(0)
 
-    let res4 = await storage.aconnLinkPairsByPwDids(A1, ['12321321312312'])
+    const res4 = await storage.aconnLinkPairsByPwDids(A1, ['12321321312312'])
     expect(res4.length).toBe(0)
   })
 
   it('should link create Agent-AgentConnection links, then map AgentConnDids to UserPwDids', async () => {
     // act
-    let res1 = await storage.aconnLinkPairsByAconnDids(A1, [A1Conn1, A1Conn3])
+    const res1 = await storage.aconnLinkPairsByAconnDids(A1, [A1Conn1, A1Conn3])
 
     // assert
     expect(res1.length).toBe(2)
     expect(res1.find(link => link.agentConnDid === A1Conn1 && link.userPwDid === A1Conn1Pw)).toBeDefined()
     expect(res1.find(link => link.agentConnDid === A1Conn3 && link.userPwDid === A1Conn3Pw)).toBeDefined()
 
-    let res2 = await storage.aconnLinkPairsByAconnDids(A1, [A1Conn2])
+    const res2 = await storage.aconnLinkPairsByAconnDids(A1, [A1Conn2])
     expect(res2.length).toBe(1)
     expect(res2.find(link => link.agentConnDid === A1Conn2 && link.userPwDid === A1Conn2Pw)).toBeDefined()
 
-    let res3 = await storage.aconnLinkPairsByAconnDids(A2, [A1Conn2])
+    const res3 = await storage.aconnLinkPairsByAconnDids(A2, [A1Conn2])
     expect(res3.length).toBe(0)
 
-    let res4 = await storage.aconnLinkPairsByAconnDids(A1, ['12321321312312'])
+    const res4 = await storage.aconnLinkPairsByAconnDids(A1, ['12321321312312'])
     expect(res4.length).toBe(0)
   })
 
@@ -93,7 +93,7 @@ describe('storage', () => {
     const uidsByAconnDids = [{ agentConnDid: A1Conn1, uids: ['foo'] }, { agentConnDid: A1Conn2, uids: ['bar'] }]
 
     // act
-    let uidsByPwDids = await storage.convertIntoUserUpdateResponse(A1, uidsByAconnDids)
+    const uidsByPwDids = await storage.convertIntoUserUpdateResponse(A1, uidsByAconnDids)
 
     // assert
     expect(uidsByPwDids.length).toBe(2)
@@ -112,7 +112,7 @@ describe('storage', () => {
     const uidsByAconnDids = [{ pairwiseDID: A1Conn1Pw, uids: ['foo'] }, { pairwiseDID: A1Conn2Pw, uids: ['bar'] }]
 
     // act
-    let uidsByPwDids = await storage.convertIntoStorageRequest(A1, uidsByAconnDids)
+    const uidsByPwDids = await storage.convertIntoStorageRequest(A1, uidsByAconnDids)
 
     // assert
     expect(uidsByPwDids.length).toBe(2)

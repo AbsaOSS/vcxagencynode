@@ -35,7 +35,7 @@ async function parseAuthcrypted (walletHandle, buffer) {
   } else {
     const { message, sender_verkey: senderVerkey } = await unpack(walletHandle, buffer)
     if (!senderVerkey) {
-      throw Error(`Authcrypted message was expected but sender_verkey is unknown after unpack.`)
+      throw Error('Authcrypted message was expected but sender_verkey is unknown after unpack.')
     }
     return { message: JSON.parse(message), senderVerkey }
   }

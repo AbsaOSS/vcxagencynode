@@ -100,10 +100,10 @@ async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWall
     logger.debug(`entity-fwa::handleMsgVcxV2Connect >> messageObj = ${JSON.stringify(messageObj)}, senderVerkey = ${senderVerkey}`)
     const { fromDID, fromDIDVerKey } = messageObj
     if (!fromDID) {
-      throw Error(`VCX A2AMessageV2::Connect expected to have field 'fromDID'.`)
+      throw Error('VCX A2AMessageV2::Connect expected to have field \'fromDID\'.')
     }
     if (!fromDIDVerKey) {
-      throw Error(`VCX A2AMessageV2::Connect expected to have field 'fromDIDVerKey'.`)
+      throw Error('VCX A2AMessageV2::Connect expected to have field \'fromDIDVerKey\'.')
     }
     if (fromDIDVerKey !== senderVerkey) {
       throw Error(`VCX A2AMessageV2::Connect message declares verkey ${fromDIDVerKey} but sender used verkey ${senderVerkey}. These must match.`)
@@ -148,7 +148,7 @@ async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWall
       return pack(wh, objectToBuffer(resObject), senderVerkey, agencyVerkey)
     } catch (err) {
       logger.error(util.inspect(err))
-      throw Error(`Failed to handle routed message`)
+      throw Error('Failed to handle routed message')
     }
   }
 

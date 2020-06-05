@@ -23,7 +23,7 @@ async function anonCrypt (wh, messageBuffer, receiverKeys) {
 }
 
 async function packAsUtf8 (wh, messageBuffer, receiverKeys, senderVk) {
-  let buffer = await pack(wh, messageBuffer, receiverKeys, senderVk)
+  const buffer = await pack(wh, messageBuffer, receiverKeys, senderVk)
   return JSON.parse((buffer).toString('utf8'))
 }
 

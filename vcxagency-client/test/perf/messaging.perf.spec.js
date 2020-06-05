@@ -38,8 +38,8 @@ let agencyVerkey
 let agencyDid
 let sendToAgency
 
-const agencyUrl = process.env.AGENCY_URL || `http://localhost:8080`
-let vcxClients = []
+const agencyUrl = process.env.AGENCY_URL || 'http://localhost:8080'
+const vcxClients = []
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 1000)
@@ -49,9 +49,9 @@ beforeAll(async () => {
   // logger.debug = (data) => console.log(data)
   // logger.silly = (data) => console.log(data)
   // indySetLogger(logger)
-  let agencyClient = await buildAgencyClientNetwork(agencyUrl)
+  const agencyClient = await buildAgencyClientNetwork(agencyUrl)
   sendToAgency = agencyClient.sendToAgency
-  let agencyInfo = await agencyClient.getAgencyInfo()
+  const agencyInfo = await agencyClient.getAgencyInfo()
   agencyVerkey = agencyInfo.verkey
   agencyDid = agencyInfo.did
 })
@@ -66,14 +66,14 @@ afterAll(async () => {
 })
 
 async function setupVcxClient () {
-  let walletKey = await indyGenerateWalletKey()
-  let walletName = `unit-perftest-${uuid.v4()}`
+  const walletKey = await indyGenerateWalletKey()
+  const walletName = `unit-perftest-${uuid.v4()}`
   await indyCreateWallet(walletName, walletKey, WALLET_KDF)
-  let wh = await indyOpenWallet(walletName, walletKey, WALLET_KDF)
-  let { did: client2AgencyDid, vkey: client2AgencyVerkey } = await indyCreateAndStoreMyDid(wh)
-  let userPwDids = []
+  const wh = await indyOpenWallet(walletName, walletKey, WALLET_KDF)
+  const { did: client2AgencyDid, vkey: client2AgencyVerkey } = await indyCreateAndStoreMyDid(wh)
+  const userPwDids = []
   for (let i = 0; i < 2; i++) {
-    let { did, vkey } = await indyCreateAndStoreMyDid(wh)
+    const { did, vkey } = await indyCreateAndStoreMyDid(wh)
     userPwDids.push({ did, vkey })
   }
   return {
@@ -91,9 +91,9 @@ const OPS_IN_ROUND = process.env.OPS_IN_ROUND || 2
 
 describe('onboarding', () => {
   it('should create agent and agent connection', async () => {
-    let clientAlice = await setupVcxClient()
-    let clientBob = await setupVcxClient()
-    let clientJohn = await setupVcxClient()
+    const clientAlice = await setupVcxClient()
+    const clientBob = await setupVcxClient()
+    const clientJohn = await setupVcxClient()
     vcxClients.push(clientAlice)
     vcxClients.push(clientBob)
     vcxClients.push(clientJohn)
@@ -103,7 +103,7 @@ describe('onboarding', () => {
     const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(clientAlice.wh, sendToAgency, agencyDid, agencyVerkey, clientAlice.client2AgencyDid, clientAlice.client2AgencyVerkey)
     const aliceAconnAlice2Bob = await vcxFlowCreateAgentConnection(
       clientAlice.wh, sendToAgency, aliceAgentDid, aliceAgentVerkey, clientAlice.client2AgencyVerkey, aliceUserPwDid2Bob, aliceUserPwVerkey2Bob)
-    const aliceRoutingKeyAlice2Bob = aliceAconnAlice2Bob['withPairwiseDIDVerKey']
+    const aliceRoutingKeyAlice2Bob = aliceAconnAlice2Bob.withPairwiseDIDVerKey
 
     const bobsUserPwVkey = clientBob.userPwDids[0].vkey
 
@@ -114,7 +114,7 @@ describe('onboarding', () => {
         if (i % 50 === 0) {
           console.log(`Round ${i}`)
         }
-        let promises = []
+        const promises = []
         for (let j = 0; j < OPS_IN_ROUND; j++) {
           promises.push(vcxFlowSendAriesMessage(clientBob.wh, sendToAgency, aliceUserPwVerkey2Bob, aliceRoutingKeyAlice2Bob, bobsUserPwVkey, uuid.v4()))
         }
@@ -131,7 +131,7 @@ describe('onboarding', () => {
         }
       }
       const tFinish = performance.now()
-      let durationSec = (tFinish - tStart) / 1000
+      const durationSec = (tFinish - tStart) / 1000
       const totalMessages = ROUNDS * OPS_IN_ROUND
       const msgsPerSec = totalMessages / durationSec
       const msgsPerMinute = msgsPerSec * 60
@@ -144,7 +144,7 @@ describe('onboarding', () => {
         if (i % 50 === 0) {
           console.log(`Round ${i}`)
         }
-        let promises = []
+        const promises = []
         for (let j = 0; j < OPS_IN_ROUND; j++) {
           promises.push(
             vcxFlowGetMsgsFromAgent(clientAlice.wh, sendToAgency, aliceAgentDid, aliceAgentVerkey, clientAlice.client2AgencyVerkey, [aliceUserPwDid2Bob], [], ['MS-106'])
@@ -153,7 +153,7 @@ describe('onboarding', () => {
         await Promise.all(promises)
       }
       const tFinish = performance.now()
-      let durationSec = (tFinish - tStart) / 1000
+      const durationSec = (tFinish - tStart) / 1000
       const totalRequests = ROUNDS * OPS_IN_ROUND
       const msgsPerSec = totalRequests / durationSec
       const msgsPerMinute = msgsPerSec * 60

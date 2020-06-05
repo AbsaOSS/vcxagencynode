@@ -26,7 +26,7 @@ async function createAnoncryptWallet () {
   try {
     await indyCreateWallet(walletName, walletKey, walletKdf)
   } catch (err) {}
-  let anoncryptWh = await indyOpenWallet(walletName, walletKey, walletKdf)
+  const anoncryptWh = await indyOpenWallet(walletName, walletKey, walletKdf)
   return anoncryptWh
 }
 
@@ -47,8 +47,8 @@ async function buildAgencyClientVirtual (entityForwardAgent) {
   }
 
   async function sendToAgency (msgBuffer) {
-    let msgForAgencyBuffer = await anonCrypt(anoncryptWh, msgBuffer, agencyVerkey)
-    let res = await entityForwardAgent.handleIncomingMessage(msgForAgencyBuffer)
+    const msgForAgencyBuffer = await anonCrypt(anoncryptWh, msgBuffer, agencyVerkey)
+    const res = await entityForwardAgent.handleIncomingMessage(msgForAgencyBuffer)
     if (res.errorMsg) {
       throw Error(res.errorMsg)
     }

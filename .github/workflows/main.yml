@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Install linter
         run: |
-          sudo npm install -g standard@12.0.1
+          sudo npm install -g standard@14.3.4
       - name: Lint
         run: |
           cd vcxagency-node && standard
@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Install linter
         run: |
-          sudo npm install -g standard@12.0.1
+          sudo npm install -g standard@14.3.4
       - name: Lint
         run: |
           cd vcxagency-client && standard
@@ -56,7 +56,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Install linter
         run: |
-          sudo npm install -g standard@12.0.1
+          sudo npm install -g standard@14.3.4
       - name: Lint
         run: |
           cd easy-indysdk && standard
