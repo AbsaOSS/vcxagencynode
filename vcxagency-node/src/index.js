@@ -117,7 +117,7 @@ validateAppConfig(appConfig, (err, ok) => {
       await startAgency()
     } catch (e) {
       logger.error(`Unhandled agency error: ${util.inspect(e)}`)
-      throw Error(`Critical error`)
+      throw Error(`Unhandled agency error: ${util.inspect(e)}`)
     }
   }
 })

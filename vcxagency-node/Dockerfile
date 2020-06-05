@@ -1,5 +1,5 @@
 ARG AGENCY_BASE_IMAGE=vcxagency-base:1.15.0
-FROM ${AGENCY_BASE_IMAGE}
+FROM ${AGENCY_BASE_IMAGE} as BASE
 
 USER root
 RUN apt-get update && \
