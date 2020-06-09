@@ -3,8 +3,12 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  github-actions-info:
+  gainfo:
     runs-on: ubuntu-latest
+    outputs:
+      GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
+      BRANCH_NAME: ${{ steps.mainstep.outputs.BRANCH_NAME }}
+      DOCKER_TAG_VERSION: ${{ steps.mainstep.outputs.DOCKER_TAG_VERSION }}
     steps:
       - run: echo $GITHUB_REPOSITORY
       - run: echo $GITHUB_REF
@@ -14,42 +18,92 @@ jobs:
       - run: echo $GITHUB_EVENT_NAME
       - run: echo $GITHUB_RUN_NUMBER
       - run: echo $GITHUB_RUN_ID
-      - run: |
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Set custom env variables
+        run: |
+          set -x
           GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
           echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY_LOWERCASE)
 
-          REF_HASH=`echo -n "$GITHUB_REF-$PACKAGES_ACCESS_USERNAME" | shasum | cut -f1 -d" "`
-          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
-      - run: |
-          echo "REF_HASH = $REF_HASH"
-          echo "GITHUB_REPOSITORY_LOWERCASE = $GITHUB_REPOSITORY_LOWERCASE"
+          if [[ -z "$GITHUB_HEAD_REF" ]] # is set only if pipeline run is triggered as pull request
+          then
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+            echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Push"
+          else
+            BRANCH_NAME=$GITHUB_HEAD_REF
+            echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Pull Request"
+          fi
+          BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g"`  ## Keep only alphanumeric chars and dash
+          echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
 
-  build-vcxagency-base:
+          REPO_VERSION=`bash ./get-version.sh`
+          echo ::set-env name=REPO_VERSION::$(echo $REPO_VERSION)
+          echo "Repo declares version $REPO_VERSION"
+
+          if [[ "master" == "$BRANCH_NAME" ]]
+          then
+             echo "this is master; BRANCH_NAME=$BRANCH_NAME"
+             DOCKER_TAG_VERSION="$REPO_VERSION"
+          else
+             echo "this is NOT master; BRANCH_NAME=$BRANCH_NAME"
+             DOCKER_TAG_VERSION=$BRANCH_NAME
+          fi
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
+          echo "Will be using docker tag $DOCKER_TAG_VERSION"
+      - name: Check custom env variables
+        id: mainstep
+        run: |
+          set -x
+          echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
+          echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
+          echo "::set-output name=DOCKER_TAG_VERSION::$DOCKER_TAG_VERSION"
+
+
+  print-custom-variables:
+    needs: gainfo
     runs-on: ubuntu-16.04
     env:
       DOCKER_BUILDKIT: 1
     steps:
-      - name: Git checkout
-        uses: actions/checkout@v2
+      - name: Load up custom variables
+        run: |
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
+      - name: Print custom variables
+        run: |
+          echo $GITHUB_REPOSITORY_LOWERCASE
+          echo $BRANCH_NAME
+          echo $DOCKER_TAG_VERSION
+
+  build-vcxagency-base:
+    needs:
+      - gainfo
+    runs-on: ubuntu-16.04
+    env:
+      DOCKER_BUILDKIT: 1
+    steps:
+      - name: Load up custom variables
+        run: |
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
       - name: Docker setup
         run: |
-          GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY_LOWERCASE)
-
-          REF_HASH=`echo -n "$GITHUB_REF-$PACKAGES_ACCESS_USERNAME" | shasum | cut -f1 -d" "`
-          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
-
           PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
           echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $PACKAGES_USERNAME --password-stdin
+      - name: Git checkout
+        uses: actions/checkout@v2
       - name: Pull image
         run: |
-           docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH || true
+           docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$DOCKER_TAG_VERSION || true
       - name: Build image
         run: |
           set -x
-          echo $REF_HASH
-          LOCAL_TAG="vcxagency-base:$REF_HASH"
-          REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH"
+          LOCAL_TAG="vcxagency-base:$DOCKER_TAG_VERSION"
+          REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$LOCAL_TAG"
+
           INDYSDK_REPO="https://github.com/hyperledger/indy-sdk"
           INDYSDK_REVISION="1.15.0"
           docker build --cache-from "$REMOTE_TAG" \
@@ -64,38 +118,39 @@ jobs:
           docker push "$REMOTE_TAG" || true
           docker image ls
 
-
   build-image-vcxagency:
     runs-on: ubuntu-16.04
-    needs: build-vcxagency-base
+    needs:
+      - build-vcxagency-base
+      - gainfo
     env:
       DOCKER_BUILDKIT: 1
     steps:
-      - name: Git checkout
-        uses: actions/checkout@v2
+      - name: Load up custom variables
+        run: |
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
       - name: Docker setup
         run: |
-          GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY_LOWERCASE)
-
-          REF_HASH=`echo -n "$GITHUB_REF-$PACKAGES_ACCESS_USERNAME" | shasum | cut -f1 -d" "`
-          echo ::set-env name=REF_HASH::$(echo $REF_HASH)
-
           PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
           echo ${{ secrets.PACKAGES_ACCESS_TOKEN }} | docker login docker.pkg.github.com -u $PACKAGES_USERNAME --password-stdin
+      - name: Git checkout
+        uses: actions/checkout@v2
       - name: Pull image
         run: |
-           docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$REF_HASH || true
-           docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH || true
+           docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$DOCKER_TAG_VERSION || true
+           docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$DOCKER_TAG_VERSION || true
       - name: Build image
         run: |
           set -x
-          echo $REF_HASH
-          LOCAL_TAG="vcxagency-node:$REF_HASH"
-          REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$REF_HASH"
-          REMOTE_TAG_BASE_IMAGE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$REF_HASH"
-          LOCAL_TAG_BASE_IMAGE="vcxagency-base:$REF_HASH"
+          LOCAL_TAG="vcxagency-node:$DOCKER_TAG_VERSION"
+          REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$DOCKER_TAG_VERSION"
+          REMOTE_TAG_BASE_IMAGE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$DOCKER_TAG_VERSION"
+          LOCAL_TAG_BASE_IMAGE="vcxagency-base:$DOCKER_TAG_VERSION"
+
           docker tag "$REMOTE_TAG_BASE_IMAGE" "$LOCAL_TAG_BASE_IMAGE" || true
+
           echo "Will build from base image $LOCAL_TAG_BASE_IMAGE"
           docker build --cache-from "$REMOTE_TAG" \
                        --build-arg BUILDKIT_INLINE_CACHE=1 \
@@ -105,7 +160,9 @@ jobs:
                         .
           echo "Tagging $LOCAL_TAG as $REMOTE_TAG"
           docker tag "$LOCAL_TAG" "$REMOTE_TAG"
+
           docker push "$REMOTE_TAG" || true
+
           docker image ls
 
   lint-vcxagency-node:
