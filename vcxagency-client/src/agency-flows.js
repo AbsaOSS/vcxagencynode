@@ -16,6 +16,7 @@
 
 'use strict'
 
+const { buildMsgVcxV2UpdateWebhookUrl } = require('./messaging/client2agency/msgs-agent')
 const { buildAriesFwdMessage } = require('./messaging/aries/aries-msg')
 const { buildAriesBasicMessage } = require('./messaging/aries/aries-msg')
 const { buildAgencyFwdMessage } = require('./messaging/client2agency/general')
@@ -138,6 +139,23 @@ async function vcxFlowUpdateMsgsFromAgent (clientWh, sendToAgency, recipientAgen
 }
 
 /**
+ Update statusCode of messages specified by UIDs per Agent-Connections
+ * @param {string} clientWh - wallet handle of agency client
+ * @param {object} sendToAgency - function which passes final message to an agency
+ * @param {string} clientVkey - verkey the client uses to talk to Agency
+ * @param {string} recipientAgentDid - DID of the Agent
+ * @param {string} recipientAgentVerkey - Verkey of the Agent
+ * @param {string} webhookUrl - url where Agent's notifications shall be sent
+ */
+async function vcxFlowSetWebhookUrl (clientWh, sendToAgency, recipientAgentDid, recipientAgentVerkey, clientVkey, webhookUrl) {
+  const encryptionOurs = clientVkey
+  // todo: seems like the failus in agent decryption were because i am using here pack, instead of packAsUtf8, see above functions
+  const msgGetMsgs = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2UpdateWebhookUrl(webhookUrl)), recipientAgentVerkey, encryptionOurs)
+  const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientAgentDid, msgGetMsgs))
+  return parseAgencyResponse(clientWh, resEncrypted)
+}
+
+/**
  Send Aries message to someone's cloud agent
  */
 async function vcxFlowSendAriesMessage (clientWh, sendToAgency, recipientVkey, recipientAgentConnRoutingVkey, e2eSenderVkey, msgString) {
@@ -167,5 +185,8 @@ module.exports = {
 
   // msgs across agent
   vcxFlowGetMsgsFromAgent,
-  vcxFlowUpdateMsgsFromAgent
+  vcxFlowUpdateMsgsFromAgent,
+
+  // webhooks
+  vcxFlowSetWebhookUrl
 }

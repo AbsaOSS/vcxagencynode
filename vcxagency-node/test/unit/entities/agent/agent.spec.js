@@ -82,4 +82,44 @@ describe('agent operations', () => {
     expect(agentDid).toBe(agentDidOnCreate)
     expect(agentVerkey).toBe(agentVkeyOnCreate)
   })
+
+  it('should set and get http/https webhook', async () => {
+    const { agentDid: agentDidOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
+    const entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
+    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
+
+    await agentAo.setWebhook('http://1.2.3.4:3000')
+    expect(await agentAo.getWebhook()).toBe('http://1.2.3.4:3000')
+
+    await agentAo.setWebhook('https://example.org/123213123')
+    expect(await agentAo.getWebhook()).toBe('https://example.org/123213123')
+  })
+
+  it('should unset webhook by using empty string', async () => {
+    const { agentDid: agentDidOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
+    const entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
+    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
+
+    await agentAo.setWebhook('http://example.org/123213123')
+    await agentAo.setWebhook('')
+
+    expect(await agentAo.getWebhook()).toBe(null)
+  })
+
+  it('should throw if webhook is not http or https', async () => {
+    const { agentDid: agentDidOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
+    const entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
+    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
+
+    // act
+    let thrown
+    try {
+      await agentAo.setWebhook('ftp://example.org/123213123')
+    } catch (err) {
+      thrown = err
+    }
+
+    // assert
+    expect(thrown.message).toMatch(/must be specify http or https protocol/i)
+  })
 })

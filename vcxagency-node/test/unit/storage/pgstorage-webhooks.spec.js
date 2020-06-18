@@ -45,4 +45,32 @@ describe('storage', () => {
     expect(await storage.getAgentWebhook(A)).toBe('https://example.org')
     expect(await storage.getAgentWebhook(B)).toBe('http://localhost:9123')
   })
+
+  it('should return null if webhook was unset', async () => {
+    const A = uuid.v4()
+
+    // act
+    await storage.setAgentWebhook(A, 'https://foooooo.org')
+    await storage.setAgentWebhook(A, null)
+
+    // assert
+    expect(await storage.getAgentWebhook(A)).toBe(null)
+  })
+
+  it('should return undefined if agent webhook record doesnt exist', async () => {
+    const A = uuid.v4()
+
+    // assert
+    expect(await storage.getAgentWebhook(A)).toBe(undefined)
+  })
+
+  it('should return null if no webhook value was set for agent', async () => {
+    const A = uuid.v4()
+
+    // act
+    await storage.setAgentWebhook(A, null)
+
+    // assert
+    expect(await storage.getAgentWebhook(A)).toBe(null)
+  })
 })

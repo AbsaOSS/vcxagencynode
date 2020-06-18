@@ -26,6 +26,7 @@ const { objectToBuffer } = require('../../utils')
 const express = require('express')
 const bodyParser = require('body-parser')
 const sleep = require('sleep-promise')
+const { vcxFlowSetWebhookUrl } = require('../../../../vcxagency-client/src')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
 const { wireUp } = require('../../../src/app')
@@ -157,6 +158,49 @@ describe('onboarding', () => {
       const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
       const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
       await setWebhookUrlForAgent(aliceAgentDid, `http://localhost:${TEST_SERVER_PORT}/notifications`)
+
+      // bob generates a verkey for this specific connection
+      const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+
+      // bob sends message to alice's agent she set up for relationship with Bob
+      await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
+
+      // wait a bit and check alice has received notification about received message on her dummy server
+      await sleep(1000)
+      expect(serverReceivedNotification.msgUid).toBeDefined()
+      expect(serverReceivedNotification.notificationId).toBeDefined()
+      expect(serverReceivedNotification.pwDid).toBe(aliceToBobDid)
+    } finally {
+      if (testServer) {
+        await testServer.close()
+      }
+    }
+  })
+
+  it('Alice should receive notification when Bobs sends her a message if webhook was set via vcx com method', async () => {
+    let testServer
+    try {
+      // set up dummy server for alice to receive notifications from agency
+      let serverReceivedNotification = {}
+      const TEST_SERVER_PORT = 49412
+
+      const appNotifications = express()
+      appNotifications.use(bodyParser.json())
+      appNotifications.post('/notifications',
+        async function (req, res) {
+          serverReceivedNotification = req.body
+          res.status(200).send()
+        })
+      testServer = appNotifications.listen(TEST_SERVER_PORT)
+
+      // set up alice's agent and agent'connection to receive message Bob
+      const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+      const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+      const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+      const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
+      const webhookUrl = `http://localhost:${TEST_SERVER_PORT}/notifications`
+      const commUpdated = await vcxFlowSetWebhookUrl(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, webhookUrl)
+      expect(commUpdated).toBeDefined()
 
       // bob generates a verkey for this specific connection
       const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
