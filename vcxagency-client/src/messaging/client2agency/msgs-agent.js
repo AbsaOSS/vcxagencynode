@@ -87,7 +87,7 @@ function buildMsgVcxV2MsgStatusUpdatedByConns (failedUidsByConns, updatedUidsByC
 function buildMsgVcxV2UpdateWebhookUrl (webhookUrl) {
   const msg = {
     '@type': MSGTYPE_UPDATE_COM_METHOD,
-    id: '123',
+    id: '123', // it's not clear how to use this parameter in libvcx, dummy cloud agency is not utilizing it either
     type: '2', // '2' signals webhook com method
     value: webhookUrl
   }

@@ -45,7 +45,12 @@ function wrapWithAgencyFwd (recipient, bufferAsUtf8) {
  First step of vcx onboarding
  */
 async function vcxFlowConnect (clientWh, sendToAgency, recipientAgencyDid, recipientAgencyVkey, agencyUserDid, agencyUserVkey) {
-  const msgConnect = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2Connect(agencyUserDid, agencyUserVkey)), recipientAgencyVkey, agencyUserVkey)
+  const msgConnect = await packAsUtf8(
+    clientWh,
+    objectToBuffer(buildMsgVcxV2Connect(agencyUserDid, agencyUserVkey)),
+    recipientAgencyVkey,
+    agencyUserVkey
+  )
   const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientAgencyDid, msgConnect))
   return parseAgencyResponse(clientWh, resEncrypted)
 }
@@ -54,7 +59,12 @@ async function vcxFlowConnect (clientWh, sendToAgency, recipientAgencyDid, recip
  Second step of vcx onboarding
  */
 async function vcxFlowSignUp (clientWh, sendToAgency, recipientTmpAgentDid, recipientTmpAgentVkey, agencyUserVkey) {
-  const msgSignedUp = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2SignUp()), recipientTmpAgentVkey, agencyUserVkey)
+  const msgSignedUp = await packAsUtf8(
+    clientWh,
+    objectToBuffer(buildMsgVcxV2SignUp()),
+    recipientTmpAgentVkey,
+    agencyUserVkey
+  )
   const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientTmpAgentDid, msgSignedUp))
   return parseAgencyResponse(clientWh, resEncrypted)
 }
@@ -63,7 +73,12 @@ async function vcxFlowSignUp (clientWh, sendToAgency, recipientTmpAgentDid, reci
  Third step of vcx onboarding
  */
 async function vcxFlowCreateAgent (clientWh, sendToAgency, recipientTmpAgentDid, recipientTmpAgentVkey, clientVkey) {
-  const msgCreateAgent = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2CreateAgent()), recipientTmpAgentVkey, clientVkey)
+  const msgCreateAgent = await packAsUtf8(
+    clientWh,
+    objectToBuffer(buildMsgVcxV2CreateAgent()),
+    recipientTmpAgentVkey,
+    clientVkey
+  )
   const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientTmpAgentDid, msgCreateAgent))
   return parseAgencyResponse(clientWh, resEncrypted)
 }
@@ -86,8 +101,12 @@ async function vcxFlowFullOnboarding (clientWh, sendToAgency, agencyDid, agencyV
  Creates agent-connection
  */
 async function vcxFlowCreateAgentConnection (clientWh, sendToAgency, recipientAgentDid, recipientAgentVkey, clientVkey, userPairwiseDid, userPairwiseVkey) {
-  const encryptionOurs = clientVkey
-  const msgCreateAgentConn = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2CreateKey(userPairwiseDid, userPairwiseVkey)), recipientAgentVkey, encryptionOurs)
+  const msgCreateAgentConn = await packAsUtf8(
+    clientWh,
+    objectToBuffer(buildMsgVcxV2CreateKey(userPairwiseDid, userPairwiseVkey)),
+    recipientAgentVkey,
+    clientVkey
+  )
   const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientAgentDid, msgCreateAgentConn))
   return parseAgencyResponse(clientWh, resEncrypted)
 }
@@ -96,8 +115,12 @@ async function vcxFlowCreateAgentConnection (clientWh, sendToAgency, recipientAg
  Downloads messages from particular agent-connection
  */
 async function vcxFlowGetMsgsFromAgentConn (clientWh, sendToAgency, recipientAgentConnDid, recipientAgentConnVkey, userPairwiseVkey, statusCodes, uids) {
-  const encryptionOurs = userPairwiseVkey
-  const msgGetMsgs = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2GetMsgs(statusCodes, uids)), recipientAgentConnVkey, encryptionOurs)
+  const msgGetMsgs = await packAsUtf8(
+    clientWh,
+    objectToBuffer(buildMsgVcxV2GetMsgs(statusCodes, uids)),
+    recipientAgentConnVkey,
+    userPairwiseVkey
+  )
   const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientAgentConnDid, msgGetMsgs))
   return parseAgencyResponse(clientWh, resEncrypted)
 }
@@ -114,9 +137,12 @@ async function vcxFlowGetMsgsFromAgentConn (clientWh, sendToAgency, recipientAge
  * @param {string} statusCodes - filter messages by status
  */
 async function vcxFlowGetMsgsFromAgent (clientWh, sendToAgency, recipientAgentDid, recipientAgentVerkey, clientVkey, userPwDids, uids, statusCodes) {
-  const encryptionOurs = clientVkey
-  // todo: seems like the failus in agent decryption were because i am using here pack, instead of packAsUtf8, see above functions
-  const msgGetMsgs = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2MsgGetMsgsByConns(userPwDids, uids, statusCodes)), recipientAgentVerkey, encryptionOurs)
+  const msgGetMsgs = await packAsUtf8(
+    clientWh,
+    objectToBuffer(buildMsgVcxV2MsgGetMsgsByConns(userPwDids, uids, statusCodes)),
+    recipientAgentVerkey,
+    clientVkey
+  )
   const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientAgentDid, msgGetMsgs))
   return parseAgencyResponse(clientWh, resEncrypted)
 }
@@ -132,8 +158,12 @@ async function vcxFlowGetMsgsFromAgent (clientWh, sendToAgency, recipientAgentDi
  * @param {string} statusCode - filter messages by status
  */
 async function vcxFlowUpdateMsgsFromAgent (clientWh, sendToAgency, recipientAgentDid, recipientAgentVkey, clientVkey, uidsByConns, statusCode) {
-  const encryptionOurs = clientVkey
-  const msgUpdateMsgs = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2UpdateMsgStatusByConns(statusCode, uidsByConns)), recipientAgentVkey, encryptionOurs)
+  const msgUpdateMsgs = await packAsUtf8(
+    clientWh,
+    objectToBuffer(buildMsgVcxV2UpdateMsgStatusByConns(statusCode, uidsByConns)),
+    recipientAgentVkey,
+    clientVkey
+  )
   const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientAgentDid, msgUpdateMsgs))
   return parseAgencyResponse(clientWh, resEncrypted)
 }
@@ -148,9 +178,12 @@ async function vcxFlowUpdateMsgsFromAgent (clientWh, sendToAgency, recipientAgen
  * @param {string} webhookUrl - url where Agent's notifications shall be sent
  */
 async function vcxFlowSetWebhookUrl (clientWh, sendToAgency, recipientAgentDid, recipientAgentVerkey, clientVkey, webhookUrl) {
-  const encryptionOurs = clientVkey
-  // todo: seems like the failus in agent decryption were because i am using here pack, instead of packAsUtf8, see above functions
-  const msgGetMsgs = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2UpdateWebhookUrl(webhookUrl)), recipientAgentVerkey, encryptionOurs)
+  const msgGetMsgs = await packAsUtf8(
+    clientWh,
+    objectToBuffer(buildMsgVcxV2UpdateWebhookUrl(webhookUrl)),
+    recipientAgentVerkey,
+    clientVkey
+  )
   const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientAgentDid, msgGetMsgs))
   return parseAgencyResponse(clientWh, resEncrypted)
 }
@@ -162,7 +195,12 @@ async function vcxFlowSendAriesMessage (clientWh, sendToAgency, recipientVkey, r
   const msgAriesBasic = buildAriesBasicMessage('123', msgString, '2019-01-15 18:42:01Z')
   const msgPackedForRecipient = await pack(clientWh, objectToBuffer(msgAriesBasic), recipientVkey, e2eSenderVkey)
   const msgAriesFwdToRecipient = buildAriesFwdMessage(recipientVkey, JSON.parse(msgPackedForRecipient.toString('utf8')))
-  const msgAnonPackedForAgentConn = await packAsUtf8(clientWh, objectToBuffer(msgAriesFwdToRecipient), recipientAgentConnRoutingVkey)
+  const msgAnonPackedForAgentConn = await packAsUtf8(
+    clientWh,
+    objectToBuffer(msgAriesFwdToRecipient),
+    recipientAgentConnRoutingVkey,
+    undefined // anoncrypted
+  )
   const bufferRes = await sendToAgency(wrapWithAgencyFwd(recipientAgentConnRoutingVkey, msgAnonPackedForAgentConn))
   return bufferRes.toString()
 }

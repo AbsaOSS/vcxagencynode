@@ -76,7 +76,7 @@ validateAppConfig(appConfig, (err, ok) => {
   }
 
   async function startAgency () {
-    logger.info('Setting up VCXS and its APIs.')
+    logger.info('Starting agency')
     const agencyWalletName = appConfig.AGENCY_WALLET_NAME
     const agencyDid = appConfig.AGENCY_DID
     const agencySeed = appConfig.AGENCY_SEED_SECRET

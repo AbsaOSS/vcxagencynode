@@ -111,7 +111,6 @@ describe('agent operations', () => {
     const entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
     const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
 
-    // act
     let thrown
     try {
       await agentAo.setWebhook('ftp://example.org/123213123')
@@ -119,7 +118,6 @@ describe('agent operations', () => {
       thrown = err
     }
 
-    // assert
     expect(thrown.message).toMatch(/must be specify http or https protocol/i)
   })
 })
