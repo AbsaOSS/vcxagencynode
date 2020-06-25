@@ -23,6 +23,8 @@ const {
   MSGTYPE_CREATE_KEY,
   MSGTYPE_GET_MSGS_BY_CONNS,
   MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS,
+  MSGTYPE_UPDATE_COM_METHOD,
+  buildMsgCommMethodUpdated,
   buildMsgVcxV2MsgStatusUpdatedByConns,
   buildVcxV2AgencyMsgsByConn,
   buildMsgVcxV2MsgsByConns,
@@ -138,6 +140,8 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
       return _handleCreateAgent(msgObject)
     } else if (msgType === MSGTYPE_CREATE_KEY) {
       return _handleCreateKey(msgObject)
+    } else if (msgType === MSGTYPE_UPDATE_COM_METHOD) {
+      return _handleUpdateComMethod(msgObject)
     } else if (msgType === MSGTYPE_GET_MSGS_BY_CONNS) {
       return _handleGetMsgsByConn(msgObject)
     } else if (msgType === MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS) {
@@ -151,12 +155,22 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     const fwd = msgObject['@fwd']
     const msg = msgObject['@msg']
     if (!fwd) {
-      throw Error(`'VCX V2 Forward message expected to have field '@fwd'. Message: ${JSON.stringify(msgObject)}'`)
+      throw Error(`${whoami} VCX V2 Forward message expected to have field '@fwd'. Message: ${JSON.stringify(msgObject)}'`)
     }
     if (!msg) {
-      throw Error(`'VCX V2 Forward message expected to have field '@msg'. Message: ${JSON.stringify(msgObject)}'`)
+      throw Error(`${whoami} VCX V2 Forward message expected to have field '@msg'. Message: ${JSON.stringify(msgObject)}'`)
     }
     return router.routeMsg(fwd, Buffer.from(JSON.stringify(msg)))
+  }
+
+  async function _handleUpdateComMethod (msgObject) {
+    const { comMethod: { value, type, id } } = msgObject
+    if (type === '2') {
+      await setWebhook(value)
+      return buildMsgCommMethodUpdated(id) // TODO: What's meaning of 'id' field? This reflects dummy-cloud-agency impl.
+    } else {
+      throw Error(`${whoami} Unsupported com method type ${type}`)
+    }
   }
 
   async function _handleGetMsgsByConn (msgObject) {
@@ -165,9 +179,9 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     const msgsByConns = []
     for (const didPair of didPairs) {
       const { agentConnDid, userPwDid } = didPair
-      logger.info(`Getting messages for pair ${JSON.stringify(didPair)}`)
+      logger.info(`${whoami} Getting messages for pair ${JSON.stringify(didPair)}`)
       const storedMsgs = await serviceStorage.loadMessages(agentDid, [agentConnDid], uids, statusCodes)
-      logger.info(`Found ${storedMsgs.length} messages`)
+      logger.info(`${whoami} Found ${storedMsgs.length} messages`)
       const responseMsgs = storedMsgs.map(storedMessageToResponseFormat)
       msgsByConns.push(buildVcxV2AgencyMsgsByConn(responseMsgs, userPwDid))
     }
@@ -250,14 +264,38 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     return buildMsgVcxV2KeyCreated(agentConnectionDid, agentConnectionVerkey)
   }
 
+  function _isHttpOrHttps (url) {
+    return url.substring(0, 7) === 'http://' || url.substring(0, 8) === 'https://'
+  }
+
+  async function _unsetWebhook () {
+    logger.info(`${whoami} Unsetting webhook url`)
+    await serviceStorage.setAgentWebhook(agentDid, null)
+  }
+
   async function setWebhook (webhookUrl) {
+    logger.info(`${whoami} Set webhook, new value=${webhookUrl}`)
+    if (!webhookUrl) {
+      return await _unsetWebhook()
+    }
+    if (typeof webhookUrl !== 'string') {
+      throw Error('Webhook url must be string!')
+    }
+    if (!_isHttpOrHttps(webhookUrl)) {
+      throw Error(`Webhook url '${webhookUrl}' must be specify http or https protocol.`)
+    }
     await serviceStorage.setAgentWebhook(agentDid, webhookUrl)
+  }
+
+  async function getWebhook () {
+    return serviceStorage.getAgentWebhook(agentDid)
   }
 
   return {
     loadInfo,
     handleRoutedMessage,
-    setWebhook
+    setWebhook,
+    getWebhook
   }
 }
 
