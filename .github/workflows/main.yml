@@ -150,7 +150,7 @@ jobs:
         run: |
           set -x
           LOCAL_TAG="vcxagency-node:$DOCKER_TAG_VERSION"
-          REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$DOCKER_TAG_VERSION"
+          REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$LOCAL_TAG"
           REMOTE_TAG_BASE_IMAGE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$DOCKER_TAG_VERSION"
           LOCAL_TAG_BASE_IMAGE="vcxagency-base:$DOCKER_TAG_VERSION"
 
