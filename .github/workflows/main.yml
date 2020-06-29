@@ -43,11 +43,10 @@ jobs:
 
           if [[ "master" == "$BRANCH_NAME" ]]
           then
-             echo "this is master; BRANCH_NAME=$BRANCH_NAME"
-             DOCKER_TAG_VERSION="$REPO_VERSION"
+#            DOCKER_TAG_VERSION="$REPO_VERSION" # thing through versioned artifact strategy
+             DOCKER_TAG_VERSION="$BRANCH_NAME"
           else
-             echo "this is NOT master; BRANCH_NAME=$BRANCH_NAME"
-             DOCKER_TAG_VERSION=$BRANCH_NAME
+             DOCKER_TAG_VERSION="$BRANCH_NAME"
           fi
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
           echo "Will be using docker tag $DOCKER_TAG_VERSION"
