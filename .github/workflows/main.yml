@@ -6,7 +6,7 @@ on:
       - master
   pull_request:
     branches:
-      - *
+      - "**"
 
 jobs:
   gainfo:
@@ -49,7 +49,7 @@ jobs:
 
           if [[ "master" == "$BRANCH_NAME" ]]
           then
-#            DOCKER_TAG_VERSION="$REPO_VERSION" # thing through versioned artifact strategy
+             # DOCKER_TAG_VERSION="$REPO_VERSION" # thing through versioned artifact strategy
              DOCKER_TAG_VERSION="$BRANCH_NAME"
           else
              DOCKER_TAG_VERSION="$BRANCH_NAME"
