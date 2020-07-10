@@ -17,33 +17,13 @@
 'use strict'
 
 const { asyncHandler } = require('./middleware')
-const logger = require('../logging/logger-builder')(__filename)
 const bodyParser = require('body-parser')
-const util = require('util')
 const validate = require('express-validation')
 const Joi = require('joi')
 
-module.exports = function (app, forwardAgent, resolver, maxRequestSizeKb) {
-  const options = {
-    inflate: true,
-    limit: `${maxRequestSizeKb}kb`,
-    type: '*/*'
-  }
-
-  app.post('/agency/msg',
-    bodyParser.raw(options),
-    asyncHandler(async function (req, res) {
-      logger.info('POST /agency/msg')
-      logger.silly(`req.headers: ${util.inspect(req.headers)}  req.route: ${util.inspect(req.route)}`)
-      const responseData = await forwardAgent.handleIncomingMessage(req.body)
-      res.set('Content-Type', 'application/ssi-agent-wire')
-      res.status(200).send(responseData)
-    }))
-
+module.exports = function (app, forwardAgent, resolver) {
   app.get('/agency',
-    bodyParser.json(),
     asyncHandler(async function (req, res) {
-      logger.info('GET /agency')
       const { did, verkey } = forwardAgent.getForwadAgentInfo()
       res.status(200).send({ DID: did, verKey: verkey })
     }))
@@ -61,10 +41,8 @@ module.exports = function (app, forwardAgent, resolver, maxRequestSizeKb) {
       }
     ),
     asyncHandler(async function (req, res) {
-      logger.info('POST /agent/:agentDid')
       const { agentDid } = req.params
       const { webhookUrl } = req.body
-      logger.info(`Updating webhook url to ${webhookUrl} for agent ${agentDid}`)
       const agentAo = await resolver.resolveEntityAO(agentDid)
       await agentAo.setWebhook(webhookUrl)
       res.status(200).send()

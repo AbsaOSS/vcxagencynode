@@ -18,17 +18,14 @@
 
 const winston = require('winston')
 const path = require('path')
+const { characterTruncater, jsonFormatter, tryAddRequestId } = require('./logger-common')
 
 const prettyFormatter = winston.format.combine(
   winston.format.colorize({ all: true }),
   winston.format.printf(
-    info => `${info.timestamp} ${info.filename} [${info.level}]: ${info.message}`
-  )
-)
-
-const jsonFormatter = winston.format.combine(
-  winston.format.printf(
-    info => JSON.stringify(info).replace(/\\n/g, '\\n').replace(/\\t/g, '\\t')
+    msg => {
+      return `[${msg.timestamp}] [${msg.filename}] [${msg.level}] [expressRequestId=${msg.expressRequestId}]: ${msg.message}`
+    }
   )
 )
 
@@ -39,9 +36,11 @@ function createConsoleLogger (mainLoggerName, formatter, logLevel, makeItSilent 
         silent: makeItSilent,
         level: logLevel,
         format: winston.format.combine(
+          characterTruncater(5000),
           winston.format.timestamp({
-            format: 'YYYY-MM-DD HH:mm:ss'
+            format: 'YYYY-MM-DD HH:mm:ss.SSS'
           }),
+          tryAddRequestId,
           formatter
         )
       })
@@ -56,6 +55,7 @@ function addChildLogger (mainLoggerName, fullPath) {
 }
 
 const mainLoggerName = 'main'
+
 const formatter = process.env.LOG_JSON_TO_CONSOLE === 'true' ? jsonFormatter : prettyFormatter
 const logLevel = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info'
 createConsoleLogger(mainLoggerName, formatter, logLevel, process.env.SILENT_WINSTON)

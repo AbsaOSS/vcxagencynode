@@ -18,16 +18,34 @@
 
 const uuid = require('uuid')
 const logger = require('../logging/logger-builder')(__filename)
-const util = require('util')
+const httpContext = require('express-http-context')
 
-const asyncHandler = fn => (req, res, next) => {
-  return Promise
-    .resolve(fn(req, res, next))
-    .catch(function (err) {
-      const errorId = uuid.v4()
-      logger.error(`Unhandled error from async express handler. ErrorId: ${errorId} Error details: ${util.inspect(err)}`)
-      res.status(500).send({ message: 'Something went wrong unexpectedly.', errorId })
-    })
+module.exports.asyncHandler = function asyncHandler (fn) {
+  return (req, res, next) => {
+    const result = Promise
+      .resolve(fn(req, res, next))
+      .catch(function (err) {
+        const errorId = httpContext.get('reqId')
+        logger.error(`ErrorID: '${errorId}'. Unhandled error from async express handler. Error details:`)
+        logger.error(err.stack)
+        res.status(500).send({ message: 'Something went wrong unexpectedly.', errorId })
+      })
+    return result
+  }
 }
 
-module.exports = { asyncHandler }
+module.exports.logRequestsWithoutBody = function logRequestsWithoutBody (req, res, next) {
+  logger.info(`${req.method} ${req.originalUrl}`)
+  next()
+}
+
+module.exports.logRequestsWithBody = function logRequestsWithBody (req, res, next) {
+  logger.info(`${req.method} ${req.originalUrl} Request body: ${JSON.stringify(req.body)}`)
+  next()
+}
+
+module.exports.setReqId = function setReqId (req, res, next) {
+  const xRequestId = req.header('X-Request-ID') || uuid.v4()
+  httpContext.set('reqId', xRequestId)
+  next()
+}
