@@ -17,8 +17,20 @@
 'use strict'
 
 /* eslint-env jest */
-const { indyCreateWallet, indyCreateAndStoreMyDid, indyGenerateWalletKey, indyOpenWallet, unpack } = require('easy-indysdk')
-const { vcxFlowSendAriesMessage, vcxFlowGetMsgsFromAgentConn, vcxFlowCreateAgentConnection, vcxFlowFullOnboarding } = require('vcxagency-client')
+const {
+  vcxFlowSendAriesMessage,
+  vcxFlowGetMsgsFromAgentConn,
+  vcxFlowCreateAgentConnection,
+  vcxFlowFullOnboarding,
+  vcxFlowSetWebhookUrl
+} = require('vcxagency-client')
+const {
+  indyCreateWallet,
+  indyCreateAndStoreMyDid,
+  indyGenerateWalletKey,
+  indyOpenWallet,
+  unpack
+} = require('easy-indysdk')
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
@@ -26,7 +38,6 @@ const { objectToBuffer } = require('../../utils')
 const express = require('express')
 const bodyParser = require('body-parser')
 const sleep = require('sleep-promise')
-const { vcxFlowSetWebhookUrl } = require('../../../../vcxagency-client/src')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
 const { wireUp } = require('../../../src/app')

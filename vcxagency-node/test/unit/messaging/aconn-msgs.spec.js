@@ -17,7 +17,11 @@
 'use strict'
 
 /* eslint-env jest */
-const { vcxFlowGetMsgsFromAgentConn, vcxFlowCreateAgentConnection, vcxFlowFullOnboarding } = require('vcxagency-client')
+const {
+  vcxFlowGetMsgsFromAgentConn,
+  vcxFlowCreateAgentConnection,
+  vcxFlowFullOnboarding
+} = require('vcxagency-client')
 const { indyCreateWallet, indyCreateAndStoreMyDid, indyOpenWallet, indyGenerateWalletKey } = require('easy-indysdk')
 const uuid = require('uuid')
 const rimraf = require('rimraf')
