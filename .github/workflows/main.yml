@@ -15,6 +15,7 @@ jobs:
       GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
       BRANCH_NAME: ${{ steps.mainstep.outputs.BRANCH_NAME }}
       DOCKER_TAG_VERSION: ${{ steps.mainstep.outputs.DOCKER_TAG_VERSION }}
+      FULL_REPO_SLUG: ${{ steps.mainstep.outputs.FULL_REPO_SLUG }}
     steps:
       - run: echo $GITHUB_REPOSITORY
       - run: echo $GITHUB_REF
@@ -39,10 +40,12 @@ jobs:
           else
             BRANCH_NAME=$GITHUB_HEAD_REF
             echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Pull Request"
-            echo "Pull request repository full name:"
-            echo ${{github.event.pull_request.head.repo.full_name}}
           fi
-          BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g"`  ## Keep only alphanumeric chars and dash
+
+          FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
+          echo ::set-env name=FULL_REPO_SLUG::$(echo $FULL_REPO_SLUG)
+
+          BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
 
           REPO_VERSION=`bash ./get-version.sh`
@@ -51,7 +54,7 @@ jobs:
 
           if [[ "master" == "$BRANCH_NAME" ]]
           then
-             # DOCKER_TAG_VERSION="$REPO_VERSION" # thing through versioned artifact strategy
+             # DOCKER_TAG_VERSION="$REPO_VERSION" # thing through versioning artifact strategy
              DOCKER_TAG_VERSION="$BRANCH_NAME"
           else
              DOCKER_TAG_VERSION="$BRANCH_NAME"
@@ -65,6 +68,7 @@ jobs:
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
           echo "::set-output name=DOCKER_TAG_VERSION::$DOCKER_TAG_VERSION"
+          echo "::set-output name=FULL_REPO_SLUG::$FULL_REPO_SLUG"
 
 
   print-custom-variables:
@@ -78,11 +82,13 @@ jobs:
           echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
           echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
+          echo ::set-env name=FULL_REPO_SLUG::$(echo ${{needs.gainfo.outputs.FULL_REPO_SLUG}})
       - name: Print custom variables
         run: |
           echo $GITHUB_REPOSITORY_LOWERCASE
           echo $BRANCH_NAME
           echo $DOCKER_TAG_VERSION
+          echo $FULL_REPO_SLUG
 
   build-vcxagency-base:
     needs:
