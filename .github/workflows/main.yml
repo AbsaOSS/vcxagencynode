@@ -57,7 +57,7 @@ jobs:
              # DOCKER_TAG_VERSION="$REPO_VERSION" # thing through versioning artifact strategy
              DOCKER_TAG_VERSION="$BRANCH_NAME"
           else
-             DOCKER_TAG_VERSION="$BRANCH_NAME"
+             DOCKER_TAG_VERSION="$FULL_REPO_SLUG-$BRANCH_NAME"
           fi
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
           echo "Will be using docker tag $DOCKER_TAG_VERSION"
