@@ -39,6 +39,8 @@ jobs:
           else
             BRANCH_NAME=$GITHUB_HEAD_REF
             echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Pull Request"
+            echo "Pull request repository full name:"
+            echo ${{github.event.pull_request.head.repo.full_name}}
           fi
           BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g"`  ## Keep only alphanumeric chars and dash
           echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
