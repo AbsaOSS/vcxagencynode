@@ -151,12 +151,12 @@ jobs:
           set -x
           LOCAL_TAG="vcxagency-node:$DOCKER_TAG_VERSION"
           REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$LOCAL_TAG"
-          REMOTE_TAG_BASE_IMAGE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$DOCKER_TAG_VERSION"
-          LOCAL_TAG_BASE_IMAGE="vcxagency-base:$DOCKER_TAG_VERSION"
+          REMOTE_TAG_BASE_IMAGE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$DOCKER_TAG_VERSION"
+          LOCAL_TAG_BASE_IMAGE="vcxagency-node:$DOCKER_TAG_VERSION"
 
           docker tag "$REMOTE_TAG_BASE_IMAGE" "$LOCAL_TAG_BASE_IMAGE" || true
 
-          echo "Will build from base image $LOCAL_TAG_BASE_IMAGE"
+          echo "Will build from agency image $LOCAL_TAG_BASE_IMAGE"
           docker build --cache-from "$REMOTE_TAG" \
                        --build-arg BUILDKIT_INLINE_CACHE=1 \
                        --build-arg AGENCY_BASE_IMAGE="$LOCAL_TAG_BASE_IMAGE" \
