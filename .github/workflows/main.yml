@@ -170,6 +170,34 @@ jobs:
 
           docker image ls
 
+  test-vcxagency-node:
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Load up custom variables
+        run: |
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Pull image
+        run: |
+          docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$DOCKER_TAG_VERSION || true
+      - name: Test agency
+        run: |
+          set -x
+          docker run -d --name postgres \
+                         -e POSTGRES_PASSWORD=mysecretpassword \
+                         -p 5432:5432 \
+                         postgres:12.1
+          docker run --rm --name vcxagencynode \
+                        --network host \
+                         docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$DOCKER_TAG_VERSION \
+                         yarn test:unit
+      - name: Lint
+        run: |
+          cd vcxagency-node && standard
+
   lint-vcxagency-node:
     runs-on: ubuntu-16.04
     steps:
