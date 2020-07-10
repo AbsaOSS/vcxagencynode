@@ -172,6 +172,9 @@ jobs:
 
   test-vcxagency-node:
     runs-on: ubuntu-16.04
+    needs:
+      - build-image-vcxagency
+      - gainfo
     steps:
       - name: Load up custom variables
         run: |
