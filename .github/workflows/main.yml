@@ -146,15 +146,18 @@ jobs:
         run: |
            docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$DOCKER_TAG_VERSION || true
            docker pull docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$DOCKER_TAG_VERSION || true
+           docker image ls
       - name: Build image
         run: |
           set -x
+          docker image ls
           LOCAL_TAG="vcxagency-node:$DOCKER_TAG_VERSION"
           REMOTE_TAG="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$LOCAL_TAG"
           REMOTE_TAG_BASE_IMAGE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-base:$DOCKER_TAG_VERSION"
           LOCAL_TAG_BASE_IMAGE="vcxagency-base:$DOCKER_TAG_VERSION"
 
           docker tag "$REMOTE_TAG_BASE_IMAGE" "$LOCAL_TAG_BASE_IMAGE" || true
+          docker image ls
 
           echo "Will build from agency image $LOCAL_TAG_BASE_IMAGE"
           docker build --cache-from "$REMOTE_TAG" \
@@ -163,12 +166,12 @@ jobs:
                        -f vcxagency-node/Dockerfile \
                        -t "$LOCAL_TAG" \
                         .
+          docker image ls
           echo "Tagging $LOCAL_TAG as $REMOTE_TAG"
           docker tag "$LOCAL_TAG" "$REMOTE_TAG"
+          docker image ls
 
           docker push "$REMOTE_TAG" || true
-
-          docker image ls
 
   test-vcxagency-node:
     runs-on: ubuntu-16.04
@@ -200,7 +203,7 @@ jobs:
           docker run --rm --name vcxagencynode \
                         --network host \
                          docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/vcxagency-node:$DOCKER_TAG_VERSION \
-                         npm run test:unit
+                         bash -c "yarn install && yarn run test:unit"
       - name: Lint
         run: |
           cd vcxagency-node && standard
