@@ -156,7 +156,7 @@ jobs:
 
           docker tag "$REMOTE_TAG_BASE_IMAGE" "$LOCAL_TAG_BASE_IMAGE" || true
 
-          echo "Will build from base image $LOCAL_TAG_BASE_IMAGE"
+          echo "Will build from agency image $LOCAL_TAG_BASE_IMAGE"
           docker build --cache-from "$REMOTE_TAG" \
                        --build-arg BUILDKIT_INLINE_CACHE=1 \
                        --build-arg AGENCY_BASE_IMAGE="$LOCAL_TAG_BASE_IMAGE" \
