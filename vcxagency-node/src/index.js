@@ -35,11 +35,15 @@ validateAppConfig(appConfig, (err, ok) => {
   const logger = require('./logging/logger-builder')(__filename)
   const express = require('express')
   const apiAgency = require('./api/api-agency')
+  const apiMessaging = require('./api/api-messaging')
 
   const { indyLoadPostgresPlugin } = require('easy-indysdk')
   const { wireUp } = require('./app')
+  const { setReqId, logRequestsWithoutBody } = require('./api/middleware')
   const { indySetLogger } = require('easy-indysdk')
-  const appAgent = express()
+  const httpContext = require('express-http-context')
+  const expressWinstonLogger = require('./logging/express-logger-builder')
+  const bodyParser = require('body-parser') // TODO: request parsing must be BEFORE we do stuff with winston express logger
 
   startup()
 
@@ -75,6 +79,54 @@ validateAppConfig(appConfig, (err, ok) => {
     }
   }
 
+  function addStandardErrorMidlleware (app) {
+    app.use(function (err, req, res, next) {
+      return res.status(err.status).json(err)
+    })
+
+    app.use(function (req, res, next) {
+      res.status(404).send({ message: `Your request: '${req.originalUrl}' didn't reach any handler.` })
+    })
+  }
+
+  function setupServer (entityForwardAgent, resolver, maxRequestSizeKb) {
+    const appAgent = express()
+    const appAgentJson = express.Router()
+    const appAgentMsg = express.Router()
+    appAgentMsg.use(bodyParser.raw({
+      inflate: true,
+      limit: `${maxRequestSizeKb}kb`,
+      type: '*/*'
+    }))
+    appAgentJson.use(bodyParser.json())
+
+    appAgentJson.use(httpContext.middleware)
+    appAgentMsg.use(httpContext.middleware)
+
+    appAgentJson.use(setReqId)
+    appAgentMsg.use(setReqId)
+
+    appAgentJson.use(logRequestsWithoutBody)
+    appAgentMsg.use(logRequestsWithoutBody)
+
+    appAgentJson.use(expressWinstonLogger)
+    appAgentMsg.use(expressWinstonLogger)
+
+    apiAgency(appAgentJson, entityForwardAgent, resolver)
+    apiMessaging(appAgentMsg, entityForwardAgent)
+
+    addStandardErrorMidlleware(appAgentJson)
+    addStandardErrorMidlleware(appAgentMsg)
+
+    appAgent.use('/agency/msg', appAgentMsg)
+    appAgent.use('/', appAgentJson)
+
+    appAgent.listen(
+      appConfig.SERVER_PORT,
+      () => logger.info(`Agency is listening on port ${appConfig.SERVER_PORT}!`)
+    )
+  }
+
   async function startAgency () {
     logger.info('Starting agency')
     const agencyWalletName = appConfig.AGENCY_WALLET_NAME
@@ -91,22 +143,15 @@ validateAppConfig(appConfig, (err, ok) => {
     }
 
     const { storageType, storageConfig, storageCredentials } = getStorageInfoPgsql()
-    logger.info(`Intializing postgres plugin with config: ${JSON.stringify(storageConfig)}`)
+    logger.info(`Initializing postgres plugin with config: ${JSON.stringify(storageConfig)}`)
     await indyLoadPostgresPlugin(storageConfig, storageCredentials)
 
+    logger.info('Building services and wiring up dependencies.')
     const { entityForwardAgent, resolver } =
       await wireUp(appStoragePgConfig, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, storageType, storageConfig, storageCredentials)
 
-    apiAgency(appAgent, entityForwardAgent, resolver, appConfig.SERVER_MAX_REQUEST_SIZE_KB)
-
-    appAgent.use((err, req, res, next) => {
-      return res.status(err.status).json(err)
-    })
-
-    appAgent.use(function (req, res, next) {
-      res.status(404).send({ message: `Your request: '${req.originalUrl}' didn't reach any handler.` })
-    })
-    appAgent.listen(appConfig.SERVER_PORT, () => logger.info(`Agency is listening on port ${appConfig.SERVER_PORT}!`))
+    logger.info('Building express http server.')
+    setupServer(entityForwardAgent, resolver, appConfig.SERVER_MAX_REQUEST_SIZE_KB)
   }
 
   async function startup () {
