@@ -16,6 +16,7 @@ jobs:
       BRANCH_NAME: ${{ steps.mainstep.outputs.BRANCH_NAME }}
       DOCKER_TAG_VERSION: ${{ steps.mainstep.outputs.DOCKER_TAG_VERSION }}
       FULL_REPO_SLUG: ${{ steps.mainstep.outputs.FULL_REPO_SLUG }}
+      RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
     steps:
       - run: echo $GITHUB_REPOSITORY
       - run: echo $GITHUB_REF
@@ -66,9 +67,9 @@ jobs:
               DOCKER_TAG_VERSION="$BRANCH_NAME"
               echo "Running push on master but version was not bumped. Will NOT release."
             else
-              # DOCKER_TAG_VERSION="$REPO_VERSION_DESIRED"
               DOCKER_TAG_VERSION="$BRANCH_NAME"
               RELEASE_VERSION="$REPO_VERSION_DESIRED"
+              DOCKER_TAG_VERSION="$REPO_VERSION_DESIRED"
               echo "Running push on master, version was bumped $REPO_VERSION_HIGHEST->$RELEASE_VERSION. Will release $RELEASE_VERSION."
             fi
           else
@@ -88,6 +89,7 @@ jobs:
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
           echo "::set-output name=DOCKER_TAG_VERSION::$DOCKER_TAG_VERSION"
           echo "::set-output name=FULL_REPO_SLUG::$FULL_REPO_SLUG"
+          echo "::set-output name=RELEASE_VERSION::$RELEASE_VERSION"
 
 
   print-custom-variables:
