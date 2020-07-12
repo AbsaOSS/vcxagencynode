@@ -9,7 +9,7 @@ on:
       - "**"
 
 jobs:
-  gainfo:
+  workflow-setup:
     runs-on: ubuntu-latest
     outputs:
       GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
@@ -26,7 +26,7 @@ jobs:
       - run: echo $GITHUB_RUN_NUMBER
       - run: echo $GITHUB_RUN_ID
       - name: Git checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
       - name: Set custom env variables
         run: |
           set -x
@@ -48,19 +48,38 @@ jobs:
           BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
           echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
 
-          REPO_VERSION=`bash ./get-version.sh`
-          echo ::set-env name=REPO_VERSION::$(echo $REPO_VERSION)
-          echo "Repo declares version $REPO_VERSION"
-
-          if [[ "master" == "$BRANCH_NAME" ]]
+          RELEASE_VERSION=''
+          if [[ "${{ github.event_name}}" == "push" && "$BRANCH_NAME" == "master" ]]
           then
-             # DOCKER_TAG_VERSION="$REPO_VERSION" # thing through versioning artifact strategy
-             DOCKER_TAG_VERSION="$BRANCH_NAME"
+            echo "Running push on master branch. Release will happen if version was bumped."
+
+            REPO_VERSION_HIGHEST=$(git describe --tags --always --abbrev=0)
+            echo ::set-env name=REPO_VERSION_HIGHEST::$(echo $REPO_VERSION_HIGHEST)
+            echo "Highest released version was $REPO_VERSION_HIGHEST"
+
+            REPO_VERSION_DESIRED=`bash ./get-version.sh`
+            echo ::set-env name=REPO_VERSION_DESIRED::$(echo $REPO_VERSION_DESIRED)
+            echo "Repo declares version $REPO_VERSION_DESIRED"
+
+            if [[ "$REPO_VERSION_HIGHEST" == "$REPO_VERSION_DESIRED" ]]
+            then
+              DOCKER_TAG_VERSION="$BRANCH_NAME"
+              echo "Running push on master but version was not bumped. Will NOT release."
+            else
+              # DOCKER_TAG_VERSION="$REPO_VERSION_DESIRED"
+              DOCKER_TAG_VERSION="$BRANCH_NAME"
+              RELEASE_VERSION="$REPO_VERSION_DESIRED"
+              echo "Running push on master, version was bumped $REPO_VERSION_HIGHEST->$RELEASE_VERSION. Will release $RELEASE_VERSION."
+            fi
           else
              DOCKER_TAG_VERSION="$FULL_REPO_SLUG-$BRANCH_NAME"
+             echo "This is not push to master. Will NOT release."
           fi
+
+          echo ::set-env name=RELEASE_VERSION::$(echo $RELEASE_VERSION)
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
-          echo "Will be using docker tag $DOCKER_TAG_VERSION"
+          echo "Docker images built in this CI will be using tag '$DOCKER_TAG_VERSION'"
+
       - name: Check custom env variables
         id: mainstep
         run: |
@@ -72,17 +91,17 @@ jobs:
 
 
   print-custom-variables:
-    needs: gainfo
+    needs: workflow-setup
     runs-on: ubuntu-16.04
     env:
       DOCKER_BUILDKIT: 1
     steps:
       - name: Load up custom variables
         run: |
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
-          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
-          echo ::set-env name=FULL_REPO_SLUG::$(echo ${{needs.gainfo.outputs.FULL_REPO_SLUG}})
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.workflow-setup.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.workflow-setup.outputs.DOCKER_TAG_VERSION}})
+          echo ::set-env name=FULL_REPO_SLUG::$(echo ${{needs.workflow-setup.outputs.FULL_REPO_SLUG}})
       - name: Print custom variables
         run: |
           echo $GITHUB_REPOSITORY_LOWERCASE
@@ -92,16 +111,16 @@ jobs:
 
   build-vcxagency-base:
     needs:
-      - gainfo
+      - workflow-setup
     runs-on: ubuntu-16.04
     env:
       DOCKER_BUILDKIT: 1
     steps:
       - name: Load up custom variables
         run: |
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
-          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.workflow-setup.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.workflow-setup.outputs.DOCKER_TAG_VERSION}})
       - name: Docker setup
         run: |
           PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
@@ -135,15 +154,15 @@ jobs:
     runs-on: ubuntu-16.04
     needs:
       - build-vcxagency-base
-      - gainfo
+      - workflow-setup
     env:
       DOCKER_BUILDKIT: 1
     steps:
       - name: Load up custom variables
         run: |
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
-          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.workflow-setup.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.workflow-setup.outputs.DOCKER_TAG_VERSION}})
       - name: Docker setup
         run: |
           PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
@@ -190,13 +209,13 @@ jobs:
     runs-on: ubuntu-16.04
     needs:
       - build-image-vcxagency
-      - gainfo
+      - workflow-setup
     steps:
       - name: Load up custom variables
         run: |
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
-          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.workflow-setup.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.workflow-setup.outputs.DOCKER_TAG_VERSION}})
       - name: Docker setup
         run: |
           PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
@@ -223,13 +242,13 @@ jobs:
     runs-on: ubuntu-16.04
     needs:
       - build-image-vcxagency
-      - gainfo
+      - workflow-setup
     steps:
       - name: Load up custom variables
         run: |
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
-          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.workflow-setup.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.workflow-setup.outputs.DOCKER_TAG_VERSION}})
       - name: Docker setup
         run: |
           PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
@@ -251,13 +270,13 @@ jobs:
     runs-on: ubuntu-16.04
     needs:
       - build-image-vcxagency
-      - gainfo
+      - workflow-setup
     steps:
       - name: Load up custom variables
         run: |
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.gainfo.outputs.GITHUB_REPOSITORY_LOWERCASE}})
-          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.gainfo.outputs.BRANCH_NAME}})
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.gainfo.outputs.DOCKER_TAG_VERSION}})
+          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.workflow-setup.outputs.BRANCH_NAME}})
+          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.workflow-setup.outputs.DOCKER_TAG_VERSION}})
       - name: Docker setup
         run: |
           PACKAGES_USERNAME=${{ secrets.PACKAGES_ACCESS_USERNAME }}
@@ -310,3 +329,33 @@ jobs:
       - name: Lint
         run: |
           cd easy-indysdk && standard
+
+  make-release:
+    needs:
+      - workflow-setup
+      - build-vcxagency-base
+      - build-image-vcxagency
+      - test-vcxagency-node
+      - test-easy-indysdk
+      - test-vcxagency-client
+      - lint-vcxagency-node
+      - lint-vcxagency-client
+      - lint-easy-indysdk
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Load up release version
+        run: |
+          echo ::set-env name=RELEASE_VERSION::$(echo ${{needs.workflow-setup.outputs.RELEASE_VERSION}})
+      - name: Release for master pushes
+        run: |
+          if [[ "$RELEASE_VERSION" ]]
+          then
+            echo "Release version was defined! Will create release $RELEASE_VERSION"
+            curl -v --request POST \
+                --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+                --header "Content-Type: application/json" \
+                -d "{\"tag_name\": \"$RELEASE_VERSION\", \"name\": \"$RELEASE_VERSION\", \"body\": \"Automatic release $RELEASE_VERSION\" }" \
+                --url https://api.github.com/repos/$GITHUB_REPOSITORY/releases
+          else
+             echo "New version was not defined, skipping release. Check 'workflow-setup' job to see the reason."
+          fi
