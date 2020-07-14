@@ -7,6 +7,7 @@ in Aries terminology).
 Assuming the sending party has properly end2end encrypted the message for recipient, according to Aries connection  
 protocol, the agency itself can't decrypt content of received messages.
 
+
 # Repository structure
 The agency implementation is in directory [vcxagency-node](./vcxagency-node).
 
