@@ -42,6 +42,7 @@ const configValidation = Joi.object().keys({
   LOG_JSON_TO_CONSOLE: Joi.string().valid(['true', 'false']),
   SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
   SERVER_MAX_REQUEST_SIZE_KB: Joi.number().integer().min(1).max(MB_AS_KB * 10).required(),
+  SERVER_ENABLE_TLS: Joi.string().valid(['true', 'false']),
 
   AGENCY_WALLET_NAME: Joi.string().required(),
   AGENCY_DID: Joi.string().required(),

@@ -36,6 +36,7 @@ function buildAppConfigFromEnvVariables () {
 
     SERVER_PORT: process.env.SERVER_PORT,
     SERVER_MAX_REQUEST_SIZE_KB: process.env.SERVER_MAX_REQUEST_SIZE_KB || '300',
+    SERVER_ENABLE_TLS: process.env.SERVER_ENABLE_TLS,
 
     AGENCY_WALLET_NAME: process.env.AGENCY_WALLET_NAME,
     AGENCY_DID: process.env.AGENCY_DID,
