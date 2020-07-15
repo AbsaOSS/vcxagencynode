@@ -17,6 +17,7 @@
 'use strict'
 
 const Joi = require('joi')
+const fs = require('fs')
 
 function stringifyAndHideSensitive (appConfig) {
   function hideSecrets (key, value) {
@@ -43,9 +44,9 @@ const configValidation = Joi.object().keys({
   SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
   SERVER_MAX_REQUEST_SIZE_KB: Joi.number().integer().min(1).max(MB_AS_KB * 10).required(),
   SERVER_ENABLE_TLS: Joi.string().valid(['true', 'false']),
-  CERTIFICATE_PATH: Joi.string(),
-  CERTIFICATE_KEY_PATH: Joi.string(),
-  CERTIFICATE_AUTHORITY_PATH: Joi.string(),
+  CERTIFICATE_PATH: Joi.string().allow(''),
+  CERTIFICATE_KEY_PATH: Joi.string().allow(''),
+  CERTIFICATE_AUTHORITY_PATH: Joi.string().allow(''),
 
   AGENCY_WALLET_NAME: Joi.string().required(),
   AGENCY_DID: Joi.string().required(),
@@ -69,8 +70,19 @@ const configValidation = Joi.object().keys({
   PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100)
 })
 
+function testConfigPathExist (appConfig, key) {
+  const path = appConfig[key]
+  if (!fs.existsSync(path)) throw Error(`${key} = ${path} is not a valid path or the path does not exist`)
+}
+
 function validateAppConfig (appConfig, callback) {
   Joi.validate(appConfig, configValidation, callback)
+  if (appConfig.SERVER_ENABLE_TLS === 'true') {
+    if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) throw Error('Valid certificate and key paths must be specified when TLS enabled!')
+    testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
+    testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
+    if (appConfig.CERTIFICATE_AUTHORITY_PATH) testConfigPathExist(appConfig, 'CERTIFICATE_AUTHORITY_PATH')
+  }
 }
 
 module.exports = {
