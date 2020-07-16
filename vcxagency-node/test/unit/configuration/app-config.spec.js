@@ -16,10 +16,40 @@
 
 'use strict'
 
+const requiredConfig = {
+  LOG_LEVEL: 'debug',
+  LOG_ENABLE_INDYSDK: 'false',
+  LOG_JSON_TO_CONSOLE: 'false',
+  SERVER_PORT: '8080',
+  SERVER_MAX_REQUEST_SIZE_KB: '300',
+
+  AGENCY_WALLET_NAME: 'vcxagency-node',
+  AGENCY_DID: 'VsKV7grR1BUE29mG2Fm2kX',
+  AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
+  AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
+
+  PG_STORE_HOST: 'localhost',
+  PG_STORE_PORT: '5432',
+  PG_STORE_ACCOUNT: 'postgres',
+  PG_STORE_PASSWORD_SECRET: 'mysecretpassword',
+  PG_STORE_DATABASE: 'agency-storage',
+
+  PG_WALLET_ACCOUNT: 'postgres',
+  PG_WALLET_PASSWORD_SECRET: 'mysecretpassword',
+  PG_WALLET_ADMIN_ACCOUNT: 'postgres',
+  PG_WALLET_ADMIN_PASSWORD_SECRET: 'mysecretpassword',
+
+  PG_WALLET_URL: 'localhost:5432',
+  PG_WALLET_MIN_IDLE_COUNT: '0',
+  PG_WALLET_MAX_CONNECTIONS: '90',
+  PG_WALLET_CONNECTION_TIMEOUT_MINS: '30'
+}
+
 /* eslint-env jest */
 const { stringifyAndHideSensitive } = require('../../../src/configuration/app-config')
 const util = require('util')
 const { validateAppConfig } = require('../../../src/configuration/app-config')
+const path = require('path')
 
 describe('app configuration', () => {
   it('should censor sensitive data in configuration', async () => {
@@ -31,6 +61,24 @@ describe('app configuration', () => {
     const hiddenParsed = JSON.parse(hidden)
     expect(hiddenParsed.FOO).toBe('foo')
     expect(hiddenParsed.BAR_SECRET).toBe('s********a')
+  })
+
+  it('if TLS enabled, throw error on empty path', async () => {
+    const tlsConfig = {
+      SERVER_ENABLE_TLS: 'true',
+      CERTIFICATE_PATH: '',
+      CERTIFICATE_KEY_PATH: ''
+    }
+    expect(() => { validateAppConfig({ ...requiredConfig, ...tlsConfig }) }).toThrow(Error)
+  })
+
+  it('if TLS enabled, allow empty cert key path for self-signed certificate', async () => {
+    const tlsConfig = {
+      SERVER_ENABLE_TLS: 'true',
+      CERTIFICATE_PATH: path.join(__dirname, 'mock_certs', 'mock_cert.pem'),
+      CERTIFICATE_KEY_PATH: path.join(__dirname, 'mock_certs', 'mock_key.pem')
+    }
+    validateAppConfig({ ...requiredConfig, ...tlsConfig })
   })
 
   it('should pass app config validation', async () => {

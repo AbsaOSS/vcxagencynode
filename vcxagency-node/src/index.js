@@ -19,6 +19,8 @@
 const { validateAppConfig, stringifyAndHideSensitive } = require('./configuration/app-config')
 const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
 const util = require('util')
+const https = require('https')
+const fs = require('fs')
 
 const appConfig = buildAppConfigFromEnvVariables()
 console.log(stringifyAndHideSensitive(appConfig))
@@ -121,10 +123,15 @@ validateAppConfig(appConfig, (err, ok) => {
     appAgent.use('/agency/msg', appAgentMsg)
     appAgent.use('/', appAgentJson)
 
-    appAgent.listen(
-      appConfig.SERVER_PORT,
-      () => logger.info(`Agency is listening on port ${appConfig.SERVER_PORT}!`)
-    )
+    if (appConfig.SERVER_ENABLE_TLS === 'true') {
+      https.createServer({
+        cert: fs.readFileSync(appConfig.CERTIFICATE_PATH),
+        key: fs.readFileSync(appConfig.CERTIFICATE_KEY_PATH),
+        ca: appConfig.CERTIFICATE_AUTHORITY_PATH ? fs.readFileSync(appConfig.CERTIFICATE_AUTHORITY_PATH) : ''
+      }, appAgent).listen(appConfig.SERVER_PORT, () => logger.info(`Agency is using TLS and listening on port ${appConfig.SERVER_PORT}!`))
+    } else {
+      appAgent.listen(appConfig.SERVER_PORT, () => logger.info(`Agency is listening on port ${appConfig.SERVER_PORT}!`))
+    }
   }
 
   async function startAgency () {
