@@ -72,16 +72,22 @@ const configValidation = Joi.object().keys({
 
 function testConfigPathExist (appConfig, key) {
   const path = appConfig[key]
-  if (!fs.existsSync(path)) throw Error(`${key} = ${path} is not a valid path or the path does not exist`)
+  if (!fs.existsSync(path)) {
+    throw Error(`${key} = ${path} is not a valid path or the path does not exist`)
+  }
 }
 
 function validateAppConfig (appConfig, callback) {
   Joi.validate(appConfig, configValidation, callback)
   if (appConfig.SERVER_ENABLE_TLS === 'true') {
-    if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) throw Error('Valid certificate and key paths must be specified when TLS enabled!')
+    if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
+      throw Error('Valid certificate and key paths must be specified when TLS enabled!')
+    }
     testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
     testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
-    if (appConfig.CERTIFICATE_AUTHORITY_PATH) testConfigPathExist(appConfig, 'CERTIFICATE_AUTHORITY_PATH')
+    if (appConfig.CERTIFICATE_AUTHORITY_PATH) {
+      testConfigPathExist(appConfig, 'CERTIFICATE_AUTHORITY_PATH')
+    }
   }
 }
 
