@@ -9,14 +9,14 @@ on:
       - "**"
 
 jobs:
-  detailed-info:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Print Context details
-        run: |
-          echo "This was trigerred by event = ${{ github.event_name}}"
-          echo "Github context = ${{ toJson(github) }}"
-          echo "Event info ${{ toJson(github.event) }}"
+#  detailed-info:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Print Context details
+#        run: |
+#          echo "This was trigerred by event = ${{ github.event_name}}"
+#          echo "Github context = ${{ toJson(github) }}"
+#          echo "Event info ${{ toJson(github.event) }}"
 
   workflow-setup:
     runs-on: ubuntu-latest
