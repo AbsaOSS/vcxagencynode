@@ -26,9 +26,11 @@ jobs:
       DOCKER_TAG_VERSION: ${{ steps.mainstep.outputs.DOCKER_TAG_VERSION }}
       RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
       CACHE_KEY_BASE: ${{ steps.mainstep.outputs.CACHE_KEY_BASE }}
-      DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_BASE }}
-      DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.DOCKER_IMG_NAME_AGENCY }}
       CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
+      CACHED_DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_BASE }}
+      CACHED_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_AGENCY }}
+      PUBLISH_DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_BASE }}
+      PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY }}
     steps:
       - run: echo $GITHUB_REPOSITORY
       - run: echo $GITHUB_REF
@@ -95,7 +97,7 @@ jobs:
           echo "Docker images built in this CI will be using tag '$DOCKER_TAG_VERSION'"
 
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
-          echo ::set-env name=DOCKER_BASE_HASH::$(echo ${{ hashFiles('vcxagency-base/vcxagency-base.Dockerfile') }})
+          echo ::set-env name=DOCKER_BASE_HASH::$(echo ${{ hashFiles('vcxagency-base') }})
           echo ::set-env name=CODE_AGENCY_HASH::$(echo ${{ hashFiles('vcxagency-node') }})
           echo ::set-env name=CODE_EASYSDK_HASH::$(echo ${{ hashFiles('easy-indysdk') }})
           echo ::set-env name=CODE_CLIENT_HASH::$(echo ${{ hashFiles('vcxagency-client') }})
@@ -108,10 +110,15 @@ jobs:
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
           echo "::set-output name=DOCKER_TAG_VERSION::$DOCKER_TAG_VERSION"
           echo "::set-output name=RELEASE_VERSION::$RELEASE_VERSION"
+
           echo "::set-output name=CACHE_KEY_BASE::$(echo reposlug-$FULL_REPO_SLUG-branch-$BRANCH_NAME-hash-$DOCKER_BASE_HASH)"
-          echo "::set-output name=DOCKER_IMG_NAME_BASE::vcxagency-base:$DOCKER_TAG_VERSION"
-          echo "::set-output name=DOCKER_IMG_NAME_AGENCY::vcxagency-node:$DOCKER_TAG_VERSION"
-          echo "::set-output name=CACHE_KEY_AGENCY::$CODE_AGENCY_HASH-$CODE_EASYSDK_HASH-$CODE_CLIENT_HASH"
+          echo "::set-output name=CACHE_KEY_AGENCY::$CODE_AGENCY_HASH-$CODE_CLIENT_HASH-$CODE_EASYSDK_HASH"
+
+          echo "::set-output name=CACHED_DOCKER_IMG_NAME_BASE::vcxagency-base:cached"
+          echo "::set-output name=CACHED_DOCKER_IMG_NAME_AGENCY::vcxagency-node:cached"
+
+          echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_BASE::vcxagency-base:$DOCKER_TAG_VERSION"
+          echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_AGENCY::vcxagency-node:$DOCKER_TAG_VERSION"
 
   build-vcxagency-base:
     needs:
@@ -126,7 +133,7 @@ jobs:
           echo ::set-env name=BRANCH_NAME::$(echo ${{needs.workflow-setup.outputs.BRANCH_NAME}})
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.workflow-setup.outputs.DOCKER_TAG_VERSION}})
           echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
-          echo ::set-env name=DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_BASE}})
+          echo ::set-env name=CACHED_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}})
       - name: Git checkout
         uses: actions/checkout@v2
       - name: Try load from cache.
@@ -138,22 +145,10 @@ jobs:
       - name: If NOT found in cache, Build and cache image.
         if: steps.cache-image.outputs.cache-hit != 'true'
         run: |
-          echo "CACHE MISS!"
-          set -x
-
-          INDYSDK_REPO="https://github.com/hyperledger/indy-sdk"
-          INDYSDK_REVISION="1.15.0"
-          docker build \
-                       --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
-                       --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
-                       -f vcxagency-base/vcxagency-base.Dockerfile \
-                       -t "$DOCKER_IMG_NAME_BASE" \
-                        .
+          vcxagency-base/build.sh "$CACHED_DOCKER_IMG_NAME_BASE"
           mkdir -p /tmp/imgcache
-          docker save "$DOCKER_IMG_NAME_BASE" > /tmp/imgcache/img_base.rar
-
+          docker save "$CACHED_DOCKER_IMG_NAME_BASE" > /tmp/imgcache/img_base.rar
           docker image ls
-
 
   build-image-vcxagency:
     runs-on: ubuntu-16.04
@@ -167,8 +162,8 @@ jobs:
         run: |
           echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
           echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_BASE}})
-          echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_AGENCY}})
+          echo ::set-env name=CACHED_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}})
+          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
 
       - name: Load base image cache
         id: load-cached-image-base
@@ -185,7 +180,7 @@ jobs:
         run: docker load < /tmp/imgcache/img_base.rar
 
       - name: Verify base image was loaded
-        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_BASE" || { echo "Image $DOCKER_IMG_NAME_BASE was not found!" ; exit 1; }
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_BASE" || { echo "Image $CACHED_DOCKER_IMG_NAME_BASE was not found!"; docker image ls; exit 1; }
 
       - name: Load base image cache
         id: load-cached-image-node
@@ -201,20 +196,20 @@ jobs:
           set -x
           echo "Cache miss for key ${{ env.CACHE_KEY_AGENCY }} No image was found. Let's build it!"
           docker build \
-                       --build-arg AGENCY_BASE_IMAGE="$DOCKER_IMG_NAME_BASE" \
+                       --build-arg AGENCY_BASE_IMAGE="$CACHED_DOCKER_IMG_NAME_BASE" \
                        -f vcxagency-node/Dockerfile \
-                       -t "$DOCKER_IMG_NAME_AGENCY" \
+                       -t "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                         .
           mkdir -p /tmp/imgcache
-          docker save "$DOCKER_IMG_NAME_AGENCY" > /tmp/imgcache/img_agency.rar
-          docker image rm "$DOCKER_IMG_NAME_AGENCY"
+          docker save "$CACHED_DOCKER_IMG_NAME_AGENCY" > /tmp/imgcache/img_agency.rar
+          docker image rm "$CACHED_DOCKER_IMG_NAME_AGENCY"
 
       - name: Load agency image from cache
         run: |
           docker load < /tmp/imgcache/img_agency.rar
       - name: Verify agency image was loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
 
   test-vcxagency-node:
@@ -226,7 +221,7 @@ jobs:
       - name: Load up custom variables
         run: |
           echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_AGENCY}})
+          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
       - name: Load agency image cache
         id: load-cached-image-node
         uses: actions/cache@v2
@@ -242,7 +237,7 @@ jobs:
         run: docker load < /tmp/imgcache/img_agency.rar
 
       - name: Verify image was loaded
-        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Run tests
         run: |
@@ -254,7 +249,7 @@ jobs:
                          postgres:12.1
           docker run --rm --name vcxagencynode \
                         --network host \
-                         "$DOCKER_IMG_NAME_AGENCY" \
+                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "yarn install && yarn run test:unit"
 
   test-easy-indysdk:
@@ -266,7 +261,7 @@ jobs:
       - name: Load up custom variables
         run: |
           echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_AGENCY}})
+          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
       - name: Load agency image cache
         id: load-cached-image-node
         uses: actions/cache@v2
@@ -282,14 +277,14 @@ jobs:
         run: docker load < /tmp/imgcache/img_agency.rar
 
       - name: Verify image was loaded
-        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Run tests
         run: |
           set -x
           docker run --rm --name vcxagencynode \
                         --network host \
-                         "$DOCKER_IMG_NAME_AGENCY" \
+                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "cd /home/app/easy-indysdk && yarn install && yarn run test:unit"
 
   test-vcxagency-client:
@@ -301,7 +296,7 @@ jobs:
       - name: Load up custom variables
         run: |
           echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_AGENCY}})
+          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
 
       - name: Load agency image cache
         id: load-cached-image-node
@@ -318,14 +313,14 @@ jobs:
         run: docker load < /tmp/imgcache/img_agency.rar
 
       - name: Verify image was loaded
-        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Run tests
         run: |
           set -x
           docker run --rm --name vcxagencynode \
                         --network host \
-                         "$DOCKER_IMG_NAME_AGENCY" \
+                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "cd /home/app/vcxagency-client && yarn install && yarn run test:unit"
 
   lint-vcxagency-node:
@@ -382,9 +377,11 @@ jobs:
           echo ::set-env name=RELEASE_VERSION::$(echo ${{needs.workflow-setup.outputs.RELEASE_VERSION}})
           echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
           echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_BASE}})
-          echo ::set-env name=DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.DOCKER_IMG_NAME_AGENCY}})
+          echo ::set-env name=CACHED_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}})
+          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
           echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
+          echo ::set-env name=PUBLISH_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_BASE}})
+          echo ::set-env name=PUBLISH_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY}})
 
       - name: Load base image cache
         id: load-cached-image-base
@@ -412,8 +409,8 @@ jobs:
 
       - name: Verify images were loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_BASE" || { echo "Image $DOCKER_IMG_NAME_BASE was not found!" ; exit 1; }
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_BASE" || { echo "Image $CACHED_DOCKER_IMG_NAME_BASE was not found!"; docker image ls; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Docker Login
         uses: azure/docker-login@v1
@@ -424,11 +421,11 @@ jobs:
 
       - name: Publish images
         run: |
-          REMOTE_DOCKER_IMG_NAME_BASE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$DOCKER_IMG_NAME_BASE"
-          REMOTE_DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$DOCKER_IMG_NAME_AGENCY"
+          REMOTE_DOCKER_IMG_NAME_BASE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_BASE"
+          REMOTE_DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_AGENCY"
 
-          docker tag "$DOCKER_IMG_NAME_BASE" "$REMOTE_DOCKER_IMG_NAME_BASE"
-          docker tag "$DOCKER_IMG_NAME_AGENCY" "$REMOTE_DOCKER_IMG_NAME_AGENCY"
+          docker tag "$CACHED_DOCKER_IMG_NAME_BASE"   "$REMOTE_DOCKER_IMG_NAME_BASE"
+          docker tag "$CACHED_DOCKER_IMG_NAME_AGENCY" "$REMOTE_DOCKER_IMG_NAME_AGENCY"
           docker image ls
 
           docker push "$REMOTE_DOCKER_IMG_NAME_BASE" || true

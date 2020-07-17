@@ -3,6 +3,7 @@
 [Mediator Agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md)
 in Aries terminology).
 
+
 # How to run it
 You can run agency locally. It's recommended to run with Node v12. (Tip: use [NVM](https://github.com/nvm-sh/nvm)
 to switch manage different NodeJS versions.)

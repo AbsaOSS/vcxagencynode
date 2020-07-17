@@ -4,7 +4,6 @@ NodeJS implementation of VCX Agency client implementing Client2Agency LibVCX pro
 In a typical application, you'll likely use LibVCX library as an Agency client - a user friendly way to communicate 
 with agency and process received messages.
 
-
 This client on the other hand, does not define how to process messages, handle connections, but it provides granular
 access to LibVCX Agency API.  
  
