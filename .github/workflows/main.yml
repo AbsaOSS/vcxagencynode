@@ -95,7 +95,7 @@ jobs:
           echo "Docker images built in this CI will be using tag '$DOCKER_TAG_VERSION'"
 
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
-          echo ::set-env name=DOCKER_BASE_HASH::$(echo ${{ hashFiles('vcxagency-base/vcxagency-base.Dockerfile') }})
+          echo ::set-env name=DOCKER_BASE_HASH::$(echo ${{ hashFiles('vcxagency-base') }})
           echo ::set-env name=CODE_AGENCY_HASH::$(echo ${{ hashFiles('vcxagency-node') }})
           echo ::set-env name=CODE_EASYSDK_HASH::$(echo ${{ hashFiles('easy-indysdk') }})
           echo ::set-env name=CODE_CLIENT_HASH::$(echo ${{ hashFiles('vcxagency-client') }})
@@ -138,22 +138,10 @@ jobs:
       - name: If NOT found in cache, Build and cache image.
         if: steps.cache-image.outputs.cache-hit != 'true'
         run: |
-          echo "CACHE MISS!"
-          set -x
-
-          INDYSDK_REPO="https://github.com/hyperledger/indy-sdk"
-          INDYSDK_REVISION="1.15.0"
-          docker build \
-                       --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \
-                       --build-arg "INDYSDK_REVISION=v$INDYSDK_REVISION" \
-                       -f vcxagency-base/vcxagency-base.Dockerfile \
-                       -t "$DOCKER_IMG_NAME_BASE" \
-                        .
+          vcxagency-base/build.sh "$DOCKER_IMG_NAME_BASE"
           mkdir -p /tmp/imgcache
           docker save "$DOCKER_IMG_NAME_BASE" > /tmp/imgcache/img_base.rar
-
           docker image ls
-
 
   build-image-vcxagency:
     runs-on: ubuntu-16.04
