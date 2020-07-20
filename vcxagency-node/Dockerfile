@@ -38,7 +38,7 @@ USER app
 WORKDIR /home/app/vcxagency-node
 RUN yarn install --production
 
-FROM ${AGENCY_BASE_IMAGE}
+FROM BASE
 USER app
 
 WORKDIR /home/app/easy-indysdk
