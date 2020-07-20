@@ -108,12 +108,15 @@ jobs:
           echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
           echo "::set-output name=DOCKER_TAG_VERSION::$DOCKER_TAG_VERSION"
           echo "::set-output name=RELEASE_VERSION::$RELEASE_VERSION"
+
           echo "::set-output name=CACHE_KEY_BASE::$(echo reposlug-$FULL_REPO_SLUG-branch-$BRANCH_NAME-hash-$DOCKER_BASE_HASH)"
+          echo "::set-output name=CACHE_KEY_AGENCY::$CODE_AGENCY_HASH-$CODE_CLIENT_HASH-$CODE_EASYSDK_HASH"
+
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_BASE::vcxagency-base:cached"
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_AGENCY::vcxagency-node:cached"
+
           echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_BASE::vcxagency-base:$DOCKER_TAG_VERSION"
           echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_AGENCY::vcxagency-node:$DOCKER_TAG_VERSION"
-          echo "::set-output name=CACHE_KEY_AGENCY::$CODE_AGENCY_HASH-$CODE_EASYSDK_HASH-$CODE_CLIENT_HASH"
 
   build-vcxagency-base:
     needs:
