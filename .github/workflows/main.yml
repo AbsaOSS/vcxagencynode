@@ -173,7 +173,7 @@ jobs:
         run: docker load < /tmp/imgcache/img_base.rar
 
       - name: Verify base image was loaded
-        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_BASE" || { echo "Image $DOCKER_IMG_NAME_BASE was not found!" ; exit 1; }
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_BASE" || { echo "Image $DOCKER_IMG_NAME_BASE was not found!"; docker image ls; exit 1; }
 
       - name: Load base image cache
         id: load-cached-image-node
@@ -202,7 +202,7 @@ jobs:
           docker load < /tmp/imgcache/img_agency.rar
       - name: Verify agency image was loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
 
   test-vcxagency-node:
@@ -230,7 +230,7 @@ jobs:
         run: docker load < /tmp/imgcache/img_agency.rar
 
       - name: Verify image was loaded
-        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Run tests
         run: |
@@ -270,7 +270,7 @@ jobs:
         run: docker load < /tmp/imgcache/img_agency.rar
 
       - name: Verify image was loaded
-        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Run tests
         run: |
@@ -306,7 +306,7 @@ jobs:
         run: docker load < /tmp/imgcache/img_agency.rar
 
       - name: Verify image was loaded
-        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Run tests
         run: |
@@ -400,8 +400,8 @@ jobs:
 
       - name: Verify images were loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_BASE" || { echo "Image $DOCKER_IMG_NAME_BASE was not found!" ; exit 1; }
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!" ; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_BASE" || { echo "Image $DOCKER_IMG_NAME_BASE was not found!"; docker image ls; exit 1; }
+          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$DOCKER_IMG_NAME_AGENCY" || { echo "Image $DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Docker Login
         uses: azure/docker-login@v1
