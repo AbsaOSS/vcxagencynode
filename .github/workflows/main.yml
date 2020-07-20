@@ -155,8 +155,8 @@ jobs:
     needs:
       - build-vcxagency-base
       - workflow-setup
-    env:
-      DOCKER_BUILDKIT: 1
+#    env:
+#      DOCKER_BUILDKIT: 1
     steps:
       - name: Load up custom variables
         run: |
