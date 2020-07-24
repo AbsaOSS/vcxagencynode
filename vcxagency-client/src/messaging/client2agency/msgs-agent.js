@@ -22,6 +22,8 @@ const MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS = 'did:sov:123456789abcdefghi1234;spec/
 const MSGTYPE_MSG_STATUS_UPDATED_BY_CONNS = 'did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS'
 const MSGTYPE_UPDATE_COM_METHOD = 'did:sov:123456789abcdefghi1234;spec/configs/1.0/UPDATE_COM_METHOD'
 const MSGTYPE_COM_METHOD_UPDATED = 'did:sov:123456789abcdefghi1234;spec/configs/1.0/COM_METHOD_UPDATED'
+const MSGTYPE_UPDATE_CONFIGS = 'did:sov:123456789abcdefghi1234;spec/configs/1.0/UPDATE_CONFIGS'
+const MSGTYPE_CONFIGS_UPDATED = 'did:sov:123456789abcdefghi1234;spec/configs/1.0/CONFIGS_UPDATED'
 
 function buildMsgVcxV2MsgGetMsgsByConns (pairwiseDIDs, uids, statusCodes) {
   const msg = {
@@ -104,6 +106,13 @@ function buildMsgCommMethodUpdated (id) {
   return msg
 }
 
+function buildMsgConfigsUpdated () {
+  const msg = {
+    '@type': MSGTYPE_CONFIGS_UPDATED
+  }
+  return msg
+}
+
 module.exports = {
   // get msgs: for many agent-connections (recipient is agent entity)
   buildMsgVcxV2MsgGetMsgsByConns, // req
@@ -118,6 +127,7 @@ module.exports = {
 
   buildMsgVcxV2UpdateWebhookUrl,
   buildMsgCommMethodUpdated,
+  buildMsgConfigsUpdated,
 
   MSGTYPE_GET_MSGS_BY_CONNS,
   MSGTYPE_MSGS_BY_CONNS,
@@ -126,5 +136,8 @@ module.exports = {
   MSGTYPE_MSG_STATUS_UPDATED_BY_CONNS,
 
   MSGTYPE_UPDATE_COM_METHOD,
-  MSGTYPE_COM_METHOD_UPDATED
+  MSGTYPE_COM_METHOD_UPDATED,
+
+  MSGTYPE_UPDATE_CONFIGS,
+  MSGTYPE_CONFIGS_UPDATED
 }

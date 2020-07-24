@@ -24,7 +24,9 @@ const {
   MSGTYPE_GET_MSGS_BY_CONNS,
   MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS,
   MSGTYPE_UPDATE_COM_METHOD,
+  MSGTYPE_UPDATE_CONFIGS,
   buildMsgCommMethodUpdated,
+  buildMsgConfigsUpdated,
   buildMsgVcxV2MsgStatusUpdatedByConns,
   buildVcxV2AgencyMsgsByConn,
   buildMsgVcxV2MsgsByConns,
@@ -142,6 +144,8 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
       return _handleCreateKey(msgObject)
     } else if (msgType === MSGTYPE_UPDATE_COM_METHOD) {
       return _handleUpdateComMethod(msgObject)
+    } else if (msgType === MSGTYPE_UPDATE_CONFIGS) {
+      return _handleUpdateConfigs(msgObject)
     } else if (msgType === MSGTYPE_GET_MSGS_BY_CONNS) {
       return _handleGetMsgsByConn(msgObject)
     } else if (msgType === MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS) {
@@ -170,6 +174,16 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
       return buildMsgCommMethodUpdated(id) // TODO: What's meaning of 'id' field? This reflects dummy-cloud-agency impl.
     } else {
       throw Error(`${whoami} Unsupported com method type ${type}`)
+    }
+  }
+
+  async function _handleUpdateConfigs (msgObject) {
+    const { configs } = msgObject
+    try {
+      await updateConfigs(configs)
+      return buildMsgConfigsUpdated()
+    } catch (err) {
+      throw Error(`${whoami} Failed to update configs: ${err}`)
     }
   }
 
@@ -289,6 +303,15 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
 
   async function getWebhook () {
     return serviceStorage.getAgentWebhook(agentDid)
+  }
+
+  async function updateConfigs (configs) {
+    const allowedNames = new Set(['name', 'logoUrl', 'publicDid'])
+    if (!Array.isArray(configs)) throw Error('Configs to update must be an array!')
+    configs.forEach(config => {
+      if (!allowedNames.has(config.name)) throw Error(`Config name ${config.name} not allowed!`)
+      // TODO: Implement updating
+    })
   }
 
   return {
