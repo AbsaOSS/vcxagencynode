@@ -9,21 +9,10 @@ on:
       - "**"
 
 jobs:
-#  detailed-info:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Print Context details
-#        run: |
-#          echo "This was trigerred by event = ${{ github.event_name}}"
-#          echo "Github context = ${{ toJson(github) }}"
-#          echo "Event info ${{ toJson(github.event) }}"
-
   workflow-setup:
     runs-on: ubuntu-latest
     outputs:
       GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
-      BRANCH_NAME: ${{ steps.mainstep.outputs.BRANCH_NAME }}
-      DOCKER_TAG_VERSION: ${{ steps.mainstep.outputs.DOCKER_TAG_VERSION }}
       RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
       CACHE_KEY_BASE: ${{ steps.mainstep.outputs.CACHE_KEY_BASE }}
       CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
@@ -96,7 +85,6 @@ jobs:
           echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
           echo "Docker images built in this CI will be using tag '$DOCKER_TAG_VERSION'"
 
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
           echo ::set-env name=DOCKER_BASE_HASH::$(echo ${{ hashFiles('vcxagency-base') }})
           echo ::set-env name=CODE_AGENCY_HASH::$(echo ${{ hashFiles('vcxagency-node') }})
           echo ::set-env name=CODE_EASYSDK_HASH::$(echo ${{ hashFiles('easy-indysdk') }})
@@ -107,8 +95,6 @@ jobs:
         run: |
           set -x
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
-          echo "::set-output name=BRANCH_NAME::$BRANCH_NAME"
-          echo "::set-output name=DOCKER_TAG_VERSION::$DOCKER_TAG_VERSION"
           echo "::set-output name=RELEASE_VERSION::$RELEASE_VERSION"
 
           echo "::set-output name=CACHE_KEY_BASE::$DOCKER_BASE_HASH"
@@ -129,9 +115,6 @@ jobs:
     steps:
       - name: Load up custom variables
         run: |
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
-          echo ::set-env name=BRANCH_NAME::$(echo ${{needs.workflow-setup.outputs.BRANCH_NAME}})
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo ${{needs.workflow-setup.outputs.DOCKER_TAG_VERSION}})
           echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
           echo ::set-env name=CACHED_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}})
       - name: Git checkout
@@ -374,7 +357,6 @@ jobs:
     steps:
       - name: Load up release version
         run: |
-          echo ::set-env name=RELEASE_VERSION::$(echo ${{needs.workflow-setup.outputs.RELEASE_VERSION}})
           echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
           echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
           echo ::set-env name=CACHED_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}})
