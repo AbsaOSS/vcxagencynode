@@ -39,7 +39,8 @@ RUN mv $INDYSDK_PATH/libindy/target/release/libindy.so /usr/lib
 USER indy
 RUN cargo build --release --manifest-path=$INDYSDK_PATH/experimental/plugins/postgres_storage/Cargo.toml
 
-RUN mv $INDYSDK_PATH/experimental/plugins/postgres_storage/target/release/libindystrgpostgres.so .
+USER root
+RUN mv $INDYSDK_PATH/experimental/plugins/postgres_storage/target/release/libindystrgpostgres.so /usr/lib
 
 FROM alpine:3.12
 
@@ -51,7 +52,7 @@ ENV LANG="C.UTF-8"
 
 RUN addgroup -g $GID node && adduser -u $UID -D -G node node
 
-COPY --from=builder /usr/lib/libindy.so /home/indy/libindystrgpostgres.so /usr/lib/
+COPY --from=builder /usr/lib/libindy.so /usr/lib/libindystrgpostgres.so /usr/lib/
 
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
