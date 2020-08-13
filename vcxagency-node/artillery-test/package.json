@@ -1,0 +1,43 @@
+{
+  "name": "agency-perf-test",
+  "author": "SK telecom",
+  "version": "1.0.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
+  "description": "Performance test suite for VCX V2 Agencies.",
+  "main": "src/index.js",
+  "scripts": {
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "test:00": "jest --runInBand  ./test/00-make-wallet",
+    "test:20": "jest --runInBand  ./test/20-messaging",
+    "test:art:onbd": "DEBUG=http artillery run ./test/10-onboarding/artillery.yaml",
+    "test:art:msg": "DEBUG=http artillery run ./test/20-messaging/artillery.yaml",
+    "test:art:verify": "DEBUG=http artillery run ./test/20-messaging/art-verify-simul.yaml",
+    "test:cw": "rm -rf ~/.indy_client/wallet/unittest-anoncrypyting-wallet-* ~/.indy_client/wallet/unit-perftest-*"
+  },
+  "dependencies": {
+    "axios": "^0.18.1",
+    "easy-indysdk": "file:./easy-indysdk",
+    "query-string": "^6.8.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.2.2",
+    "@types/node-persist": "0.0.33",
+    "artillery": "^1.6.1",
+    "command-line-args": "^5.1.1",
+    "command-line-usage": "^5.0.5",
+    "dotenv": "^7.0.0",
+    "elasticdump": "^6.16.0",
+    "jest": "^26.0.1",
+    "jest-cli": "^26.0.1",
+    "node-persist": "^3.0.5",
+    "sleep-promise": "^8.0.1",
+    "standard": "^14.3.4",
+    "winston": "^3.2.1"
+  }
+}

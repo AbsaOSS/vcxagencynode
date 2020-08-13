@@ -1,0 +1,432 @@
+-- todo
+- skt-hlf: hlf-config.yaml에 document ver 필드 추가
+  - load 시 낮은 버전 문서를 현재 버전으로 converting하는 기능도 필요
+- skt-hlf: Orderer 파라메터 (블록 타임아웃 등) 설정 방법 제공
+  . cryptogen, configtxgen을 구동하는 스크립트 파일을 생성하는 것이 좋겠다
+    generate 명령후, 스크립트 파일을 구동하면서 미세조정을 할 수 있게...
+  . hlf-master.sh 제공?
+- skt-hlf: dns server 설치/운영
+  . 당위성: 컨테이너 extra_hosts 등록 방식 (즉, 컨테이너의 /etc/hosts 이용 방식)으로는
+    peer, orderer의 주소가 바뀔 경우 대응하지 못함
+  . 당위성: HLF 네트워크 구축 시작 단계에서 모든 서버(그리고 IP)가 준비되지 않음
+    추후 점진적으로 서버(그리고 IP)를 추가/변경할 때마다 DNS 설정이 동적으로 일어나야 함
+  . 요구사항: DNS 서버는 Org마다 별도 운영할 수 있어야 함
+    DID 하나은행에서 proxy를 이용했을 때, Org마다 proxy 주소를 달리설정해 주어야 했음
+  . 요구사항: Org별 DNS서버에 항목을 추가/수정/삭제하는 기능을 제공해야 한다
+- skt-hlf: "cc deploy전 channel ready 상태"를 event로 처리
+- skt-hlf: Raft Orderer 검토
+  - Kafka Orderer 마이그레이션 기능 필요
+- skt-hlf: hlf-config.yaml cc 파트에 invoke/query-args 필드 추가, invoke/query-cc.sh 자동 생성
+- 브랜드사이트 론칭
+  - 브랜드사이트 수정안 정리 & 협의 (w/ 주재현 님, 이윤지 님)
+    - 오픈 범위 협의 (DApp 샘플, 프로비저닝웹, ...)
+      - DApp 샘플 다듬기 (필요?): 성택님 DApp? MWC DApp?
+    - 도메인 협의 (stonledger.io?)
+  - 프로비저닝웹 다듬기 (필요?)
+    - cc path 속성을 read-only로 고정
+    - query-cc, invoke-cc 포함?
+    - README 리뷰
+  - https 인증서 확보
+- Azure VM Image 작성 방법 파악
+- Azure향 BaaS
+  - Azure 메타트론 디스커버리 사례 확인
+    - 페이지내 정보
+      - 동영상 필요한가?
+    - 아키텍처 다이어그램
+- skt-hlf: grafana monitoring refactoring
+  - hlfConfig Monitor 아이템의 타입 체크 (XXXSpec은 단일 아이템, XXXs는 array인 규칙 고려)
+  - host-containers map 상에서 monitor 항목 하나로 여러개의 container들을 처리하는 것 개선
+  - (grafana와 같은 머신에서 실행되는) prometheus의 포트는 host에 노출될 필요 없을 것 같다
+  - prometheus 등의 monitoring container들에 extra_hosts 설정이 필요 없을 것 같다
+- hlf-skt: long-term test
+  !- orderer load balancing? : 왜 o1만 일하나? (o1만 작업로그가 출력됨)
+    => invoke-cc에 o1만 명시했다
+    !- invoke-cc를 수정하면 모든 orderer들을 참가시킬 수 있나? => yes
+      - invoke 성공하지만, query하면 결과가 그대로다 (invoke한 값이 반영되지 않았다). 원인?
+  - grafana vm 상태 파악에 누락되는 node들이 있다 (cadvisor? node-exporter?)
+  - peer/orderer 컨테이너 교체 프로세스 테스트
+    . HLF 1.4.7 안정화 버전
+    . volume mount 옵션 적용 버전
+    - nCloud 서버의 스토리지는 컨테이너 볼륨 전체를 백업할만큼 넉넉한가?
+- initial-ledger: org 추가
+  - n-cloud 계정/로그인 확인
+  - n-cloud 서버 접속 확인
+  - 방화벽 확인
+  - 프락시 확인
+  - HLF org/peer 추가
+- hlf-longterm: disk full 문제 해결
+  - 1일 tx 조절 (orderer 머신 스토리지에 3+개월 저장 가능하도록 tx 낮추기)
+  - grafana page에서 일부 vm이 보이지 않는 문제 fix
+  - grafana 초기화 스크립트 검증 및 fix
+- did front-end
+
+- Mediator 기능 테스트 자동화
+  - Faber-Alice jest 테스트 스크립트 작성
+  - Q to Author
+    - vcxagency-node에서 yarn run test:unit 하면 실패, 의도적인가?
+      vcxagency-node/src/configuration/app-config.js 파일 64 라인의 아래 구문 (min 0, max 0)
+      PG_WALLET_MIN_IDLE_COUNT: Joi.number().integer().min(0).max(0)
+- Mediator infra 구축 (for 운영)
+  - postgres HA 운영 Best practice 파악
+- Mediator docker image 빌드
+  - 환경변수 및 설정 파라메터 선택
+    . 로그출력 없게/적게
+    . DB connection pool 이용을 효과적으로
+- Mediator 성능 테스트
+  !- 테스트 도구 탐색: Artillery 적합성 테스트 (JS function 만으로 시나리오 구성이 가능한가?)
+    => NodeJS 부하 테스트 도구로는 Artillery 외에 대안이 없는 것 같다
+    => 그런데, Artillery는 JS function 만으로 테스트 시나리오를 구성할 수 없다 (api-url & payload 명시 필요)
+    => 그러니, vcxagency-node 대상 api-url과 payload를 사전에 구비할 수 있는지 확인하자 (AbsaOSS 문서 정독)
+  !- 평가 지표 & 평가 시나리오 개발
+    . PASS앱의 경우 최대 동접 2천명 (@ 7.17타운홀 자료) => 최대 동접 2,000 명이 목표
+    . (서버 1대에서 동작하는) Mediator 1개 인스턴스의 처리 용량 산정
+      . (4CPU,8G RAM,... 스펙의 머신은) 1초에 몇개의 VC발급이 가능한가 (또는 Proof수집이 가능한가?)
+    !- 인터넷 자료 정독
+    !- Poll-me 자료 정독
+    => proof-req payload size, proof payload size 요청함 (to 지혁님)
+    => proof 확인 시나리오로 1개 Agency의 최대 퍼포먼스를 측정하기로 함
+  - 테스트 인프라 구축 (long-term 서버 활용)
+    . VM list
+      . 172.27.19.109: operating vm (4core cpu, 7.8G mem)
+      . 172.27.19.83: Agency (4core cpu, 7.8G mem)
+      . 172.27.19.55: postgres db (4core cpu, 7.8G mem)
+      . 172.27.19.32: indy-pool (4core cpu, 7.8G mem)
+      . 172.27.26.31, 104, 33, 30, 80, 96: load gen (4core cpu, 7.8G mem)
+    !- initial-mediator ingee/for-ltvm branch 생성
+    !- SW 설치 (19.109, 19.83, 19.55,
+      !- vim
+      !- node.js: nvm install/use/alias lts/erbium
+      !- initial-mediator clone & checkout ingee/for-ltvm
+    !- SW 설정/실행
+      !- loader들 docker.txn 확인 => ledger 쓰지 않음 (schema, schema-def 정의 않음)
+    !- Agency version에 따른 성능차? => 최신 버전으로만 테스트!
+    - test summary : 테스트 환경 구축
+      !- max-vuser 제한을 없앰
+        . msg-0728-1525.log
+        . ld별 Faber들의 send msg는 14000 여개, Alice들의 recv msg는 250 여개
+          => ECONNRESET (1090개), ESOCKETTIMEOUT (10900개) 에러로 msg 전달 실패함
+      !- Agency log level을 warning으로 높임 (더 적게 출력)
+        . msg-0728-1546.log
+        . total-msg-count, faber-msg, alice-msg 수치 비슷
+        . ECONNRESET=1090개, ESOCKETTIMEDOUT=10900개 (직전 1090개, 10900개)
+        . median res-time = 26 sec (직전 25 sec)
+      !- Agency log level을 error으로 높임 (가장 적게 출력)
+        . msg-0728-1634.log
+        . total-msg-count, faber-msg, alice-msg 수치 비슷
+        . ECONNRESET=1090개, ESOCKETTIMEDOUT=10900개 (직전 1090개, 10900개)
+        . median res-time = 28 sec (직전 26 sec)
+      !- Artillery instance를 2배로 (2 proc/vm)
+        . msg-0728-1718.log,
+          msg-0728-1728.log: artillry fault 발생, 비정상 종료로 지표 확인 못함
+        !- test code fix ==> 포기. 이런 상황이 발생하지 않도록 제한하겠다 (vCPU 점유율 100% 이내로)
+    !- 중간 정리
+      !- libindy 관련 patrik 메시지 확인 (blocking io?) => wallet API가 blocking 방식으로 동작한다
+        ---
+        @VCX Patrik Stas 5:14 PM
+        Yeah also the agency - on the node implementation I've hit bottleneck of roughly 70 request/second == 4200 a minute. I've seen benchmark where NodeJS Express server handled about 20K/second. From my experiments, I've managed to get about 900/second (maybe I did something wrong) - but my conclusion is that if the wallet API is async, 1 agency instance will handle I think at least 1K/second, if not more.
+        Till then the workaround I see is to run many container instance using some docker orchestration tool
+        ---
+      !- Artillery socket-timeout 설정 가능한가? => config/http/timeout 에 초단위로 설정 (default 120초)
+        . https://artillery.io/docs/http-reference/#request-timeout
+        ---
+        config:
+          target: "http://my.app"
+					http:
+						# Responses have to be sent within 10 seconds or the request will be aborted
+						timeout: 10
+        ---
+    !- test summary: Agency CPU 100% 부하는 어느 정도 일까? (그러면 total-msg == sum-of-Alice 가 될까?)
+			. Agency 로그를 근거로 timeout을 300초로 설정
+				. msg-0729-1246.log
+				. ECONNRESET(12000)개 발생, ESOCKETTIMEDOUT은 발생 않음 => Artillery는 끊지 않았지만, 서버가 끊었다
+        . Agency res time max= 280sec
+        . Agency %cpu max= 200%
+      . config.http.timeout 원복, loader 6개->4개로 축소
+        . msg-0729-1301.log
+        . ECONNRESET은 9000개씩, ESOCKETTIMEDOUT은 800개, 100개, ...
+        . Agency crash!
+        . Agency res-time-max= 125sec
+        . Agency %cpu-max= 180%
+      . loader 4개->2개로 축소
+        . msg-0729-1307.log
+        . ECONNRESET은 8000개씩, ESOCKETTIMEDOUT은 발생 않음, ECONNREFUSED 발견됨
+        . Agency crash!
+        . Agency res-time-max= 41sec
+        . Agency %cpu-max= 150%
+      . loader 2개->1개로 축소
+        . msg-0729-1311.log
+        . ECONNRESET은 10개 미만씩, ESOCKETTIMEDOUT은 7분 경과후부터 1000개씩 발생
+        . Agency alive!
+        . Agency res-time-max= 253sec
+        . Agency %cpu-max= 통상 150%, 190%도 잠깐씩 지나감
+        => loader 1개로 Agency를 죽일 수 있다 (더이상의 loader 투입은 필요 없다)
+      . loader 1개, maxVusers 100
+        . msg-0729-1335.log, msg-0729-1409.log
+        . ECONNRESET, ESOCKETTIMEDOUT 미발생
+        . Agency alive!
+        . Agency res-time-max= 0.8sec
+        . Agency %cpu-max= 150%
+        => total-msg == total-alice!
+      . loader 1개, maxVusers 200
+        . msg-0729-1418.log
+        . ECONNRESET, ESOCKETTIMEDOUT 미발생 (total-msg == send-msg == recv-msg)
+        . Agency alive! %cpu-max= 150%
+        . Agency res-time-max= 3.5sec
+        . res-time-max= 3.9sec, res-median=1.0sec
+      . loader 1개, maxVusers 400
+        . msg-0729-1426.log
+        . ECONNRESET, ESOCKETTIMEDOUT 미발생 (total-msg == send-msg == recv-msg)
+        . Artillery hang!
+        . Agency alive! %cpu-max= 150%
+        . Agency res-time-max= 11.3sec
+        . res-time-max= 10.5sec, res-median=9.4sec
+      => loader 1개, phase 20/120, arrivalRate 2/100, maxVusers 100 선택
+        (이 상태에서 total-msg == total-Alice 였다)
+    !- test summary: Agency %CPU < 100 적정 부하패턴 검색
+      => loader 3개, phase 10/120, arrivalRate 1/4, maxVuser 4 선택
+        (이 상태에서 Agency %CPU가 80~120 이었다)
+    !- test 목표치 설정
+      . max %CPU, 80%(top 출력치)를 목표치로 => 이를 넘으면 NodeJS 로직이 GC와 경쟁
+        => https://artillery.io/docs/faq/#high-cpu-warnings 참조
+      . max response-time, 1sec를 목표치로 => 그냥... %CPU에 종속 (무시해도 무방)
+    !- test summary: response time, res/sec 의미 파악 (post 행위에 대한 지표가 맞는가?)
+      !- 비교 기준으로 활용하기 위해 5번 결과치 산출 => res/sec=112.06
+      !- loop 다음의 summary 호출을 제거하고 지표가 어떻게 변하는지 확인 (추정: 동일) => res/sec=112.11, 부합
+      !- loop 횟수를 2로 줄이고 지표가 어떻게 변하는지 확인 (추정: 1/5배) => res/sec=23.21, 부합
+      !- loop 횟수를 20으로 늘리고 지표가 어떻게 변하는지 확인 (추정: 2배) => res/sec=145.96, 성능Max도달/포화
+      => Alice가 Agency에서 msg를 가져올 때 생기는 부하가 무척 크다 (안 가져올 때 %CPU=50, 가져올 때 %CPU=130)
+    !- test summary: Agency 한계치 측정 (Agency의 최대 TPS는 60인 것 같다, jjh 추정)
+      . 테스트결과: https://docs.google.com/spreadsheets/d/1E8GrWpDAxOzirsTo0PV9qvSYNpTqAZ8tuGPG_SyJckY
+      . CPU max 100% (top 출력치) 이내를 목표치로 부하 제한 => Agency가 정상 응답하는 최대치라고 생각
+      => Agency TPS (== res/sec로 추정)은 100
+    - test summary: Agency post call의 payload 크기를 키워보자 (res/sec가 변하는가?)
+      . yjh님 log에 의하면 가장 큰 post payload는 verification 때 60477[byte] => 134k text file 확보/이용
+    - Agency 튜닝 factor 확인
+      - log level?
+      - PG_WALLET_MIN_IDLE_COUNT?
+    - share w/ team
+      . max %CPU, 80%(top 출력치)를 목표치로 => 이를 넘으면 NodeJS 로직이 GC와 경쟁
+        => https://artillery.io/docs/faq/#high-cpu-warnings 참조
+        => loader 3ea 사용
+      . 지표 취합 방식
+        . response time, max : 3ea 중 최대치
+        . response time, med : 3ea 중 최대치
+        . res/sec : 3ea 합산
+      . Alice가 Agency에서 msg를 가져올 때 생기는 부하가 무척 크다 (안 가져올 때 %CPU=50, 가져올 때 %CPU=130)
+    - git commit (agency 소스&설정 initial-mediator로 가져오기)
+      - test log @ld1
+      - test setting, src @ld1
+    - perf-test branch cherry-pick
+      - 5fa11f865452ceb507c0eaa5f7e9d0627bed93a7 : perf-test/README.md
+      - 65eff790d6627ce11f08cfe8cfa7afa33c54caa9 : .../20-messaging/artillery.proc.js : Alice-total
+      - 7423cac1e7370b7b6cfb594b015e72e37ea0ad8e : payload file for post op
+
+-- weekly
+
+-- done
+0723- Mediator 성능 테스트 코드 개발: faber(N개) vs alice(N개) messaging
+  . nmon 설치 (시스템 메트릭 모니터링 툴)
+  !- Config.json의 DEBUG 파람과 log 함수 연계
+  !- vcxagency-client 분석, 테스트 설계: 1:1? 1:N? N:N?
+    => "faber send msg to alice", "alice send msg to faber" 시나리오 별도 구비
+    => "faber download msg from agency", "alice download msg from agency" 시나리오도 구비
+  !- artillery 테스트 코드 구현
+    !- agentConn 1개로 여러개의 entity들로부터 msg를 받을 수 있는가? => 있다
+    !- 1:1 messaginge 테스트 코드를 N:N messaging 으로 일반화
+      !- post-req:: loop 처리
+      !- alice max count 처리
+        => alice 수가 많아지면 messaging 부하 테스트가 아니라 onboarding 부하 테스트가 될 우려가 있다
+        !- test-config.json 파라메터 추가
+      !- 시나리오 끝날 때, alice 가 수신한 메시지 숫자 카운트
+    !- anoncrypt wallet name 고정
+  !- wrap-up
+    !- 10-onboarding, AgencyDid/Verkey를 test-config.json에서 읽도록 artillery.proc.js 수정
+    !- artillery.yaml:: test-phase 적절하게 디폴트 설정
+  !- README.md 업데이트
+    !- 테스트 설정 방법
+      . agency url : artillery.yaml
+      . agency did, verkey : test-config.json
+      . Alice/Faber number : test-config.json
+      . MaxMessaging Alice/Faber number : test-config.json
+  !- git commit: check to remove a.log
+  !- test env set-up: w/ P.CL VMs
+  !- Share with team
+    . 데모
+    . test metric 의미 (total msg count, faber msg count, alice msg count)
+    . test-config.json Faber/Alice MaxNumber 의미
+      => alice 수가 많아지면 messaging 부하 테스트가 아니라 onboarding 부하 테스트가 될까 우려
+    - Q: 어디까지가 표준인가? vcxFlowFullOnboarding, vcxFlowGetMsgsFromAgent, ... 는 표준인가?
+0715- Mediator 성능 테스트 코드 개발: faber(N개), alice(N개) onboarding
+```
+nc -l 8080
+curl -v -X POST localhost:8080/agency/msg -d @vcx-connect-alice.msg -H "Content-Type: application/ssi-agent-wire"
+curl -v -X POST localhost:8080/agency/msg -d @vcx-connect-alice-dbg.msg -H "Content-Type: application/ssi-agent-wire"
+DEBUG=[*|http|http,http:response] artillery run TEST_YAML
+```
+  !- vcx connect
+    !- Artillery로 vcx-connect 부하테스트 코드 작성
+    !- Artillery README 작성
+    - vcx connect 메시지를 file에서 읽어오는 방식이 아니라 테스트할 때 동적으로 생성하도록 수정
+      => test:10 vcx-msg-conn 캡처 과정이 필요 없어짐
+      !- init의 indyCreateAndStoreMyDid()호출은 DID를 계속 새로 만드나? => 새로 만든다
+      !- anonCrypt에 아무 wh나 전달해도 되나? => ecnrypt/decrypt 모두 된다!
+      !- test:10 (vcx-conn 메시지 캡쳐) 필요 없음을 README에 명시
+    !- clean-up: 반복 테스트, log 제거
+      !- common.js, agency-flow.js, *.spec.js, artillery-proc.js
+  !- vcx create-agent
+  !- wrap-up
+    !- 만들어진 client wallet을 open 하는 방식이 아니라 테스트할 때 새로 create 하는 방식으로???
+      => wallet 만드는 시간이 꽤 걸린다 (2.5+ sec/wallet)
+      => 지금처럼 만들어진 wallet을 이용하는 방식 고수
+    !- entity 숫자(faber-N, alice-N) 설정에 따라 onboarding 부하 테스트를 진행하도록 코드 정리
+      !- artillery phase 설정에 따라 exception 발생, 이때 뭔가 꼬이는 문제 해결
+        => context.vars['users'] 이용, context 관리
+      !- artillery test scenario 종료후 onboarding 성공/실패 숫자 확인
+        . wallet open 이후 시도한 횟수 체크
+        . connect,sign-up,create-agent 실패횟수 체크 (Agency:WalletAlreadyExistsError 제외)
+        !- artillery Best Practice 파악
+        !- artillery test scenario 종료후 코드 개입시키는 방법? => afterScenario
+    !- summary report 출력
+      . https://github.com/artilleryio/artillery/issues/160
+    !- directory 구조 정리
+    !- config.json 분리
+    !- README.md 수정
+      !- test:10 onboarding/connect message capture 관련 내용 제거
+      !- test-config.json 설정
+0715- Mediator 성능 테스트 코드 개발: create faber(N개) wallets and alice(N개) wallets
+  => indy.generateWalletKey(seed) 호출시 "Indy Error: CommonInvalidStructure" 문제 있었음
+  => indy.generateWalletKey() 함수는 RAW 방식으로 wallet-key를 생성하는 함수
+  => indy.generateWalletKey()를 호출해서 wallet-key를 만들어
+      indy.createWallet(wallet-name, wallet-key, "RAW")를 호출하는 방법을 쓰지 않고,
+      indy.createWallet(wallet-name, some-seed-string-as-wallet-key, "ARGON2I_MOD")만 호출하여
+      wallet을 생성함
+  => 이는 vcx/wrapper/node/demo/faber.js 과 동일한 방식임
+  => 생성된 wallet을 some-seed-string-as-wallet-key로 open할 수 있는지 indy-cli로 검증함
+0715- vcxagencynode PR 관련 Patrik 요청 대응
+0701- VCX Slack의 Patrik 메시지 정독
+0701- AbsaOSS/vcxagencynode README 정독
+  !- vcxagency-node/ README.md, DEV.md, CONFIGURATION.md
+    vcxagency-client/ README.md,
+    vcxagency-tester/ README.md
+  !- README 수정 (vcx-study, initial-mediator, ...)
+  !- to PR
+    !- $/vcxagencynode/vcxagency-node/README.md:36
+      [here](./configuration.md) -> [here](./CONFIGURATION.md)
+    !- $/vcxagencynode/vcxagency-node/README.md:39
+      [first need to build base image](../ubuntu-indysdk-lite) -> [first...](../vcxagency-base)
+    !- $/vcxagencynode/vcxagency-node/README.md:67
+      [VCX Tester](../vcx-tester) -> [VCX...](../vcxagency-tester)
+    !- $/vcxagencynode/vcxagency-node/README.md:83
+      [overview](./dev.md) -> [overview](./DEV.md)
+0624- Mediator 기능 테스트
+  !- Jest 학습
+  !- Alice&Faber demo with vcxagencynode
+  !- Alice&Faber demo with nodeJS lts/erbium
+    !- indy-sdk/vcx/wrapper/node/ 에서 lts/erbium 버전의 npm install 실패 원인?
+      !- 문제 node-module 파악 => ffi, ref, ref-struct, weak
+    !- initial-mediator/feature-test 용 nodeJS 버전 결정 => NodeJS lts/carbon (되는 버전)을 쓰기로
+  !- (vcxagency-node unit-test 포함) vcxagencynode 테스트 코드 체크: 참조할 테스트 시나리오가 있는가?
+    !- psql 이용, DB 데이터 확인
+    !- vcxagency-node test 시나리오중에 VC발급 Proof확인 시나리오가 있는가?
+      => vcxagencynode/node-vcx-wrapper/demo 확인하자
+      !- 여기도 nodeJS lts/erbium 으로 npm install 에러 (node-gyp 빌드 에러)
+        => node module을 잘만들어야 한다
+        => NodeJS lts/carbon (되는 버전)을 쓰기로
+    !- von-network 적용, ledger 데이터 확인 => vcxangency-node test:unit 은 indy ledger를 쓰지 않는다
+    !- noti test:unit 시나리오 확인 (messaging/aries-msg.spect.js)
+      => web-hook url을 호스팅하는 서버가 준비되어야 함
+      => web-hook 호스팅 서버는 노티 처리를 위해 /notifications path를 제공해야 함
+      => agency의 alice-agent에 noti url을 setWebhookUrlForAgent() 설정해주어야 함
+        => agency레벨이 아니라 agent레벨에서 설정하는 것이 특이하다고 생각
+  !- vcxagencynode/vcx-tester 디렉토리 내용 확인
+    => genesis-path는 /vcxagencynode/vcxagency-tester/test/tools/network-registry/genesis/* 에 존재
+    => agency-url은 어플소스에 존재 (alice/faber agent를 agency에 provision할 때 참조)
+  !- alice-faber w/ von-network, ledger 데이터 확인
+    !- mediator는 ledger와 무관한 것 아닐까??? => 무관함 (정기님 컨펌)
+    !- vcxagency-node test:unit 실행 => vcxangency-node test:unit 은 indy ledger를 쓰지 않는다
+    !- local von-network genesis-path 확인 (ip?) => client_ip, node_ip가 있음
+    !- dummy-cloud-agent & von-network & sqlite 에서 alice-faber 확인
+      !- 단계별 ledger에 기록되는 데이터 확인
+        => SCHEMA, CRED_DEF 2개가 기록됨
+      !- revocation 적용시 ledger에 기록되는 TX가 달라지는지 확인
+        => REVOC_REG_DEF, REVOC_REG_ENTRY 2개 TX가 추가 기록됨
+    !- vcxagency-node & von-network & postreSQL 에서 alice-faber 확인
+      !- faber.js, alice.js 수정
+        !- "Enter any key" 위치 조절 (polling 직전 코드 제거)
+        !- env에 따라 "Enter any key" on/off
+  !- vcxagency feature test 시나리오 결정 & 매뉴얼 테스트
+    !- alice-faber (/w notification)
+    !- scalability
+    !- wrap-up test
+      !- idle_count를 지정하면 DB failover 시에도 alice-faber 데모가 정상 실행되나?
+        => DB table이 유지되면 (DB의 docker volume을 날리지 않으면)
+          DB 컨테이너 failover 시에도 데모 시나리오가 정상 실행됨을 확인
+    !- README update
+      . vcxagencynode 레포를 로컬로 가져온 것 반영
+    !- share with team
+      . demo/common.js provisionAgentInAgency 코드에 webhook 등록 코드 추가
+        => faber.js,alice.js 수정 필요 없음
+      . agency 2개 (8080,8081) 띄우고 faber.js와 alice.js의 agency endpoint를 달리 지정해도 데모 성공
+        => scale-out 문제 없음
+        => DB 재시작시 Agency 정상 동작 않음
+      !- next todo 논의 (성능/부하 테스트)
+        . (n개 holder, n개 issuer/verifier, 1개 Agency 상황에서)
+          . 1개의 issuer/verifier가 여러개의 holder를 상대하는 시나리오를 고려해야 하는지 고민해보자
+          제대로 동작하는지 여부를 따지자
+        . (n개 holder, n개 issuer/verifier, n개 Agency 상황에서)
+          제대로 동작하는지 여부를 따지자
+        . 그다음 성능을 따지자
+          - provistion agent in agency: 처리속도, max agent 개수, ...
+          - issue VC to Alice: 처리속도, ...
+          - submit Proof to Faber: 처리속도, ...
+      !- faber1 : aliceN 테스트
+        - Q: cred-def 를 1번 만들어 재사용하면 에러 "invalide cred-def handle", 이유?
+    !- feature-test 소스레포 정리
+0624- DB Connection Best Practice 파악 => MM메모함
+0615- 태규님 ncloud 확인요청: LB(10.181.23.6) 상태 확인
+0609- Mediator 개발 계획
+  !- 팀장님 메일 회신: 개발 일정 (~6.9.화)
+  !- DummyCloudAgent 분석 자료 공유
+    . step-by-step Alice&Faber, agent-conn 3개의 생성시점 확인
+      . nodeJS version 확인 (v8.17.0)
+      . check ~/.indy_client directory & wallets
+      . check http://localhost:8090/admin, /forward-agent
+    !- Q: Mediator end-point가 2개(8080,8081) 이유? => skip
+    !- Q: DID,VerKey (WalletName,DID,SeedScret,WalletKeySecret, ...) 어떻게 만드나?
+      => http://54.180.86.51/ 에서 "Register from seed" 하면 생성됨
+  !- NodeJS Mediator 평가 항목 (== Mediator 개발 목표)
+    . 기본 기능이 제대로 구현되어 있는가?
+      . Faber-Alice 데모 테스트
+      . Single Issuer/Verifier/Holder 테스트
+      . Multiple Issuer/Verifier/Holder 테스트
+    . 단말이 오프라인일 경우에도 연결성을 보장하는가? (noti를 지원하는가?)
+    . mediator가 state-less한가? (scale-out 가능한가?)
+    . 성능 테스트
+      . 시스템 Failure 발생 시 정상 서비스 여부
+      . 과부하 Stress 테스트
+    - unit/regression test tool?
+    - load test tool?
+  !- Mediator 관련 todo
+    - 운영 서버 설정 (상용 4대, 테스트용 3대. TDE?)
+      - Docker/Swarm 설정
+      - 방화벽 Any 오픈 (8080,8081?)
+      - DNS 등록 (initial-agency.sktelecom.com?)
+  !- CloudAgent R&R?
+    - 윤지혁,김인기 => Mediator 운영 (개발 항목 미지수)
+    - 성백재,김정기 => CloudAgent REST API 개발 (SteetCred 기준 Agency-API와 Wallet-API)
+  !- Mediator 일정
+    - Mediator as-is 기능 평가& 성능 평가 : 1달 ~6.E
+    - Mediator 부족 부분 개발 : 1달 ~7.E
+    - 테스트 인프라& 운영 인프라 구축 (Swarm/K8s) : 1달 ~8.E
+    - Mediator QA : 1달 ~9.E
+    * 변수: Initial Ledger NW 확장 (6월 중순. 약 2주 소요)
+0608- NodeJS Mediator 릴리즈 내용 확인
+  !- 테스트코드 실행 => yarn run test:unit
+  !- 데모 실행 (production mode) => yarn run serve
+  !- clean-up
+    !- Dummy-cloud-agent 실행 확인
+    !- AWS 중계 서버 stop
+0603- MVCC? (같은 키로 TX를 많이 날릴 경우 race-condition? 대응 기법) 개념 체크
+  => DB의 concurrency-control 기법 중 하나
+  => DB 데이터를 읽을 때 버전 분기를 허용 (즉 multi-version을 허용)
+  => (소스코드 버전 컨트롤처럼) DB 데이터의 충돌이 발생할 수 있으며, 이를 Application이 해결해야 함

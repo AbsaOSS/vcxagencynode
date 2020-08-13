@@ -1,0 +1,392 @@
+VERIFY
+
+### Agency-FWD (CREATE_KEY)
+[2020-07-28 11:36:18.537] [middleware] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: POST /agency/msg
+[2020-07-28 11:36:18.537] [api-messaging] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: +++++req.body.toString().length: 1737
+[2020-07-28 11:36:18.537] [entity-fwa] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:18.567] [entity-fwa] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:18.568] [router] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:18.588] [resolver] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:18.610] [agent] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/CREATE_KEY","forDID":"3cGdnJvDgDEwEkz7AcVzFS","forDIDVerKey":"2RSvsaKGDPMA62ZYeYzVUJSsLcvR3nQmLiDKycyyfQZM"}
+[2020-07-28 11:36:18.610] [agent-connection] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: Creating agent-connection agentDid=TPk5tWsz36oiitiiuwnkYL ownerVerkey=GBYKWhFs4KhmM65oWni3Pr9QJEj29zu2Z3FvkTZ4FtxB, userPairwiseDid=3cGdnJvDgDEwEkz7AcVzFS, userPairwiseVerkey=2RSvsaKGDPMA62ZYeYzVUJSsLcvR3nQmLiDKycyyfQZM
+[2020-07-28 11:36:18.731] [api-messaging] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: -----responseData.toString().length: 881
+[2020-07-28 11:36:18.731] [express-logger] [info] [expressRequestId=566cf856-c4bf-40cc-99d2-778759aa4662]: POST /agency/msg 200 194ms
+
+
+### ARIES-FWD message to A-Conn (to Faber)
+### 추정: Alice가 Faber에게 (Faber의 invitation-conn을 통해) Conn을 요청
+###
+[2020-07-28 11:36:18.743] [middleware] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: POST /agency/msg
+[2020-07-28 11:36:18.744] [api-messaging] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: +++++req.body.toString().length: 4537
+[2020-07-28 11:36:18.744] [entity-fwa] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:18.757] [entity-fwa] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AriesFWD message
+[2020-07-28 11:36:18.757] [router] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: Router routing a message to '7p4xYwSLSysdmhwu2mUWaizrzRS3g5nPiojEzMFpm9Yb'.
+[2020-07-28 11:36:18.761] [resolver] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: Resolver: For 7p4xYwSLSysdmhwu2mUWaizrzRS3g5nPiojEzMFpm9Yb resolved Agent Connection Entity.
+[2020-07-28 11:36:18.793] [api-messaging] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: -----responseData.toString().length: 0
+[2020-07-28 11:36:18.793] [express-logger] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: POST /agency/msg 200 49ms
+[2020-07-28 11:36:18.798] [agent-connection] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: Agent U9sQeQqwfTQTPkCi438872 received aries message and resolved webhook http://172.23.243.155:7202/notifications/
+[2020-07-28 11:36:19.528] [agent-connection] [info] [expressRequestId=8e455a1c-7c7a-4d8e-a609-b1353df56bdc]: Notification 15fd83c0-250f-4174-99c7-2046257761ad from agentConnectionDid DVrLZZPTEHJdbxYGAX1eSN sent to http://172.23.243.155:7202/notifications/ successfully.
+
+
+### Agency-FWD message (GET_MSGS)
+[2020-07-28 11:36:18.806] [middleware] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: POST /agency/msg
+[2020-07-28 11:36:18.806] [api-messaging] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: +++++req.body.toString().length: 2977
+[2020-07-28 11:36:18.806] [entity-fwa] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:18.821] [entity-fwa] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:18.821] [router] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:18.826] [resolver] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:18.855] [agent] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message type did:sov:123456789abcdefghi1234;spec/routing/1.0/FWD
+[2020-07-28 11:36:18.855] [router] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: Router routing a message to 'Lgfj7qXgze6BFpPiARdxSr'.
+[2020-07-28 11:36:18.860] [resolver] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: Resolver: For Lgfj7qXgze6BFpPiARdxSr resolved Agent Connection Entity.
+[2020-07-28 11:36:18.881] [agent-connection] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: [AgentConnection Lgfj7qXgze6BFpPiARdxSr] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS","statusCodes":["MS-103"]}
+[2020-07-28 11:36:18.913] [api-messaging] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: -----responseData.toString().length: 733
+[2020-07-28 11:36:18.914] [express-logger] [info] [expressRequestId=9020d7a4-cf6a-4298-af88-c80aca2e0f9b]: POST /agency/msg 200 107ms
+
+
+### Agency-FWD message (GET_MSGS_BY_CONNS)
+[2020-07-28 11:36:18.820] [middleware] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: POST /agency/msg
+[2020-07-28 11:36:18.820] [api-messaging] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: +++++req.body.toString().length: 1737
+[2020-07-28 11:36:18.820] [entity-fwa] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:18.835] [entity-fwa] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:18.835] [router] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:18.842] [resolver] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:18.898] [agent] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: [Agent U9sQeQqwfTQTPkCi438872] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS_BY_CONNS","uids":["88d88d2b-631c-41df-8dd5-ac3fb0a9f34c"],"pairwiseDIDs":["TAkZMZLMG9PogGZHCh3hfC"]}
+[2020-07-28 11:36:18.918] [agent] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: [Agent U9sQeQqwfTQTPkCi438872] Getting messages for pair {"agentConnDid":"DVrLZZPTEHJdbxYGAX1eSN","userPwDid":"TAkZMZLMG9PogGZHCh3hfC"}
+[2020-07-28 11:36:18.924] [agent] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: [Agent U9sQeQqwfTQTPkCi438872] Found 1 messages
+[2020-07-28 11:36:18.934] [api-messaging] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: -----responseData.toString().length: 3273
+[2020-07-28 11:36:18.934] [express-logger] [info] [expressRequestId=877ad6a1-f89d-4100-b599-f3bfe88f3b77]: POST /agency/msg 200 114ms
+
+
+### Agency-FWD message (GET_MSGS)
+[2020-07-28 11:36:18.963] [middleware] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: POST /agency/msg
+[2020-07-28 11:36:18.964] [api-messaging] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: +++++req.body.toString().length: 2977
+[2020-07-28 11:36:18.964] [entity-fwa] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:18.981] [entity-fwa] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:18.981] [router] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:18.985] [resolver] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:19.023] [agent] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: [Agent U9sQeQqwfTQTPkCi438872] Handling message type did:sov:123456789abcdefghi1234;spec/routing/1.0/FWD
+[2020-07-28 11:36:19.023] [router] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: Router routing a message to 'DVrLZZPTEHJdbxYGAX1eSN'.
+[2020-07-28 11:36:19.031] [resolver] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: Resolver: For DVrLZZPTEHJdbxYGAX1eSN resolved Agent Connection Entity.
+[2020-07-28 11:36:19.050] [agent-connection] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: [AgentConnection DVrLZZPTEHJdbxYGAX1eSN] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS","statusCodes":["MS-103"]}
+[2020-07-28 11:36:19.064] [api-messaging] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: -----responseData.toString().length: 3185
+[2020-07-28 11:36:19.065] [express-logger] [info] [expressRequestId=1ea533e1-d451-4db4-a6be-067ed775fb18]: POST /agency/msg 200 101ms
+
+
+### Agency-FWD (CREATE_KEY)
+[2020-07-28 11:36:19.082] [middleware] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: POST /agency/msg
+[2020-07-28 11:36:19.082] [api-messaging] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: +++++req.body.toString().length: 1737
+[2020-07-28 11:36:19.082] [entity-fwa] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:19.097] [entity-fwa] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:19.097] [router] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:19.102] [resolver] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:19.115] [agent] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: [Agent U9sQeQqwfTQTPkCi438872] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/CREATE_KEY","forDID":"EPxprvFeii3LPY9BjCp1xY","forDIDVerKey":"8JUKMS4qAf8QGZMvX58dkxKxDs952PYP3qqSC4Lhqwgy"}
+[2020-07-28 11:36:19.115] [agent-connection] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: Creating agent-connection agentDid=U9sQeQqwfTQTPkCi438872 ownerVerkey=BbCTPNLwXZP5T7uCc5itpUW4gJdnuCa7u7HUuTc7iChN, userPairwiseDid=EPxprvFeii3LPY9BjCp1xY, userPairwiseVerkey=8JUKMS4qAf8QGZMvX58dkxKxDs952PYP3qqSC4Lhqwgy
+[2020-07-28 11:36:19.221] [api-messaging] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: -----responseData.toString().length: 881
+[2020-07-28 11:36:19.222] [express-logger] [info] [expressRequestId=8a198e91-7acc-4525-98b2-0c94d468a555]: POST /agency/msg 200 139ms
+
+
+### ARIES-FWD message to A-Conn (to Alice1)
+### 추정: Faber가 Alice에게 (Faber-Alice 통신을 위한 신규) Conn 정보 전달
+###
+[2020-07-28 11:36:19.234] [middleware] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: POST /agency/msg
+[2020-07-28 11:36:19.234] [api-messaging] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: +++++req.body.toString().length: 5945
+[2020-07-28 11:36:19.234] [entity-fwa] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:19.248] [entity-fwa] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AriesFWD message
+[2020-07-28 11:36:19.249] [router] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: Router routing a message to 'BjFNFg7ikfr7EKVUa9VhyNrsD634youtHK2vrisxqJSB'.
+[2020-07-28 11:36:19.253] [resolver] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: Resolver: For BjFNFg7ikfr7EKVUa9VhyNrsD634youtHK2vrisxqJSB resolved Agent Connection Entity.
+[2020-07-28 11:36:19.273] [api-messaging] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: -----responseData.toString().length: 0
+[2020-07-28 11:36:19.274] [express-logger] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: POST /agency/msg 200 39ms
+[2020-07-28 11:36:19.277] [agent-connection] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: Agent TPk5tWsz36oiitiiuwnkYL received aries message and resolved webhook http://172.23.243.155:7203/notifications/1
+[2020-07-28 11:36:19.291] [agent-connection] [info] [expressRequestId=8a81e5bc-56e0-478e-88ae-debc733f103e]: Notification e0a2ae7a-61f2-41a8-ba7b-1b918195bf1b from agentConnectionDid Lgfj7qXgze6BFpPiARdxSr sent to http://172.23.243.155:7203/notifications/1 successfully.
+
+
+### Agency-FWD (UPDATE_MSG_STATUS_BY_CONNS)
+[2020-07-28 11:36:19.281] [middleware] [info] [expressRequestId=bf835f80-31d8-422d-8305-c2c987efb30f]: POST /agency/msg
+[2020-07-28 11:36:19.281] [api-messaging] [info] [expressRequestId=bf835f80-31d8-422d-8305-c2c987efb30f]: +++++req.body.toString().length: 1825
+[2020-07-28 11:36:19.281] [entity-fwa] [info] [expressRequestId=bf835f80-31d8-422d-8305-c2c987efb30f]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:19.299] [entity-fwa] [info] [expressRequestId=bf835f80-31d8-422d-8305-c2c987efb30f]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:19.299] [router] [info] [expressRequestId=bf835f80-31d8-422d-8305-c2c987efb30f]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:19.304] [resolver] [info] [expressRequestId=bf835f80-31d8-422d-8305-c2c987efb30f]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:19.329] [agent] [info] [expressRequestId=bf835f80-31d8-422d-8305-c2c987efb30f]: [Agent U9sQeQqwfTQTPkCi438872] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/UPDATE_MSG_STATUS_BY_CONNS","statusCode":"MS-106","uidsByConns":[{"pairwiseDID":"TAkZMZLMG9PogGZHCh3hfC","uids":["88d88d2b-631c-41df-8dd5-ac3fb0a9f34c"]}]}
+[2020-07-28 11:36:19.376] [api-messaging] [info] [expressRequestId=bf835f80-31d8-422d-8305-c2c987efb30f]: -----responseData.toString().length: 917
+[2020-07-28 11:36:19.377] [express-logger] [info] [expressRequestId=bf835f80-31d8-422d-8305-c2c987efb30f]: POST /agency/msg 200 95ms
+
+
+### Agency-FWD message (GET_MSGS_BY_CONNS)
+[2020-07-28 11:36:19.298] [middleware] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: POST /agency/msg
+[2020-07-28 11:36:19.298] [api-messaging] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: +++++req.body.toString().length: 1737
+[2020-07-28 11:36:19.298] [entity-fwa] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:19.311] [entity-fwa] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:19.312] [router] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:19.318] [resolver] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:19.357] [agent] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS_BY_CONNS","uids":["7aad8527-71f1-40f5-99b5-17ed3cc7c6fa"],"pairwiseDIDs":["3cGdnJvDgDEwEkz7AcVzFS"]}
+[2020-07-28 11:36:19.384] [agent] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: [Agent TPk5tWsz36oiitiiuwnkYL] Getting messages for pair {"agentConnDid":"Lgfj7qXgze6BFpPiARdxSr","userPwDid":"3cGdnJvDgDEwEkz7AcVzFS"}
+[2020-07-28 11:36:19.394] [agent] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: [Agent TPk5tWsz36oiitiiuwnkYL] Found 1 messages
+[2020-07-28 11:36:19.422] [api-messaging] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: -----responseData.toString().length: 4329
+[2020-07-28 11:36:19.423] [express-logger] [info] [expressRequestId=c4172e59-8d92-426e-b881-627a7baef0da]: POST /agency/msg 200 124ms
+
+
+### Agency-FWD message (GET_MSGS)
+[2020-07-28 11:36:19.392] [middleware] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: POST /agency/msg
+[2020-07-28 11:36:19.392] [api-messaging] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: +++++req.body.toString().length: 2977
+[2020-07-28 11:36:19.392] [entity-fwa] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:19.410] [entity-fwa] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:19.410] [router] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:19.415] [resolver] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:19.440] [agent] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: [Agent U9sQeQqwfTQTPkCi438872] Handling message type did:sov:123456789abcdefghi1234;spec/routing/1.0/FWD
+[2020-07-28 11:36:19.441] [router] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: Router routing a message to 'DVrLZZPTEHJdbxYGAX1eSN'.
+[2020-07-28 11:36:19.446] [resolver] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: Resolver: For DVrLZZPTEHJdbxYGAX1eSN resolved Agent Connection Entity.
+[2020-07-28 11:36:19.463] [agent-connection] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: [AgentConnection DVrLZZPTEHJdbxYGAX1eSN] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS","statusCodes":["MS-103"]}
+[2020-07-28 11:36:19.487] [api-messaging] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: -----responseData.toString().length: 733
+[2020-07-28 11:36:19.489] [express-logger] [info] [expressRequestId=32290fc4-bc88-47c9-9e7f-f79a443b9bcd]: POST /agency/msg 200 96ms
+
+
+### Agency-FWD message (GET_MSGS)
+[2020-07-28 11:36:19.456] [middleware] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: POST /agency/msg
+[2020-07-28 11:36:19.456] [api-messaging] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: +++++req.body.toString().length: 2977
+[2020-07-28 11:36:19.456] [entity-fwa] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:19.477] [entity-fwa] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:19.477] [router] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:19.482] [resolver] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:19.505] [agent] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message type did:sov:123456789abcdefghi1234;spec/routing/1.0/FWD
+[2020-07-28 11:36:19.505] [router] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: Router routing a message to 'Lgfj7qXgze6BFpPiARdxSr'.
+[2020-07-28 11:36:19.509] [resolver] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: Resolver: For Lgfj7qXgze6BFpPiARdxSr resolved Agent Connection Entity.
+[2020-07-28 11:36:19.525] [agent-connection] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: [AgentConnection Lgfj7qXgze6BFpPiARdxSr] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS","statusCodes":["MS-103"]}
+[2020-07-28 11:36:19.544] [api-messaging] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: -----responseData.toString().length: 4241
+[2020-07-28 11:36:19.545] [express-logger] [info] [expressRequestId=12e795be-bdff-4bc1-8bcf-4e0619724faa]: POST /agency/msg 200 88ms
+
+
+### ARIES-FWD message to A-Conn (to Faber)
+### 추정: Alice가 Faber에게 Conn 정보 전달 (Conn complete)
+###
+[2020-07-28 11:36:19.561] [middleware] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: POST /agency/msg
+[2020-07-28 11:36:19.562] [api-messaging] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: +++++req.body.toString().length: 3117
+[2020-07-28 11:36:19.563] [entity-fwa] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:19.579] [entity-fwa] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AriesFWD message
+[2020-07-28 11:36:19.579] [router] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: Router routing a message to '5PtxtS63YHssJx5TcMeX1yZZKcWB2dPEkaub8RZcyWNn'.
+[2020-07-28 11:36:19.585] [resolver] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: Resolver: For 5PtxtS63YHssJx5TcMeX1yZZKcWB2dPEkaub8RZcyWNn resolved Agent Connection Entity.
+[2020-07-28 11:36:19.605] [api-messaging] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: -----responseData.toString().length: 0
+[2020-07-28 11:36:19.606] [express-logger] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: POST /agency/msg 200 44ms
+[2020-07-28 11:36:19.655] [agent-connection] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: Agent U9sQeQqwfTQTPkCi438872 received aries message and resolved webhook http://172.23.243.155:7202/notifications/
+[2020-07-28 11:36:20.667] [agent-connection] [info] [expressRequestId=bf1e1593-8739-4a57-9a28-feab67e16bc6]: Notification e1722ef1-c219-4543-b344-884b2b71dd31 from agentConnectionDid 94fr8G1rUJVSxwiqkchDny sent to http://172.23.243.155:7202/notifications/ successfully.
+
+
+### Agency-FWD (UPDATE_MSG_STATUS_BY_CONNS)
+[2020-07-28 11:36:19.623] [middleware] [info] [expressRequestId=c2fb231d-b616-4015-a4ed-6634396a58bf]: POST /agency/msg
+[2020-07-28 11:36:19.623] [api-messaging] [info] [expressRequestId=c2fb231d-b616-4015-a4ed-6634396a58bf]: +++++req.body.toString().length: 1825
+[2020-07-28 11:36:19.626] [entity-fwa] [info] [expressRequestId=c2fb231d-b616-4015-a4ed-6634396a58bf]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:19.699] [entity-fwa] [info] [expressRequestId=c2fb231d-b616-4015-a4ed-6634396a58bf]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:19.699] [router] [info] [expressRequestId=c2fb231d-b616-4015-a4ed-6634396a58bf]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:19.728] [resolver] [info] [expressRequestId=c2fb231d-b616-4015-a4ed-6634396a58bf]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:19.787] [agent] [info] [expressRequestId=c2fb231d-b616-4015-a4ed-6634396a58bf]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/UPDATE_MSG_STATUS_BY_CONNS","statusCode":"MS-106","uidsByConns":[{"pairwiseDID":"3cGdnJvDgDEwEkz7AcVzFS","uids":["7aad8527-71f1-40f5-99b5-17ed3cc7c6fa"]}]}
+[2020-07-28 11:36:20.083] [api-messaging] [info] [expressRequestId=c2fb231d-b616-4015-a4ed-6634396a58bf]: -----responseData.toString().length: 917
+[2020-07-28 11:36:20.084] [express-logger] [info] [expressRequestId=c2fb231d-b616-4015-a4ed-6634396a58bf]: POST /agency/msg 200 460ms
+
+
+### Agency-FWD message (GET_MSGS_BY_CONNS)
+[2020-07-28 11:36:19.719] [middleware] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: POST /agency/msg
+[2020-07-28 11:36:19.719] [api-messaging] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: +++++req.body.toString().length: 1737
+[2020-07-28 11:36:19.720] [entity-fwa] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:19.759] [entity-fwa] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:19.760] [router] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:19.771] [resolver] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:20.016] [agent] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: [Agent U9sQeQqwfTQTPkCi438872] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS_BY_CONNS","uids":["7aa2f94f-57bd-4bb8-be75-659dadde847a"],"pairwiseDIDs":["EPxprvFeii3LPY9BjCp1xY"]}
+[2020-07-28 11:36:20.067] [agent] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: [Agent U9sQeQqwfTQTPkCi438872] Getting messages for pair {"agentConnDid":"94fr8G1rUJVSxwiqkchDny","userPwDid":"EPxprvFeii3LPY9BjCp1xY"}
+[2020-07-28 11:36:20.074] [agent] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: [Agent U9sQeQqwfTQTPkCi438872] Found 1 messages
+[2020-07-28 11:36:20.098] [api-messaging] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: -----responseData.toString().length: 2213
+[2020-07-28 11:36:20.099] [express-logger] [info] [expressRequestId=90de0364-13cd-4b75-8211-da94937beb07]: POST /agency/msg 200 379ms
+
+
+### Agency-FWD message (GET_MSGS)
+[2020-07-28 11:36:20.157] [middleware] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: POST /agency/msg
+[2020-07-28 11:36:20.157] [api-messaging] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: +++++req.body.toString().length: 2977
+[2020-07-28 11:36:20.158] [entity-fwa] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:20.239] [entity-fwa] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:20.239] [router] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:20.245] [resolver] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:20.261] [agent] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: [Agent U9sQeQqwfTQTPkCi438872] Handling message type did:sov:123456789abcdefghi1234;spec/routing/1.0/FWD
+[2020-07-28 11:36:20.262] [router] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: Router routing a message to '94fr8G1rUJVSxwiqkchDny'.
+[2020-07-28 11:36:20.268] [resolver] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: Resolver: For 94fr8G1rUJVSxwiqkchDny resolved Agent Connection Entity.
+[2020-07-28 11:36:20.296] [agent-connection] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: [AgentConnection 94fr8G1rUJVSxwiqkchDny] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS","statusCodes":["MS-103"]}
+[2020-07-28 11:36:20.312] [api-messaging] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: -----responseData.toString().length: 2125
+[2020-07-28 11:36:20.313] [express-logger] [info] [expressRequestId=44018671-2b0a-460a-9fb1-ae3bd1fb9391]: POST /agency/msg 200 155ms
+
+
+### Agency-FWD (UPDATE_MSG_STATUS_BY_CONNS)
+[2020-07-28 11:36:20.328] [middleware] [info] [expressRequestId=a2e5a345-4ffe-4860-b490-3dd04ac838f4]: POST /agency/msg
+[2020-07-28 11:36:20.328] [api-messaging] [info] [expressRequestId=a2e5a345-4ffe-4860-b490-3dd04ac838f4]: +++++req.body.toString().length: 1825
+[2020-07-28 11:36:20.328] [entity-fwa] [info] [expressRequestId=a2e5a345-4ffe-4860-b490-3dd04ac838f4]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:20.350] [entity-fwa] [info] [expressRequestId=a2e5a345-4ffe-4860-b490-3dd04ac838f4]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:20.350] [router] [info] [expressRequestId=a2e5a345-4ffe-4860-b490-3dd04ac838f4]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:20.358] [resolver] [info] [expressRequestId=a2e5a345-4ffe-4860-b490-3dd04ac838f4]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:20.404] [agent] [info] [expressRequestId=a2e5a345-4ffe-4860-b490-3dd04ac838f4]: [Agent U9sQeQqwfTQTPkCi438872] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/UPDATE_MSG_STATUS_BY_CONNS","statusCode":"MS-106","uidsByConns":[{"pairwiseDID":"EPxprvFeii3LPY9BjCp1xY","uids":["7aa2f94f-57bd-4bb8-be75-659dadde847a"]}]}
+[2020-07-28 11:36:20.477] [api-messaging] [info] [expressRequestId=a2e5a345-4ffe-4860-b490-3dd04ac838f4]: -----responseData.toString().length: 917
+[2020-07-28 11:36:20.478] [express-logger] [info] [expressRequestId=a2e5a345-4ffe-4860-b490-3dd04ac838f4]: POST /agency/msg 200 150ms
+
+
+### ARIES-FWD message to A-Conn (to Alice1)
+### 추정: Faber가 Alice에게 Proof-req 전달
+###
+[2020-07-28 11:36:20.560] [middleware] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: POST /agency/msg
+[2020-07-28 11:36:20.561] [api-messaging] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: +++++req.body.toString().length: 5081
+[2020-07-28 11:36:20.561] [entity-fwa] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:20.589] [entity-fwa] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AriesFWD message
+[2020-07-28 11:36:20.589] [router] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: Router routing a message to 'BjFNFg7ikfr7EKVUa9VhyNrsD634youtHK2vrisxqJSB'.
+[2020-07-28 11:36:20.597] [resolver] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: Resolver: For BjFNFg7ikfr7EKVUa9VhyNrsD634youtHK2vrisxqJSB resolved Agent Connection Entity.
+[2020-07-28 11:36:20.633] [api-messaging] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: -----responseData.toString().length: 0
+[2020-07-28 11:36:20.633] [express-logger] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: POST /agency/msg 200 73ms
+[2020-07-28 11:36:20.642] [agent-connection] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: Agent TPk5tWsz36oiitiiuwnkYL received aries message and resolved webhook http://172.23.243.155:7203/notifications/1
+[2020-07-28 11:36:20.659] [agent-connection] [info] [expressRequestId=d7ac60a4-ffce-4415-bdf3-0076e0db5190]: Notification 9d893b24-66aa-44e2-8c6d-2941700714c7 from agentConnectionDid Lgfj7qXgze6BFpPiARdxSr sent to http://172.23.243.155:7203/notifications/1 successfully.
+
+
+### Agency-FWD message (GET_MSGS_BY_CONNS)
+[2020-07-28 11:36:20.697] [middleware] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: POST /agency/msg
+[2020-07-28 11:36:20.697] [api-messaging] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: +++++req.body.toString().length: 1737
+[2020-07-28 11:36:20.697] [entity-fwa] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:20.886] [entity-fwa] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:20.887] [router] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:20.893] [resolver] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:20.939] [agent] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS_BY_CONNS","uids":["1d63e5c3-fa13-4995-8f56-176a01209005"],"pairwiseDIDs":["3cGdnJvDgDEwEkz7AcVzFS"]}
+[2020-07-28 11:36:20.957] [agent] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: [Agent TPk5tWsz36oiitiiuwnkYL] Getting messages for pair {"agentConnDid":"Lgfj7qXgze6BFpPiARdxSr","userPwDid":"3cGdnJvDgDEwEkz7AcVzFS"}
+[2020-07-28 11:36:20.963] [agent] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: [Agent TPk5tWsz36oiitiiuwnkYL] Found 1 messages
+[2020-07-28 11:36:20.985] [api-messaging] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: -----responseData.toString().length: 3685
+[2020-07-28 11:36:20.986] [express-logger] [info] [expressRequestId=8ff149e5-3562-4303-a442-19e26648acc5]: POST /agency/msg 200 289ms
+
+
+### Agency-FWD message (GET_MSGS)
+[2020-07-28 11:36:21.062] [middleware] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: POST /agency/msg
+[2020-07-28 11:36:21.062] [api-messaging] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: +++++req.body.toString().length: 2977
+[2020-07-28 11:36:21.062] [entity-fwa] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:21.085] [entity-fwa] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:21.085] [router] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:21.093] [resolver] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:21.127] [agent] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message type did:sov:123456789abcdefghi1234;spec/routing/1.0/FWD
+[2020-07-28 11:36:21.127] [router] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: Router routing a message to 'Lgfj7qXgze6BFpPiARdxSr'.
+[2020-07-28 11:36:21.133] [resolver] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: Resolver: For Lgfj7qXgze6BFpPiARdxSr resolved Agent Connection Entity.
+[2020-07-28 11:36:21.147] [agent-connection] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: [AgentConnection Lgfj7qXgze6BFpPiARdxSr] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS","statusCodes":["MS-103"]}
+[2020-07-28 11:36:21.165] [api-messaging] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: -----responseData.toString().length: 3597
+[2020-07-28 11:36:21.165] [express-logger] [info] [expressRequestId=2c63f523-cfc6-402c-978e-2c8ebc4e9a1f]: POST /agency/msg 200 103ms
+
+
+### ARIES-FWD message to A-Conn (to Faber)
+### 추정: Alice가 Faber에게 Proof 전달 (60KB)
+###
+[2020-07-28 11:36:21.792] [middleware] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: POST /agency/msg
+[2020-07-28 11:36:21.792] [api-messaging] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: +++++req.body.toString().length: 60477
+[2020-07-28 11:36:21.792] [entity-fwa] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:21.815] [entity-fwa] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AriesFWD message
+[2020-07-28 11:36:21.817] [router] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: Router routing a message to '5PtxtS63YHssJx5TcMeX1yZZKcWB2dPEkaub8RZcyWNn'.
+[2020-07-28 11:36:21.821] [resolver] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: Resolver: For 5PtxtS63YHssJx5TcMeX1yZZKcWB2dPEkaub8RZcyWNn resolved Agent Connection Entity.
+[2020-07-28 11:36:21.858] [api-messaging] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: -----responseData.toString().length: 0
+[2020-07-28 11:36:21.859] [express-logger] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: POST /agency/msg 200 67ms
+[2020-07-28 11:36:21.864] [agent-connection] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: Agent U9sQeQqwfTQTPkCi438872 received aries message and resolved webhook http://172.23.243.155:7202/notifications/
+[2020-07-28 11:36:22.756] [agent-connection] [info] [expressRequestId=49218dcd-0c96-4afe-8b79-fddbcf09a36a]: Notification af738bc9-9615-422d-b207-11f510e28e58 from agentConnectionDid 94fr8G1rUJVSxwiqkchDny sent to http://172.23.243.155:7202/notifications/ successfully.
+
+
+### Agency-FWD (UPDATE_MSG_STATUS_BY_CONNS)
+[2020-07-28 11:36:21.872] [middleware] [info] [expressRequestId=93315fba-5a73-42dc-8f18-80257738703b]: POST /agency/msg
+[2020-07-28 11:36:21.872] [api-messaging] [info] [expressRequestId=93315fba-5a73-42dc-8f18-80257738703b]: +++++req.body.toString().length: 1825
+[2020-07-28 11:36:21.872] [entity-fwa] [info] [expressRequestId=93315fba-5a73-42dc-8f18-80257738703b]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:21.891] [entity-fwa] [info] [expressRequestId=93315fba-5a73-42dc-8f18-80257738703b]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:21.891] [router] [info] [expressRequestId=93315fba-5a73-42dc-8f18-80257738703b]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:21.902] [resolver] [info] [expressRequestId=93315fba-5a73-42dc-8f18-80257738703b]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:22.016] [agent] [info] [expressRequestId=93315fba-5a73-42dc-8f18-80257738703b]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/UPDATE_MSG_STATUS_BY_CONNS","statusCode":"MS-106","uidsByConns":[{"pairwiseDID":"3cGdnJvDgDEwEkz7AcVzFS","uids":["1d63e5c3-fa13-4995-8f56-176a01209005"]}]}
+[2020-07-28 11:36:22.159] [api-messaging] [info] [expressRequestId=93315fba-5a73-42dc-8f18-80257738703b]: -----responseData.toString().length: 917
+[2020-07-28 11:36:22.159] [express-logger] [info] [expressRequestId=93315fba-5a73-42dc-8f18-80257738703b]: POST /agency/msg 200 287ms
+
+
+### Agency-FWD message (GET_MSGS_BY_CONNS)
+[2020-07-28 11:36:21.895] [middleware] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: POST /agency/msg
+[2020-07-28 11:36:21.895] [api-messaging] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: +++++req.body.toString().length: 1737
+[2020-07-28 11:36:21.895] [entity-fwa] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:21.916] [entity-fwa] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:21.916] [router] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:21.939] [resolver] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:22.033] [agent] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: [Agent U9sQeQqwfTQTPkCi438872] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS_BY_CONNS","uids":["a4d20d01-eb93-4de4-9331-7e3da017ab25"],"pairwiseDIDs":["EPxprvFeii3LPY9BjCp1xY"]}
+[2020-07-28 11:36:22.049] [agent] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: [Agent U9sQeQqwfTQTPkCi438872] Getting messages for pair {"agentConnDid":"94fr8G1rUJVSxwiqkchDny","userPwDid":"EPxprvFeii3LPY9BjCp1xY"}
+[2020-07-28 11:36:22.078] [agent] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: [Agent U9sQeQqwfTQTPkCi438872] Found 1 messages
+[2020-07-28 11:36:22.100] [api-messaging] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: -----responseData.toString().length: 45229
+[2020-07-28 11:36:22.100] [express-logger] [info] [expressRequestId=02dbcbcf-86a2-4efb-b465-3bffc3be6aa2]: POST /agency/msg 200 205ms
+
+
+### Agency-FWD message (GET_MSGS)
+[2020-07-28 11:36:22.210] [middleware] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: POST /agency/msg
+[2020-07-28 11:36:22.210] [api-messaging] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: +++++req.body.toString().length: 2977
+[2020-07-28 11:36:22.210] [entity-fwa] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:22.230] [entity-fwa] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:22.230] [router] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:22.236] [resolver] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:22.256] [agent] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: [Agent U9sQeQqwfTQTPkCi438872] Handling message type did:sov:123456789abcdefghi1234;spec/routing/1.0/FWD
+[2020-07-28 11:36:22.257] [router] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: Router routing a message to '94fr8G1rUJVSxwiqkchDny'.
+[2020-07-28 11:36:22.263] [resolver] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: Resolver: For 94fr8G1rUJVSxwiqkchDny resolved Agent Connection Entity.
+[2020-07-28 11:36:22.283] [agent-connection] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: [AgentConnection 94fr8G1rUJVSxwiqkchDny] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS","statusCodes":["MS-103"]}
+[2020-07-28 11:36:22.308] [api-messaging] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: -----responseData.toString().length: 45141
+[2020-07-28 11:36:22.308] [express-logger] [info] [expressRequestId=b5b2d27e-eda8-4ddd-9a4a-1ee03af34ecc]: POST /agency/msg 200 98ms
+
+
+### ARIES-FWD message to A-Conn (to Alice1)
+### 추정: Faber가 Alice에게 ACK 전달
+###
+[2020-07-28 11:36:22.427] [middleware] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: POST /agency/msg
+[2020-07-28 11:36:22.427] [api-messaging] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: +++++req.body.toString().length: 3117
+[2020-07-28 11:36:22.427] [entity-fwa] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:22.441] [entity-fwa] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AriesFWD message
+[2020-07-28 11:36:22.441] [router] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: Router routing a message to 'BjFNFg7ikfr7EKVUa9VhyNrsD634youtHK2vrisxqJSB'.
+[2020-07-28 11:36:22.445] [resolver] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: Resolver: For BjFNFg7ikfr7EKVUa9VhyNrsD634youtHK2vrisxqJSB resolved Agent Connection Entity.
+[2020-07-28 11:36:22.464] [api-messaging] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: -----responseData.toString().length: 0
+[2020-07-28 11:36:22.465] [express-logger] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: POST /agency/msg 200 37ms
+[2020-07-28 11:36:22.476] [agent-connection] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: Agent TPk5tWsz36oiitiiuwnkYL received aries message and resolved webhook http://172.23.243.155:7203/notifications/1
+[2020-07-28 11:36:22.488] [agent-connection] [info] [expressRequestId=113f5013-4ab9-4d5e-b142-5f8e2822369d]: Notification 2661f9db-5f4e-4c3b-b8a2-bf55118e760c from agentConnectionDid Lgfj7qXgze6BFpPiARdxSr sent to http://172.23.243.155:7203/notifications/1 successfully.
+
+
+### Agency-FWD (UPDATE_MSG_STATUS_BY_CONNS)
+[2020-07-28 11:36:22.473] [middleware] [info] [expressRequestId=5871680d-2a22-4d13-8bac-97e3e880c143]: POST /agency/msg
+[2020-07-28 11:36:22.473] [api-messaging] [info] [expressRequestId=5871680d-2a22-4d13-8bac-97e3e880c143]: +++++req.body.toString().length: 1825
+[2020-07-28 11:36:22.473] [entity-fwa] [info] [expressRequestId=5871680d-2a22-4d13-8bac-97e3e880c143]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:22.492] [entity-fwa] [info] [expressRequestId=5871680d-2a22-4d13-8bac-97e3e880c143]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:22.492] [router] [info] [expressRequestId=5871680d-2a22-4d13-8bac-97e3e880c143]: Router routing a message to 'U9sQeQqwfTQTPkCi438872'.
+[2020-07-28 11:36:22.497] [resolver] [info] [expressRequestId=5871680d-2a22-4d13-8bac-97e3e880c143]: Resolver: For U9sQeQqwfTQTPkCi438872 resolved Agent Entity.
+[2020-07-28 11:36:22.601] [agent] [info] [expressRequestId=5871680d-2a22-4d13-8bac-97e3e880c143]: [Agent U9sQeQqwfTQTPkCi438872] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/UPDATE_MSG_STATUS_BY_CONNS","statusCode":"MS-106","uidsByConns":[{"pairwiseDID":"EPxprvFeii3LPY9BjCp1xY","uids":["a4d20d01-eb93-4de4-9331-7e3da017ab25"]}]}
+[2020-07-28 11:36:22.732] [api-messaging] [info] [expressRequestId=5871680d-2a22-4d13-8bac-97e3e880c143]: -----responseData.toString().length: 917
+[2020-07-28 11:36:22.733] [express-logger] [info] [expressRequestId=5871680d-2a22-4d13-8bac-97e3e880c143]: POST /agency/msg 200 259ms
+
+
+### Agency-FWD message (GET_MSGS_BY_CONNS)
+[2020-07-28 11:36:22.496] [middleware] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: POST /agency/msg
+[2020-07-28 11:36:22.496] [api-messaging] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: +++++req.body.toString().length: 1737
+[2020-07-28 11:36:22.496] [entity-fwa] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:22.510] [entity-fwa] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:22.510] [router] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:22.572] [resolver] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:22.643] [agent] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS_BY_CONNS","uids":["805714e0-1486-4871-a0f7-4f1d65a42874"],"pairwiseDIDs":["3cGdnJvDgDEwEkz7AcVzFS"]}
+[2020-07-28 11:36:22.667] [agent] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: [Agent TPk5tWsz36oiitiiuwnkYL] Getting messages for pair {"agentConnDid":"Lgfj7qXgze6BFpPiARdxSr","userPwDid":"3cGdnJvDgDEwEkz7AcVzFS"}
+[2020-07-28 11:36:22.672] [agent] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: [Agent TPk5tWsz36oiitiiuwnkYL] Found 1 messages
+[2020-07-28 11:36:22.689] [api-messaging] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: -----responseData.toString().length: 2213
+[2020-07-28 11:36:22.690] [express-logger] [info] [expressRequestId=d01313ba-66e1-4af2-ae63-c07c8043a883]: POST /agency/msg 200 193ms
+
+
+### Agency-FWD message (GET_MSGS)
+[2020-07-28 11:36:22.735] [middleware] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: POST /agency/msg
+[2020-07-28 11:36:22.735] [api-messaging] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: +++++req.body.toString().length: 2977
+[2020-07-28 11:36:22.735] [entity-fwa] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:22.768] [entity-fwa] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:22.769] [router] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:22.776] [resolver] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:22.797] [agent] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message type did:sov:123456789abcdefghi1234;spec/routing/1.0/FWD
+[2020-07-28 11:36:22.797] [router] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: Router routing a message to 'Lgfj7qXgze6BFpPiARdxSr'.
+[2020-07-28 11:36:22.809] [resolver] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: Resolver: For Lgfj7qXgze6BFpPiARdxSr resolved Agent Connection Entity.
+[2020-07-28 11:36:22.832] [agent-connection] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: [AgentConnection Lgfj7qXgze6BFpPiARdxSr] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS","statusCodes":["MS-103"]}
+[2020-07-28 11:36:22.853] [api-messaging] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: -----responseData.toString().length: 2125
+[2020-07-28 11:36:22.854] [express-logger] [info] [expressRequestId=286eeb1c-3281-4f28-b033-acbeb0eb1b74]: POST /agency/msg 200 119ms
+
+
+### Agency-FWD (UPDATE_MSG_STATUS_BY_CONNS)
+[2020-07-28 11:36:22.870] [middleware] [info] [expressRequestId=df1f4bd8-9683-439d-a78f-b27291333cc5]: POST /agency/msg
+[2020-07-28 11:36:22.870] [api-messaging] [info] [expressRequestId=df1f4bd8-9683-439d-a78f-b27291333cc5]: +++++req.body.toString().length: 1825
+[2020-07-28 11:36:22.870] [entity-fwa] [info] [expressRequestId=df1f4bd8-9683-439d-a78f-b27291333cc5]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Agency received message.
+[2020-07-28 11:36:22.884] [entity-fwa] [info] [expressRequestId=df1f4bd8-9683-439d-a78f-b27291333cc5]: [ForwardAgent VsKV7grR1BUE29mG2Fm2kX] Received AgencyFWD message
+[2020-07-28 11:36:22.884] [router] [info] [expressRequestId=df1f4bd8-9683-439d-a78f-b27291333cc5]: Router routing a message to 'TPk5tWsz36oiitiiuwnkYL'.
+[2020-07-28 11:36:22.889] [resolver] [info] [expressRequestId=df1f4bd8-9683-439d-a78f-b27291333cc5]: Resolver: For TPk5tWsz36oiitiiuwnkYL resolved Agent Entity.
+[2020-07-28 11:36:22.904] [agent] [info] [expressRequestId=df1f4bd8-9683-439d-a78f-b27291333cc5]: [Agent TPk5tWsz36oiitiiuwnkYL] Handling message {"@type":"did:sov:123456789abcdefghi1234;spec/pairwise/1.0/UPDATE_MSG_STATUS_BY_CONNS","statusCode":"MS-106","uidsByConns":[{"pairwiseDID":"3cGdnJvDgDEwEkz7AcVzFS","uids":["805714e0-1486-4871-a0f7-4f1d65a42874"]}]}
+[2020-07-28 11:36:22.941] [api-messaging] [info] [expressRequestId=df1f4bd8-9683-439d-a78f-b27291333cc5]: -----responseData.toString().length: 917
+[2020-07-28 11:36:22.942] [express-logger] [info] [expressRequestId=df1f4bd8-9683-439d-a78f-b27291333cc5]: POST /agency/msg 200 72ms

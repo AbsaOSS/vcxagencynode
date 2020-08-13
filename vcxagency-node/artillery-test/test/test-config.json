@@ -1,0 +1,11 @@
+{
+  "TestName": "SKT-Perf",
+  "FaberNumber": 10,
+  "AliceNumber": 90,
+  "MaxMessagingFaberNumber": 2,
+  "MaxMessagingAliceNumber": 4,
+  "PostPayloadFile": "/home/svcapp_su/work/initial-mediator/perf-test/test/20-messaging/payload-30k.txt",
+  "DEBUG": true,
+  "AgencyDid": "VsKV7grR1BUE29mG2Fm2kX",
+  "AgencyVerkey": "Hezce2UWMZ3wUhVkh2LfKSs8nDzWwzs2Win7EzNN3YaR"
+}

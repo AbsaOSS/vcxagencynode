@@ -1,0 +1,27 @@
+config:
+  target: "http://172.27.19.83:8080"
+  phases:
+  - duration: 300
+    arrivalRate: 1
+    maxVusers: 1
+  processor: "./art-verify-simul.js"
+scenarios:
+- name: "Simulate Verification - Faber To Alice (f2a)"
+  flow:
+  - function: "f2a_init"
+  - loop:
+    - post:
+        url: "/agency/msg/"
+        headers:
+          Content-Type: "application/ssi-agent-wire"
+        body: "{{ body }}"
+        beforeRequest: "f2a_setSmallReqBody"
+    - function: "f2a_getMsgByConns"
+    count: 5
+  - post:
+      url: "/agency/msg/"
+      headers:
+        Content-Type: "application/ssi-agent-wire"
+      body: "{{ body }}"
+      beforeRequest: "f2a_setLargeReqBody"
+  - function: "f2a_getMsgByConns"
