@@ -107,7 +107,7 @@ beforeEach(async () => {
   const { agentDid: aDid1, agentVerkey: aVerkey1 } = await vcxFlowFullOnboarding(agencyUserWh, sendToAgency, agencyDid, agencyVerkey, agencyUserDid, agencyUserVerkey)
   agent1Did = aDid1
   agent1Verkey = aVerkey1
-  const { agentDid: agent2Did } = await vcxFlowFullOnboarding(bobWh, sendToAgency, agencyDid, agencyVerkey, bobDid, bobVerkey)
+  await vcxFlowFullOnboarding(bobWh, sendToAgency, agencyDid, agencyVerkey, bobDid, bobVerkey)
 
   // create 2 agency connections for agent1
   const { did: userPairwiseDid1, vkey: userPairwiseVerkey1 } = await indyCreateAndStoreMyDid(agencyUserWh)
@@ -133,15 +133,15 @@ beforeEach(async () => {
   await serviceStorage.storeMessage(agent1Did, aconn2Did, msg5Id, 'MS-103', { msg: 'a1conn2-msg5' })
   await serviceStorage.storeMessage(agent1Did, aconn2Did, msg6Id, 'MS-104', { msg: 'a1conn2-msg6' })
 
-  // store messages for bob
-  const bobConn1Did = uuid.v4()
-  const bobConn2Did = uuid.v4()
-  await serviceStorage.storeMessage(agent2Did, bobConn1Did, msg1Id, 'MS-103', { msg: 'a2conn1-msg1' })
-  await serviceStorage.storeMessage(agent2Did, bobConn1Did, msg2Id, 'MS-103', { msg: 'a2conn1-msg2' })
-  await serviceStorage.storeMessage(agent2Did, bobConn1Did, msg3Id, 'MS-104', { msg: 'a2conn1-msg3' })
-  await serviceStorage.storeMessage(agent2Did, bobConn2Did, msg4Id, 'MS-103', { msg: 'a2conn2-msg1' })
-  await serviceStorage.storeMessage(agent2Did, bobConn2Did, msg5Id, 'MS-103', { msg: 'a2conn2-msg2' })
-  await serviceStorage.storeMessage(agent2Did, bobConn2Did, msg6Id, 'MS-104', { msg: 'a2conn2-msg3' })
+  // // store messages for bob
+  // const bobConn1Did = uuid.v4()
+  // const bobConn2Did = uuid.v4()
+  // await serviceStorage.storeMessage(agent2Did, bobConn1Did, msg1Id, 'MS-103', { msg: 'a2conn1-msg1' })
+  // await serviceStorage.storeMessage(agent2Did, bobConn1Did, msg2Id, 'MS-103', { msg: 'a2conn1-msg2' })
+  // await serviceStorage.storeMessage(agent2Did, bobConn1Did, msg3Id, 'MS-104', { msg: 'a2conn1-msg3' })
+  // await serviceStorage.storeMessage(agent2Did, bobConn2Did, msg4Id, 'MS-103', { msg: 'a2conn2-msg1' })
+  // await serviceStorage.storeMessage(agent2Did, bobConn2Did, msg5Id, 'MS-103', { msg: 'a2conn2-msg2' })
+  // await serviceStorage.storeMessage(agent2Did, bobConn2Did, msg6Id, 'MS-104', { msg: 'a2conn2-msg3' })
 })
 
 afterEach(async () => {
@@ -285,6 +285,32 @@ describe('onboarding', () => {
     expect(msgsByConn1.msgs.find(msg => msg.uid === msg1Id)).toBeDefined()
     expect(msgsByConn1.msgs.find(msg => msg.uid === msg2Id)).toBeDefined()
     expect(msgsByConn1.msgs.find(msg => msg.uid === msg3Id)).toBeDefined()
+  })
+
+  it('should filter messages only by uids', async () => {
+    // act
+    const msgReply = await vcxFlowGetMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, null, [msg1Id, msg2Id, msg3Id, msg4Id], [])
+    const { msgsByConns } = msgReply
+    expect(Array.isArray(msgsByConns)).toBeTruthy()
+    expect(msgsByConns.length).toBe(3)
+
+    console.log(JSON.stringify(msgsByConns))
+
+    const msgsByConn1 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn1UserPwDid)
+    expect(msgsByConn1).toBeDefined()
+    expect(msgsByConn1.msgs.length).toBe(3)
+    expect(msgsByConn1.msgs.find(msg => msg.uid === msg1Id)).toBeDefined()
+    expect(msgsByConn1.msgs.find(msg => msg.uid === msg2Id)).toBeDefined()
+    expect(msgsByConn1.msgs.find(msg => msg.uid === msg3Id)).toBeDefined()
+
+    const msgsByConn2 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn2UserPwDid)
+    expect(msgsByConn2).toBeDefined()
+    expect(msgsByConn2.msgs.length).toBe(1)
+    expect(msgsByConn2.msgs.find(msg => msg.uid === msg4Id)).toBeDefined()
+
+    const msgsByConn3 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn3UserPwDid)
+    expect(msgsByConn3).toBeDefined()
+    expect(msgsByConn3.msgs.length).toBe(0)
   })
 
   it('should filter messages by status and uids', async () => {

@@ -174,7 +174,8 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
   }
 
   async function _handleGetMsgsByConn (msgObject) {
-    const { uids, pairwiseDIDs, statusCodes } = msgObject
+    const { uids, statusCodes } = msgObject
+    const pairwiseDIDs = msgObject.pairwiseDIDs || []
     const didPairs = await serviceStorage.aconnLinkPairsByPwDids(agentDid, pairwiseDIDs)
     const msgsByConns = []
     for (const didPair of didPairs) {
