@@ -21,8 +21,10 @@ const { asyncHandler } = require('./middleware')
 module.exports = function (expressRouter, forwardAgent) {
   expressRouter.post('/',
     asyncHandler(async function (req, res) {
+      let resStatus = 200
       const responseData = await forwardAgent.handleIncomingMessage(req.body)
-      res.set('Content-Type', 'application/ssi-agent-wire')
-      res.status(200).send(responseData)
+      if (responseData.errorMsg) resStatus = 500
+      res.set('content-type', 'application/ssi-agent-wire')
+      res.status(resStatus).send(responseData)
     }))
 }
