@@ -30,7 +30,7 @@ yarn run test:art:verify  # Do DID verification load test w/Artillery
 #### Configure artillery.yaml
 * Set 'config/target' to actual Angecy-url
 
-#### Config with test-config.json
+#### Configure test-config.json
 * TestName: Test wallets will have this prefix string (ex, TestName-Alice-0000)
 * FaberNumber: Number of Faber(Issuer/Verifier role)
 * AliceNumber: Number of Alice(Holder role)

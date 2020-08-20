@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "axios": "^0.18.1",
-    "easy-indysdk": "file:./easy-indysdk",
+    "easy-indysdk": "file:../easy-indysdk",
     "query-string": "^6.8.2"
   },
   "devDependencies": {
