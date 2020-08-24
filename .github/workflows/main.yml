@@ -425,20 +425,34 @@ jobs:
       - lint-vcxagency-client
       - lint-easy-indysdk
     runs-on: ubuntu-latest
+    if: ${{ needs.workflow-setup.outputs.RELEASE_VERSION }}
     steps:
       - name: Load up release version
         run: |
           echo ::set-env name=RELEASE_VERSION::$(echo ${{needs.workflow-setup.outputs.RELEASE_VERSION}})
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: Generate changelog
+        uses: heinrichreimer/github-changelog-generator-action@v2.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          futureRelease: ${{ env.RELEASE_VERSION }}
+          releaseBranch: master
+          pullRequests: true
+          unreleased: true
+          unreleasedOnly: true
+          issuesWoLabels: true
+          prWoLabels: true
+          stripGeneratorNotice: true
+          stripHeaders: true
+          verbose: true
       - name: Release for master pushes
-        run: |
-          if [[ "$RELEASE_VERSION" ]]
-          then
-            echo "Release version was defined! Will create release $RELEASE_VERSION"
-            curl -v --request POST \
-                --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-                --header "Content-Type: application/json" \
-                -d "{\"tag_name\": \"$RELEASE_VERSION\", \"name\": \"$RELEASE_VERSION\", \"body\": \"Automatic release $RELEASE_VERSION\" }" \
-                --url https://api.github.com/repos/$GITHUB_REPOSITORY/releases
-          else
-             echo "New version was not defined, skipping release. Check 'workflow-setup' job to see the reason."
-          fi
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.RELEASE_VERSION }}
+          release_name: ${{ env.RELEASE_VERSION }}
+          body_path: /github/workspace/CHANGELOG.md
+          draft: false
+          prerelease: false
