@@ -14,15 +14,15 @@
     "lint": "standard",
     "lint:fix": "standard --fix",
     "test:00": "jest --runInBand  ./test/00-make-wallet",
-    "test:20": "jest --runInBand  ./test/20-messaging",
-    "test:art:onbd": "DEBUG=http artillery run ./test/10-onboarding/artillery.yaml",
-    "test:art:msg": "DEBUG=http artillery run ./test/20-messaging/artillery.yaml",
-    "test:art:verify": "DEBUG=http artillery run ./test/20-messaging/art-verify-simul.yaml",
+    "test:art:onbd": "artillery run ./test/10-onboarding/artillery.yaml",
+    "test:art:msg": "artillery run ./test/20-messaging/artillery.yaml",
+    "test:art:verify": "artillery run ./test/20-messaging/art-verify-simul.yaml",
     "test:cw": "rm -rf ~/.indy_client/wallet/unittest-anoncrypyting-wallet-* ~/.indy_client/wallet/unit-perftest-*"
   },
   "dependencies": {
     "axios": "^0.18.1",
     "easy-indysdk": "file:../easy-indysdk",
+    "vcxagency-client": "file:../vcxagency-client",
     "query-string": "^6.8.2"
   },
   "devDependencies": {

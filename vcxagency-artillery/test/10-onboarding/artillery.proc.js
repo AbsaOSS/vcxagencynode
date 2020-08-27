@@ -1,7 +1,7 @@
 'use strict'
 
 const easyindy = require('easy-indysdk')
-const onboarding = require('../../src/messaging/client2agency/onboarding')
+const onboarding = require('vcxagency-client/src/messaging/client2agency/onboarding')
 const { wrapWithAgencyFwd } = require('../../src/agency-flows')
 const { encryptForAgency } = require('../common')
 const config = require('../config')

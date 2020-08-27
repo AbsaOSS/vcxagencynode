@@ -4,7 +4,7 @@ Artillery Test
 Performance/load test with Artillery
 * Originated from vcxagencynode/vcxagency-client directory
 * Modified for performance test with Artillery
-* Use the latest NodeJS (At this point, it's lts/erbium v12.18.0)
+* Use the latest NodeJS (At this time, it's lts/erbium v12.18.0)
 
 ## How to setup
 ```bash
@@ -21,6 +21,11 @@ npm rebuild
 #
 
 # Modify ./test/test-config.json for your test (set wallet count and more.)
+# Fix 'target' url in
+#   test/10-onboarding/artillery.yaml,
+#   test/20-messaging/artillery.yaml,
+#   and test/20-messaging/art-verify-simul.yaml
+#   'target' url should point actual Agency url
 yarn run test:00          # Create test wallets (Required once before other tests)
 yarn run test:art:onbd    # Do vcx-onboarding load test w/Artillery
 yarn run test:art:msg     # Do vcx-messaging load test w/Artillery

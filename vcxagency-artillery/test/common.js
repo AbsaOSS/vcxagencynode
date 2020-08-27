@@ -62,7 +62,6 @@ async function buildAgencyClientNetwork (agencyUrl) {
 
 async function createAnoncryptWallet () {
   const walletName = `unittest-anoncrypyting-wallet-${uuid.v4()}`
-  //const walletName = 'unittest-anoncrypyting-wallet'
   const walletKey = 'CUUz1xrqVeJQTx1bUyMiW3v1j2kEF8koUcoYSYdSQT7t'
   const walletKdf = 'RAW'
   try {

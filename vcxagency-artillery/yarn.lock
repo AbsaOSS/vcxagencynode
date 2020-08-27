@@ -6137,6 +6137,13 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
 
+"vcxagency-client@file:../vcxagency-client":
+  version "1.0.0"
+  dependencies:
+    axios "^0.18.1"
+    easy-indysdk "file:../../../.cache/yarn/v6/npm-vcxagency-client-1.0.0-29abe457-9e7f-4f38-9fc7-0c7ffa7c6b68-1598507023206/node_modules/easy-indysdk"
+    query-string "^6.8.2"
+
 verror@1.10.0:
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/verror/-/verror-1.10.0.tgz#3a105ca17053af55d6e270c1f8288682e18da400"

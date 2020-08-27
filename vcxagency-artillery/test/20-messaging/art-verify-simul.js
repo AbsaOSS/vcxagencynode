@@ -1,14 +1,15 @@
 'use strict'
 
 const fs = require('fs').promises
-const { wrapWithAgencyFwd } = require('../../src/agency-flows')
 const { buildAgencyClientNetwork } = require('../common')
 const { encryptForAgency } = require('../common')
-const { vcxFlowFullOnboarding } = require('../../src')
-const { vcxFlowCreateAgentConnection } = require('../../src')
-const { vcxFlowGetMsgsFromAgent } = require('../../src')
-const { objectToBuffer } = require('../../src/utils')
-const aries = require('../../src/messaging/aries/aries-msg')
+const { wrapWithAgencyFwd } = require('../../src/agency-flows')
+const { vcxFlowFullOnboarding } = require('vcxagency-client')
+const { vcxFlowCreateAgentConnection } = require('vcxagency-client')
+const { vcxFlowGetMsgsFromAgent } = require('vcxagency-client')
+const { objectToBuffer } = require('vcxagency-client/src/utils')
+const aries = require('vcxagency-client/src/messaging/aries/aries-msg')
+
 const easyindy = require('easy-indysdk')
 const config = require('../config')
 const printlog = config.DEBUG ? console.log: ()=>{}

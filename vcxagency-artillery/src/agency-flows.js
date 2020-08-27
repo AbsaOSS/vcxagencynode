@@ -16,18 +16,18 @@
 
 'use strict'
 
-const { buildAriesFwdMessage } = require('./messaging/aries/aries-msg')
-const { buildAriesBasicMessage } = require('./messaging/aries/aries-msg')
-const { buildAgencyFwdMessage } = require('./messaging/client2agency/general')
-const { buildMsgVcxV2UpdateMsgStatusByConns } = require('./messaging/client2agency/msgs-agent')
-const { buildMsgVcxV2MsgGetMsgsByConns } = require('./messaging/client2agency/msgs-agent')
-const { buildMsgVcxV2GetMsgs } = require('./messaging/client2agency/msgs-agentconn')
-const { buildMsgVcxV2CreateKey } = require('./messaging/client2agency/onboarding')
-const { buildMsgVcxV2CreateAgent } = require('./messaging/client2agency/onboarding')
-const { buildMsgVcxV2SignUp } = require('./messaging/client2agency/onboarding')
-const { buildMsgVcxV2Connect } = require('./messaging/client2agency/onboarding')
+const { buildAriesFwdMessage } = require('vcxagency-client')
+const { buildAriesBasicMessage } = require('vcxagency-client')
+const { buildAgencyFwdMessage } = require('vcxagency-client')
+const { buildMsgVcxV2UpdateMsgStatusByConns } = require('vcxagency-client')
+const { buildMsgVcxV2MsgGetMsgsByConns } = require('vcxagency-client')
+const { buildMsgVcxV2GetMsgs } = require('vcxagency-client')
+const { buildMsgVcxV2CreateKey } = require('vcxagency-client')
+const { buildMsgVcxV2CreateAgent } = require('vcxagency-client')
+const { buildMsgVcxV2SignUp } = require('vcxagency-client')
+const { buildMsgVcxV2Connect } = require('vcxagency-client')
+const { objectToBuffer } = require('vcxagency-client/src/utils')
 const { packAsUtf8 } = require('easy-indysdk')
-const { objectToBuffer } = require('./utils')
 const { unpack } = require('easy-indysdk')
 const { pack } = require('easy-indysdk')
 const fs = require('fs').promises
@@ -62,11 +62,6 @@ async function vcxMakeConnectMessage (clientWh, encryptMessage, recipientAgencyD
  Second step of vcx onboarding
  */
 async function vcxFlowSignUp (clientWh, sendToAgency, recipientTmpAgentDid, recipientTmpAgentVkey, agencyUserVkey) {
-  /*
-  const msgSignedUp = await packAsUtf8(clientWh, objectToBuffer(buildMsgVcxV2SignUp()), recipientTmpAgentVkey, agencyUserVkey)
-  const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientTmpAgentDid, msgSignedUp))
-  return parseAgencyResponse(clientWh, resEncrypted)
-  */
   const objSignUp = JSON.stringify(buildMsgVcxV2SignUp())
   const msgSignUp = await packAsUtf8(clientWh, Buffer.from(objSignUp), recipientTmpAgentVkey, agencyUserVkey)
   const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientTmpAgentDid, msgSignUp))
