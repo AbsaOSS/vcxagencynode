@@ -48,7 +48,7 @@ yarn run test:art:msg     # Do vcx-messaging load test with Artillery
 * AgencyVerkey: Verkey of Agency
 
 #### Custom Artillery metric and meaning
-* Messaging load test (test:verify)
+* DID Verifying load test (test:verify)
   - Faber-total: Number of total sending messages by all Fabers
   - Alice-total: Number of total receving messages by all Alices
 * Onbodarding load test (test:onbd)
