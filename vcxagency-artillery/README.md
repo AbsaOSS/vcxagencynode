@@ -20,16 +20,18 @@ npm rebuild
 # Run vcxagency-node
 #
 
-# Modify ./test/test-config.json for your test (set wallet count and more.)
 # Fix 'target' url in
 #   test/10-onboarding/artillery.yaml,
 #   test/20-messaging/artillery.yaml,
 #   and test/20-messaging/art-verify-simul.yaml
 #   'target' url should point actual Agency url
+# Modify ./test/test-config.json for your test (set wallet count and more.)
 yarn run test:00          # Create test wallets (Required once before other tests)
-yarn run test:art:onbd    # Do vcx-onboarding load test w/Artillery
-yarn run test:art:msg     # Do vcx-messaging load test w/Artillery
-yarn run test:art:verify  # Do DID verification load test w/Artillery
+yarn run test:art:verify  # Do DID verification load test with Artillery
+
+# Optional tests
+yarn run test:art:onbd    # Do vcx-onboarding load test with Artillery
+yarn run test:art:msg     # Do vcx-messaging load test with Artillery
 ```
 
 #### Configure artillery.yaml
@@ -46,13 +48,13 @@ yarn run test:art:verify  # Do DID verification load test w/Artillery
 * AgencyVerkey: Verkey of Agency
 
 #### Custom Artillery metric and meaning
+* Messaging load test (test:verify)
+  - Faber-total: Number of total sending messages by all Fabers
+  - Alice-total: Number of total receving messages by all Alices
 * Onbodarding load test (test:onbd)
   - onboarding-try: Number of valid onboarding request (request count after wallet open)
   - onboarding-ok: Number of onboarding success
   - onboarding-fail: Number of onboarding failure
 * Messaging load test (test:msg)
-  - Faber-total: Number of total sending messages by all Fabers
-  - Alice-total: Number of total receving messages by all Alices
-* Messaging load test (test:verify)
   - Faber-total: Number of total sending messages by all Fabers
   - Alice-total: Number of total receving messages by all Alices
