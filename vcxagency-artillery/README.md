@@ -36,6 +36,7 @@ yarn run test:art:msg     # Do vcx-messaging load test with Artillery
 
 #### Configure artillery.yaml
 * Set 'config/target' to actual Angecy-url
+* Tip: You should select proper config/phases/maxVusers to limit loader-CPU<100% for valid load-test
 
 #### Configure test-config.json
 * TestName: Test wallets will have this prefix string (ex, TestName-Alice-0000)

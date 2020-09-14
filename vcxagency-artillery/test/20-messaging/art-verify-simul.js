@@ -3,7 +3,7 @@
 const fs = require('fs').promises
 const { buildAgencyClientNetwork } = require('../common')
 const { encryptForAgency } = require('../common')
-const { wrapWithAgencyFwd } = require('../../src/agency-flows')
+const { wrapWithAgencyFwd } = require('vcxagency-client')
 const { vcxFlowFullOnboarding } = require('vcxagency-client')
 const { vcxFlowCreateAgentConnection } = require('vcxagency-client')
 const { vcxFlowGetMsgsFromAgent } = require('vcxagency-client')

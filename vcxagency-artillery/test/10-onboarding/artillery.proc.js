@@ -2,7 +2,7 @@
 
 const easyindy = require('easy-indysdk')
 const onboarding = require('vcxagency-client/src/messaging/client2agency/onboarding')
-const { wrapWithAgencyFwd } = require('../../src/agency-flows')
+const { wrapWithAgencyFwd } = require('vcxagency-client')
 const { encryptForAgency } = require('../common')
 const config = require('../config')
 const printlog = config.DEBUG ? console.log: ()=>{}
