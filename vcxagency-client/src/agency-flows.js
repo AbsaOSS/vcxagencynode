@@ -207,6 +207,7 @@ async function vcxFlowSendAriesMessage (clientWh, sendToAgency, recipientVkey, r
 
 module.exports = {
   // onboarding
+  wrapWithAgencyFwd,
   vcxFlowConnect,
   vcxFlowSignUp,
   vcxFlowCreateAgent,

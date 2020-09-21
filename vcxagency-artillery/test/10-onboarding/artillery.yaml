@@ -1,0 +1,32 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+  - duration: 30
+    arrivalRate: 10
+  processor: "./artillery.proc.js"
+scenarios:
+- name: "onboarding"
+  #afterScenario: "reportOnboardingResult"
+  flow:
+  - function: "init"
+  - post:
+      url: "/agency/msg/"
+      headers:
+        Content-Type: "application/ssi-agent-wire"
+      body: "{{ body }}"
+      beforeRequest: "setConnMsg"
+      afterResponse: "handleConnRes"
+  - post:
+      url: "/agency/msg/"
+      headers:
+        Content-Type: "application/ssi-agent-wire"
+      body: "{{ body }}"
+      beforeRequest: "setSignUpMsg"
+      afterResponse: "handleSignUpRes"
+  - post:
+      url: "/agency/msg/"
+      headers:
+        Content-Type: "application/ssi-agent-wire"
+      body: "{{ body }}"
+      beforeRequest: "setCreateAgentMsg"
+      afterResponse: "handleCreateAgentRes"
