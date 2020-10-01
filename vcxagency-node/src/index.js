@@ -114,7 +114,7 @@ validateAppConfig(appConfig, (err, ok) => {
     appAgentJson.use(expressWinstonLogger)
     appAgentMsg.use(expressWinstonLogger)
 
-    apiAgency(appAgentJson, entityForwardAgent, resolver)
+    apiAgency(appAgentJson, entityForwardAgent)
     apiMessaging(appAgentMsg, entityForwardAgent)
 
     addStandardErrorMidlleware(appAgentJson)
