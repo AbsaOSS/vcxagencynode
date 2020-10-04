@@ -54,6 +54,7 @@ let serviceStorage // eslint-disable-line
 let resolver // eslint-disable-line
 let router // eslint-disable-line
 let agencyVerkey // eslint-disable-line
+let servicePollNotifications // eslint-disable-line
 
 let aliceWalletName
 let aliceWalletKey
@@ -81,16 +82,13 @@ beforeAll(async () => {
   serviceStorage = app.serviceStorage
   resolver = app.resolver
   router = app.router
+  servicePollNotifications = app.servicePollNotifications
 
   const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
   sendToAgency = agencyClient.sendToAgency
   const agencyInfo = await agencyClient.getAgencyInfo()
   agencyVerkey = agencyInfo.verkey
 })
-
-// afterAll(async () => {
-//   await tmpPgDb.dropDb()
-// })
 
 beforeEach(async () => {
   aliceWalletKey = await indyGenerateWalletKey()
@@ -228,6 +226,87 @@ describe('onboarding', () => {
       if (testServer) {
         await testServer.close()
       }
+    }
+  })
+
+  it('should be informed after timeout that no new messages are available', async () => {
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+
+    const utimeBeforeSecs = Math.floor(new Date() / 1000)
+    const hasNewMessages = await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+    const utimeAfterSecs = Math.floor(new Date() / 1000)
+    expect(hasNewMessages).toBeFalsy()
+    expect(utimeAfterSecs - utimeBeforeSecs).toBe(2)
+  })
+
+  it('should be informed after about new message within 1 second of arrival', async () => {
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+    const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
+
+    const utimePollStarted = Math.floor(new Date() / 1000)
+    let pollResolvedWithSuccess
+
+    servicePollNotifications.pollHasNewMessage(aliceAgentDid, 10)
+      .then(function (hasNewMessage) {
+        pollResolvedWithSuccess = true
+        const utimePollReturned = Math.floor(new Date() / 1000)
+        expect(hasNewMessage).toBeTruthy()
+        expect(utimePollReturned - utimePollStarted).toBeGreaterThanOrEqual(2)
+        expect(utimePollReturned - utimePollStarted).toBeLessThanOrEqual(3)
+      }, function (error) {
+        pollResolvedWithSuccess = false
+        throw error
+      })
+
+    await sleep(2000)
+
+    const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
+
+    await sleep(3100)
+    expect(pollResolvedWithSuccess).toBeTruthy()
+  })
+
+  it('should be informed immediately if messages has arrived since last poll', async () => {
+    // set up alice's agent and agent'connection to receive message Bob
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+    const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
+
+    const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
+
+    const utimePollStarted = Math.floor(new Date() / 1000)
+    await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 10)
+    const utimePollEnded = Math.floor(new Date() / 1000)
+    expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(1)
+  })
+
+  it('subsequent poll should hang if no new message has arrived', async () => {
+    // set up alice's agent and agent'connection to receive message Bob
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+    const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
+
+    const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
+    {
+      const utimePollStarted = Math.floor(new Date() / 1)
+      await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+      const utimePollEnded = Math.floor(new Date() / 1)
+      expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(100)
+    }
+    {
+      const utimePollStarted = Math.floor(new Date() / 1000)
+      await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+      const utimePollEnded = Math.floor(new Date() / 1000)
+      expect(utimePollEnded - utimePollStarted).toBeGreaterThanOrEqual(2)
     }
   })
 })

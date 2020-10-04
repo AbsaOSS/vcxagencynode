@@ -168,6 +168,7 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
     const msgUid = uuid.v4()
     const statusCode = 'MS-103'
     await serviceStorage.storeMessage(agentDid, agentConnectionDid, msgUid, statusCode, msgObject.msg)
+    serviceStorage.setHasNewMessage(agentDid, true)
     trySendNotification(msgUid, statusCode)
   }
 

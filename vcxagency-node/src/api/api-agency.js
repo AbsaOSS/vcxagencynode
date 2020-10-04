@@ -17,11 +17,28 @@
 'use strict'
 
 const { asyncHandler } = require('./middleware')
+const validate = require('express-validation')
+const Joi = require('joi')
 
-module.exports = function (app, forwardAgent) {
+module.exports = function (app, forwardAgent, servicePollNotifications) {
   app.get('/agency',
     asyncHandler(async function (req, res) {
       const { did, verkey } = forwardAgent.getForwadAgentInfo()
       res.status(200).send({ DID: did, verKey: verkey })
     }))
+
+  app.get('/experimental/agent/:agentDid/notifications',
+    validate(
+      {
+        params: {
+          agentDid: Joi.string().required()
+        }
+      }
+    ),
+    asyncHandler(async function (req, res) {
+      const { agentDid } = req.params
+      const hasNotifications = await servicePollNotifications.pollHasNewMessage(agentDid, 30)
+      res.status(200).send({ hasNotifications })
+    })
+  )
 }

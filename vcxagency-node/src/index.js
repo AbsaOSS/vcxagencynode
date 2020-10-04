@@ -91,7 +91,7 @@ validateAppConfig(appConfig, (err, ok) => {
     })
   }
 
-  function setupServer (entityForwardAgent, resolver, maxRequestSizeKb) {
+  function setupServer (entityForwardAgent, resolver, servicePollNotifications, maxRequestSizeKb) {
     const appAgent = express()
     const appAgentJson = express.Router()
     const appAgentMsg = express.Router()
@@ -114,7 +114,7 @@ validateAppConfig(appConfig, (err, ok) => {
     appAgentJson.use(expressWinstonLogger)
     appAgentMsg.use(expressWinstonLogger)
 
-    apiAgency(appAgentJson, entityForwardAgent)
+    apiAgency(appAgentJson, entityForwardAgent, servicePollNotifications)
     apiMessaging(appAgentMsg, entityForwardAgent)
 
     addStandardErrorMidlleware(appAgentJson)
@@ -154,11 +154,11 @@ validateAppConfig(appConfig, (err, ok) => {
     await indyLoadPostgresPlugin(storageConfig, storageCredentials)
 
     logger.info('Building services and wiring up dependencies.')
-    const { entityForwardAgent, resolver } =
+    const { entityForwardAgent, resolver, servicePollNotifications } =
       await wireUp(appStoragePgConfig, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, storageType, storageConfig, storageCredentials)
 
     logger.info('Building express http server.')
-    setupServer(entityForwardAgent, resolver, appConfig.SERVER_MAX_REQUEST_SIZE_KB)
+    setupServer(entityForwardAgent, resolver, servicePollNotifications, appConfig.SERVER_MAX_REQUEST_SIZE_KB)
   }
 
   async function startup () {

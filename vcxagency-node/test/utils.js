@@ -24,6 +24,7 @@ function objectToBuffer (object) {
 
 function setupVcxLogging (logger) {
   if (!logger) {
+    logger = {}
     logger.error = (data) => console.error(data)
     logger.warn = (data) => console.warn(data)
     logger.info = (data) => console.log(data)

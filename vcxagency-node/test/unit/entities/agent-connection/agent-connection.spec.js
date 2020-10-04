@@ -71,14 +71,14 @@ afterEach(async () => {
 describe('agent operations', () => {
   it('should create agentConnection data and retrieve entity record', async () => {
     const { agentConnectionDid, agentConnectionVerkey } = await createAgentConnectionData('LC9mkrzZfDXb3UwjnBnm89', clientDid, clientVerkey, clientPairwiseDid, clientPairwiseVkey, serviceIndyWallets, serviceStorage)
-    const entityRecord = await serviceStorage.loadEntityRecord(agentConnectionDid)
-    const entityRecordByVkey = await serviceStorage.loadEntityRecord(agentConnectionVerkey)
+    const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentConnectionDid)
+    const entityRecordByVkey = await serviceStorage.loadEntityRecordByDidOrVerkey(agentConnectionVerkey)
     expect(entityRecord).toStrictEqual(entityRecordByVkey)
   })
 
   it('should create agentConnection data and build AO', async () => {
     const { agentConnectionDid, agentConnectionVerkey } = await createAgentConnectionData('LC9mkrzZfDXb3UwjnBnm89', clientDid, clientVerkey, clientPairwiseDid, clientPairwiseVkey, serviceIndyWallets, serviceStorage)
-    const entityRecord = await serviceStorage.loadEntityRecord(agentConnectionDid)
+    const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentConnectionDid)
 
     const agentAo = await buildAgentConnectionAO(entityRecord, serviceIndyWallets, serviceStorage)
     const info = await agentAo.loadInfo()

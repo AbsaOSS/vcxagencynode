@@ -66,14 +66,14 @@ describe('agent operations', () => {
     const { agentDid, agentVerkey } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
     expect(agentDid).toBeDefined()
     expect(agentVerkey).toBeDefined()
-    const entityRecord = await serviceStorage.loadEntityRecord(agentDid)
-    const entityRecordByVkey = await serviceStorage.loadEntityRecord(agentVerkey)
+    const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentDid)
+    const entityRecordByVkey = await serviceStorage.loadEntityRecordByDidOrVerkey(agentVerkey)
     expect(entityRecord).toStrictEqual(entityRecordByVkey)
   })
 
   it('should create agent data and retrieve wallet information', async () => {
     const { agentDid: agentDidOnCreate, agentVerkey: agentVkeyOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
-    const entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
+    const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentDidOnCreate)
     const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
     const { ownerDid, ownerVerkey, agentDid, agentVerkey } = await agentAo.loadInfo()
 
@@ -85,7 +85,7 @@ describe('agent operations', () => {
 
   it('should set and get http/https webhook', async () => {
     const { agentDid: agentDidOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
-    const entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
+    const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentDidOnCreate)
     const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
 
     await agentAo.setWebhook('http://1.2.3.4:3000')
@@ -97,7 +97,7 @@ describe('agent operations', () => {
 
   it('should unset webhook by using empty string', async () => {
     const { agentDid: agentDidOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
-    const entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
+    const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentDidOnCreate)
     const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
 
     await agentAo.setWebhook('http://example.org/123213123')
@@ -108,7 +108,7 @@ describe('agent operations', () => {
 
   it('should throw if webhook is not http or https', async () => {
     const { agentDid: agentDidOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
-    const entityRecord = await serviceStorage.loadEntityRecord(agentDidOnCreate)
+    const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentDidOnCreate)
     const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
 
     let thrown

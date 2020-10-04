@@ -69,7 +69,8 @@ async function createPgStorageEntities (appStorageConfig) {
 
   const createAgentsTable = `CREATE TABLE IF NOT EXISTS agents (
          agent_did VARCHAR (50) PRIMARY KEY,
-         webhook_url VARCHAR (512)
+         webhook_url VARCHAR (512),
+         has_new_message BOOL
         );
     `
 
@@ -91,6 +92,12 @@ async function createPgStorageEntities (appStorageConfig) {
   await runDbQuery(msgsAgentAgetConnectionIndex)
 
   // ---- ---- ---- ---- ---- ----  Agent webhooks
+  async function createAgentRecord (agentDid) {
+    const values = [agentDid, null, null]
+    const insertQuery = 'INSERT INTO agents (agent_did, webhook_url, has_new_message) VALUES($1, $2, $3)'
+    await pgPool.query(insertQuery, values)
+  }
+
   async function setAgentWebhook (agentDid, webhookUrl) {
     const values = [agentDid, webhookUrl]
     const insertQuery = 'INSERT INTO agents (agent_did, webhook_url) VALUES($1, $2) ON CONFLICT (agent_did) DO UPDATE SET webhook_url = $2'
@@ -108,6 +115,37 @@ async function createPgStorageEntities (appStorageConfig) {
       return undefined
     }
     return rows[0].webhook_url
+  }
+
+  /**
+   * Gets has_new_message flag of agent
+   * @param {string} agentDid - DID of the agent.
+   */
+  async function getHasNewMessage (agentDid) {
+    const insertQuery = 'SELECT has_new_message FROM agents WHERE agent_did = $1'
+    const values = [agentDid]
+    const { rows } = await pgPool.query(insertQuery, values)
+    if (rows.length > 1) {
+      throw Error('Expected to find at most 1 entity.')
+    }
+    if (rows.length === 0) {
+      throw Error(`Expected to get 1 result row. Agent ${agentDid} seem not to exist.`)
+    }
+    return rows[0].has_new_message
+  }
+
+  /**
+   * Updates has_new_message flag of agent
+   * @param {string} agentDid - DID of the agent.
+   * @param {bool} hasNewMessages - flag signalling whether new messages has been received since last "new-message probe"
+   */
+  async function setHasNewMessage (agentDid, hasNewMessages) {
+    if (!agentDid) {
+      throw Error('AgentDid or AgentConnDid was not specified.')
+    }
+    const values = [agentDid, hasNewMessages]
+    const updateStatusQuery = 'UPDATE agents SET has_new_message = $2 WHERE agent_did = $1'
+    await pgPool.query(updateStatusQuery, values)
   }
 
   // ---- ---- ---- ---- ---- ----  Messages read/write
@@ -209,13 +247,29 @@ async function createPgStorageEntities (appStorageConfig) {
 
   /**
    * Loads "Entity Record". This is data necessary to recreate entity's AO (Access Object) to manipulate it.
-   * @param {string} didOrVerkey - DID or Verkey of an entity
+   * @param {string} entityDidOrVerkey - DID or Verkey of an entity
    * @return {object|undefined} Entity record belonging to the entity with specified DID/Verkey.
    * Undefined if DID/Verkey is not matching any entity's DID/Verkey.
    */
-  async function loadEntityRecord (didOrVerkey) {
+  async function loadEntityRecordByDidOrVerkey (entityDidOrVerkey) {
     const insertQuery = 'SELECT * from entities WHERE entity_did = $1 OR entity_verkey = $1'
-    const values = [didOrVerkey]
+    const values = [entityDidOrVerkey]
+    const { rows } = await pgPool.query(insertQuery, values)
+    if (rows.length > 1) {
+      throw Error('Expected to find at most 1 entity.')
+    }
+    return rows[0].entity_record
+  }
+
+  /**
+   * Loads "Entity Record". This is data necessary to recreate entity's AO (Access Object) to manipulate it.
+   * @param {string} entityDid - DID of an entity
+   * @return {object|undefined} Entity record belonging to the entity with specified DID.
+   * Undefined if DID is not matching any entity's DID.
+   */
+  async function loadEntityRecordByDid (entityDid) {
+    const insertQuery = 'SELECT * from entities WHERE entity_did = $1'
+    const values = [entityDid]
     const { rows } = await pgPool.query(insertQuery, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
@@ -368,7 +422,8 @@ async function createPgStorageEntities (appStorageConfig) {
 
   return {
     // entity records
-    loadEntityRecord,
+    loadEntityRecordByDid,
+    loadEntityRecordByDidOrVerkey,
     saveEntityRecord,
 
     // messaging
@@ -377,6 +432,7 @@ async function createPgStorageEntities (appStorageConfig) {
     loadMessages,
 
     // webhook storage
+    createAgentRecord,
     setAgentWebhook,
     getAgentWebhook,
 
@@ -387,7 +443,10 @@ async function createPgStorageEntities (appStorageConfig) {
     convertIntoStorageRequest,
     convertIntoUserUpdateResponse,
     pwDidToAconnDid,
-    aconnDidToPwDid
+    aconnDidToPwDid,
+
+    setHasNewMessage,
+    getHasNewMessage
   }
 }
 

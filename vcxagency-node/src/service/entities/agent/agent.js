@@ -64,6 +64,7 @@ async function createAgentData (ownerDid, ownerVerkey, serviceWallets, serviceSt
     agentVerkey
   }
   await serviceStorage.saveEntityRecord(agentDid, agentVerkey, entityRecord)
+  await serviceStorage.createAgentRecord(agentDid)
   return { agentDid, agentVerkey }
 }
 
@@ -292,11 +293,22 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     return serviceStorage.getAgentWebhook(agentDid)
   }
 
+  async function experimentalGetHasNewMessage () {
+    const hasMessage = await serviceStorage.getHasNewMessage(agentDid)
+    return hasMessage === true
+  }
+
+  async function experimentalSetHasNewMessage (value) {
+    return await serviceStorage.setHasNewMessage(agentDid, value)
+  }
+
   return {
     loadInfo,
     handleRoutedMessage,
     setWebhook,
-    getWebhook
+    getWebhook,
+    experimentalGetHasNewMessage,
+    experimentalSetHasNewMessage
   }
 }
 

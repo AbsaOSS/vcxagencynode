@@ -16,6 +16,7 @@
 
 'use strict'
 
+const { createPollNotificationService } = require('./service/notifications/notifications')
 const { createPgStorageEntities } = require('./service/storage/pgstorage-entities')
 const { createRouter } = require('./service/delivery/router')
 const { createResolver } = require('./service/delivery/resolver')
@@ -34,7 +35,8 @@ async function wireUp (appStorageConfig, agencyWalletName, agencyDid, agencySeed
   resolver.setRouter(router)
   entityForwardAgent.setRouter(router)
   entityForwardAgent.setResolver(resolver)
-  return { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router }
+  const servicePollNotifications = createPollNotificationService(resolver)
+  return { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, servicePollNotifications }
 }
 
 module.exports = { wireUp }
