@@ -34,7 +34,6 @@
     "nodemon": "^1.18.10",
     "readline-sync": "^1.4.10",
     "rimraf": "^2.6.3",
-    "sleep-promise": "^8.0.1",
     "standard": "^14.3.4"
   },
   "dependencies": {
@@ -54,6 +53,7 @@
     "pgtools": "^0.3.0",
     "uuid": "^3.3.2",
     "vcxagency-client": "file:../vcxagency-client",
-    "winston": "^3.2.1"
+    "winston": "^3.2.1",
+    "sleep-promise": "^8.0.1"
   }
 }
