@@ -62,12 +62,14 @@ RUN apk add --no-cache \
         libsodium-dev \
         libzmq \
         make \
-        nodejs \
+        nodejs-current \
         npm \
         openssl-dev \
         python2 \
         sqlite-dev \
         zeromq-dev
+
+RUN npm install -g npm
 
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="indy-sdk"
