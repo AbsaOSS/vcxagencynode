@@ -18,6 +18,7 @@
 
 const { asyncHandler } = require('./middleware')
 const validate = require('express-validation')
+const logger = require('../logging/logger-builder')(__filename)
 const Joi = require('joi')
 
 module.exports = function (app, forwardAgent, servicePollNotifications) {
@@ -38,7 +39,23 @@ module.exports = function (app, forwardAgent, servicePollNotifications) {
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
       const hasNotifications = await servicePollNotifications.pollHasNewMessage(agentDid, 30)
+      logger.debug(`Returning longpoll with result hasNotifications=${hasNotifications}`)
       res.status(200).send({ hasNotifications })
+    })
+  )
+
+  app.post('/experimental/agent/:agentDid/notifications/ack',
+    validate(
+      {
+        params: {
+          agentDid: Joi.string().required()
+        }
+      }
+    ),
+    asyncHandler(async function (req, res) {
+      const { agentDid } = req.params
+      await servicePollNotifications.ackNewMessage(agentDid)
+      res.status(200).send()
     })
   )
 }

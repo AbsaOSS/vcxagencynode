@@ -235,9 +235,10 @@ describe('onboarding', () => {
     await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
 
     const utimeBeforeSecs = Math.floor(new Date() / 1000)
-    const hasNewMessages = await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+    const hasNotifications = await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+    await servicePollNotifications.ackNewMessage(aliceAgentDid)
     const utimeAfterSecs = Math.floor(new Date() / 1000)
-    expect(hasNewMessages).toBeFalsy()
+    expect(hasNotifications).toBeFalsy()
     expect(utimeAfterSecs - utimeBeforeSecs).toBe(2)
   })
 
@@ -251,10 +252,11 @@ describe('onboarding', () => {
     let pollResolvedWithSuccess
 
     servicePollNotifications.pollHasNewMessage(aliceAgentDid, 10)
-      .then(function (hasNewMessage) {
+      .then(async function (hasNotifications) {
         pollResolvedWithSuccess = true
         const utimePollReturned = Math.floor(new Date() / 1000)
-        expect(hasNewMessage).toBeTruthy()
+        await servicePollNotifications.ackNewMessage(aliceAgentDid)
+        expect(hasNotifications).toBeTruthy()
         expect(utimePollReturned - utimePollStarted).toBeGreaterThanOrEqual(2)
         expect(utimePollReturned - utimePollStarted).toBeLessThanOrEqual(3)
       }, function (error) {
@@ -282,7 +284,9 @@ describe('onboarding', () => {
     await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
 
     const utimePollStarted = Math.floor(new Date() / 1000)
-    await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 10)
+    const hasNotifications = await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 10)
+    expect(hasNotifications).toBeTruthy()
+    await servicePollNotifications.ackNewMessage(aliceAgentDid)
     const utimePollEnded = Math.floor(new Date() / 1000)
     expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(1)
   })
@@ -298,13 +302,49 @@ describe('onboarding', () => {
     await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
     {
       const utimePollStarted = Math.floor(new Date() / 1)
-      await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+      const hasNotifications = await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+      expect(hasNotifications).toBeTruthy()
+      await servicePollNotifications.ackNewMessage(aliceAgentDid)
       const utimePollEnded = Math.floor(new Date() / 1)
       expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(100)
     }
     {
       const utimePollStarted = Math.floor(new Date() / 1000)
-      await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+      const hasNotifications = await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+      expect(hasNotifications).toBeFalsy()
+      const utimePollEnded = Math.floor(new Date() / 1000)
+      expect(utimePollEnded - utimePollStarted).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('subsequent poll should recieve information about received message if update callback was not called', async () => {
+    // set up alice's agent and agent'connection to receive message Bob
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+    const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
+
+    const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
+    {
+      const utimePollStarted = Math.floor(new Date() / 1)
+      const hasNotifications = await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+      expect(hasNotifications).toBeTruthy()
+      const utimePollEnded = Math.floor(new Date() / 1)
+      expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(100)
+    }
+    {
+      const utimePollStarted = Math.floor(new Date() / 1000)
+      const hasNotifications = await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+      expect(hasNotifications).toBeTruthy()
+      await servicePollNotifications.ackNewMessage(aliceAgentDid)
+      const utimePollEnded = Math.floor(new Date() / 1000)
+      expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(100)
+    }
+    {
+      const utimePollStarted = Math.floor(new Date() / 1000)
+      const hasNotifications = await servicePollNotifications.pollHasNewMessage(aliceAgentDid, 2)
+      expect(hasNotifications).toBeFalsy()
       const utimePollEnded = Math.floor(new Date() / 1000)
       expect(utimePollEnded - utimePollStarted).toBeGreaterThanOrEqual(2)
     }

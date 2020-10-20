@@ -15,6 +15,7 @@
     "lint:fix": "standard --fix",
     "test:unit": "jest --runInBand  ./test/unit",
     "test:integration": "jest --runInBand  ./test/integration",
+    "test:integration:longpoll": "jest --runInBand  ./test/integration/longpoll.spec.js",
     "test:perf": "jest --runInBand  ./test/perf",
     "test:perf:onboarding": "jest --runInBand  ./test/perf/onboarding.perf.spec.js",
     "test:perf:msgs": "jest --runInBand  ./test/perf/messaging.perf.spec.js",
