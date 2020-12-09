@@ -40,7 +40,7 @@ module.exports = function (app, forwardAgent, servicePollNotifications) {
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
       const hasNotifications = await servicePollNotifications.pollHasNewMessage(agentDid, 30)
-      logger.debug(`Returning longpoll with result hasNotifications=${hasNotifications}`)
+      logger.info(`Returning long-poll with result hasNotifications=${hasNotifications}`)
       res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
       res.status(200).send({ hasNotifications })
     })

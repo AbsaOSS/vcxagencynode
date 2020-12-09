@@ -35,15 +35,15 @@ module.exports.createPollNotificationService = function createPollNotificationSe
     const utimeSecEnd = utimeSecNow + waitThresholdSeconds
     let internalPollCount = 0
     while (true) {
-      logger.info(`Notification longpoll for agent ${agentDid} internalPollCount=${internalPollCount}`)
+      logger.debug(`Notification longpoll for agent ${agentDid} internalPollCount=${internalPollCount}`)
       const hasMessage = await agentAo.experimentalGetHasNewMessage()
       if (hasMessage) {
-        logger.info(`Notification longpoll for agent ${agentDid} terminated per discovered new message. internalPollCount=${internalPollCount}`)
+        logger.debug(`Notification longpoll for agent ${agentDid} terminated per discovered new message. internalPollCount=${internalPollCount}`)
         return hasMessage
       }
       const utimeSecNow = Math.floor(new Date() / 1000)
       if (utimeSecNow >= utimeSecEnd) {
-        logger.info(`Notification longpoll for agent ${agentDid} terminated per timeout. internalPollCount=${internalPollCount}`)
+        logger.debug(`Notification longpoll for agent ${agentDid} terminated per timeout. internalPollCount=${internalPollCount}`)
         return hasMessage
       }
       await sleep(1000)
@@ -56,7 +56,7 @@ module.exports.createPollNotificationService = function createPollNotificationSe
     if (!agentAo) {
       throw Error(`No Agent Entity was resolved by agent did ${agentDid}`)
     }
-    logger.info(`NewMessages status acked for agent ${agentDid}`)
+    logger.debug(`NewMessages status acked for agent ${agentDid}`)
     await agentAo.experimentalSetHasNewMessage(false)
   }
 
