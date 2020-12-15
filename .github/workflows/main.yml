@@ -31,11 +31,11 @@ jobs:
       - run: echo $GITHUB_RUN_ID
       - name: Git checkout
         uses: actions/checkout@v1
-      - name: Set custom env variables
+      - name: Set outputs
+        id: mainstep
         run: |
           set -x
-          GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo $GITHUB_REPOSITORY_LOWERCASE)
+          export GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
 
           if [[ -z "$GITHUB_HEAD_REF" ]] # is set only if pipeline run is triggered as pull request
           then
@@ -46,11 +46,8 @@ jobs:
             echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Pull Request"
           fi
 
-          FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
-          echo ::set-env name=FULL_REPO_SLUG::$(echo $FULL_REPO_SLUG)
-
-          BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
-          echo ::set-env name=BRANCH_NAME::$(echo $BRANCH_NAME)
+          export FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
+          export BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
 
           RELEASE_VERSION=''
 
@@ -58,42 +55,31 @@ jobs:
           then
             echo "Running push on master branch. Release will happen if version was bumped."
 
-            REPO_VERSION_HIGHEST=$(git describe --tags --always --abbrev=0)
-            echo ::set-env name=REPO_VERSION_HIGHEST::$(echo $REPO_VERSION_HIGHEST)
+            export REPO_VERSION_HIGHEST=$(git describe --tags --always --abbrev=0)
             echo "Highest released version was $REPO_VERSION_HIGHEST"
 
-            REPO_VERSION_DESIRED=`bash ./get-version.sh`
-            echo ::set-env name=REPO_VERSION_DESIRED::$(echo $REPO_VERSION_DESIRED)
+            export REPO_VERSION_DESIRED=`bash ./get-version.sh`
             echo "Repo declares version $REPO_VERSION_DESIRED"
 
             if [[ "$REPO_VERSION_HIGHEST" == "$REPO_VERSION_DESIRED" ]]
             then
-              DOCKER_TAG_VERSION="$BRANCH_NAME"
+              export DOCKER_TAG_VERSION="$BRANCH_NAME"
               echo "Running push on master but version was not bumped. Will NOT release."
             else
-              DOCKER_TAG_VERSION="$BRANCH_NAME"
-              RELEASE_VERSION="$REPO_VERSION_DESIRED"
-              DOCKER_TAG_VERSION="$REPO_VERSION_DESIRED"
+              export RELEASE_VERSION="$REPO_VERSION_DESIRED"
+              export DOCKER_TAG_VERSION="$REPO_VERSION_DESIRED"
               echo "Running push on master, version was bumped $REPO_VERSION_HIGHEST->$RELEASE_VERSION. Will release $RELEASE_VERSION."
             fi
           else
-             DOCKER_TAG_VERSION="$FULL_REPO_SLUG-$BRANCH_NAME"
+             export DOCKER_TAG_VERSION="$FULL_REPO_SLUG-$BRANCH_NAME"
              echo "This is not push to master. Will NOT release."
           fi
 
-          echo ::set-env name=RELEASE_VERSION::$(echo $RELEASE_VERSION)
-          echo ::set-env name=DOCKER_TAG_VERSION::$(echo $DOCKER_TAG_VERSION)
-          echo "Docker images built in this CI will be using tag '$DOCKER_TAG_VERSION'"
+          export DOCKER_BASE_HASH=${{ hashFiles('vcxagency-base') }}
+          export CODE_AGENCY_HASH=${{ hashFiles('vcxagency-node') }}
+          export CODE_EASYSDK_HASH=${{ hashFiles('easy-indysdk') }}
+          export CODE_CLIENT_HASH=${{ hashFiles('vcxagency-client') }}
 
-          echo ::set-env name=DOCKER_BASE_HASH::$(echo ${{ hashFiles('vcxagency-base') }})
-          echo ::set-env name=CODE_AGENCY_HASH::$(echo ${{ hashFiles('vcxagency-node') }})
-          echo ::set-env name=CODE_EASYSDK_HASH::$(echo ${{ hashFiles('easy-indysdk') }})
-          echo ::set-env name=CODE_CLIENT_HASH::$(echo ${{ hashFiles('vcxagency-client') }})
-
-      - name: Set and print outputs
-        id: mainstep
-        run: |
-          set -x
           echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
           echo "::set-output name=RELEASE_VERSION::$RELEASE_VERSION"
 
@@ -112,11 +98,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_BUILDKIT: 1
+      CACHE_KEY_BASE: ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}}
+      CACHED_DOCKER_IMG_NAME_BASE: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}}
     steps:
-      - name: Load up custom variables
-        run: |
-          echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
-          echo ::set-env name=CACHED_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}})
       - name: Git checkout
         uses: actions/checkout@v2
       - name: Try load from cache.
@@ -140,14 +124,11 @@ jobs:
       - workflow-setup
     env:
       DOCKER_BUILDKIT: 1
+      CACHE_KEY_BASE: ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}}
+      CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
+      CACHED_DOCKER_IMG_NAME_BASE: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}}
+      CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
     steps:
-      - name: Load up custom variables
-        run: |
-          echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
-          echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=CACHED_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}})
-          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
-
       - name: Load base image cache
         id: load-cached-image-base
         uses: actions/cache@v2
@@ -200,11 +181,10 @@ jobs:
     needs:
       - build-image-vcxagency
       - workflow-setup
+    env:
+      CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
+      CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
     steps:
-      - name: Load up custom variables
-        run: |
-          echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
       - name: Load agency image cache
         id: load-cached-image-node
         uses: actions/cache@v2
@@ -240,11 +220,10 @@ jobs:
     needs:
       - build-image-vcxagency
       - workflow-setup
+    env:
+      CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
+      CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
     steps:
-      - name: Load up custom variables
-        run: |
-          echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
       - name: Load agency image cache
         id: load-cached-image-node
         uses: actions/cache@v2
@@ -275,12 +254,10 @@ jobs:
     needs:
       - build-image-vcxagency
       - workflow-setup
+    env:
+      CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
+      CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
     steps:
-      - name: Load up custom variables
-        run: |
-          echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
-
       - name: Load agency image cache
         id: load-cached-image-node
         uses: actions/cache@v2
@@ -354,17 +331,15 @@ jobs:
       - lint-vcxagency-client
       - lint-easy-indysdk
     runs-on: ubuntu-latest
+    env:
+      CACHE_KEY_BASE: ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}}
+      CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
+      CACHED_DOCKER_IMG_NAME_BASE: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}}
+      CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
+      GITHUB_REPOSITORY_LOWERCASE: ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}}
+      PUBLISH_DOCKER_IMG_NAME_BASE: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_BASE}}
+      PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY}}
     steps:
-      - name: Load up release version
-        run: |
-          echo ::set-env name=CACHE_KEY_BASE::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}})
-          echo ::set-env name=CACHE_KEY_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}})
-          echo ::set-env name=CACHED_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}})
-          echo ::set-env name=CACHED_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}})
-          echo ::set-env name=GITHUB_REPOSITORY_LOWERCASE::$(echo ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}})
-          echo ::set-env name=PUBLISH_DOCKER_IMG_NAME_BASE::$(echo ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_BASE}})
-          echo ::set-env name=PUBLISH_DOCKER_IMG_NAME_AGENCY::$(echo ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY}})
-
       - name: Load base image cache
         id: load-cached-image-base
         uses: actions/cache@v2
@@ -425,11 +400,10 @@ jobs:
       - lint-vcxagency-client
       - lint-easy-indysdk
     runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{needs.workflow-setup.outputs.RELEASE_VERSION}}
     if: ${{ needs.workflow-setup.outputs.RELEASE_VERSION }}
     steps:
-      - name: Load up release version
-        run: |
-          echo ::set-env name=RELEASE_VERSION::$(echo ${{needs.workflow-setup.outputs.RELEASE_VERSION}})
       - name: Git checkout
         uses: actions/checkout@v2
       - name: Generate changelog
