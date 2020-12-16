@@ -12,16 +12,15 @@ jobs:
   workflow-setup:
     runs-on: ubuntu-latest
     outputs:
-      GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
-      RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
       CACHE_KEY_BASE: ${{ steps.mainstep.outputs.CACHE_KEY_BASE }}
       CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
       CACHED_DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_BASE }}
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_AGENCY }}
-      PUBLISH_DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_BASE }}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY }}
+      PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
+      RELEASE: ${{ steps.mainstep.outputs.RELEASE }}
+      PRERELEASE: ${{ steps.mainstep.outputs.PRERELEASE }}
     steps:
-      - run: echo $GITHUB_REPOSITORY
       - run: echo $GITHUB_REF
       - run: echo $GITHUB_HEAD_REF
       - run: echo $GITHUB_BASE_REF
@@ -35,7 +34,6 @@ jobs:
         id: mainstep
         run: |
           set -x
-          export GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
 
           if [[ -z "$GITHUB_HEAD_REF" ]] # is set only if pipeline run is triggered as pull request
           then
@@ -46,51 +44,79 @@ jobs:
             echo "Setting BRANCH_NAME=$BRANCH_NAME because this pipeline is run as Pull Request"
           fi
 
-          export FULL_REPO_SLUG=`echo "${{github.event.pull_request.head.repo.full_name}}" | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
-          export BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
+          BRANCH_NAME=`echo $BRANCH_NAME | sed "s/[^[:alnum:]-]//g" | tr '[:upper:]' '[:lower:]'` # lowercase, only alphanumeric and dash
 
-          RELEASE_VERSION=''
-
-          if [[ "${{ github.event_name}}" == "push" && "$BRANCH_NAME" == "master" ]]
+          if [[ "${{ github.event_name }}" == "pull_request" ]]
           then
-            echo "Running push on master branch. Release will happen if version was bumped."
+            REPO_HEAD="${{ github.event.pull_request.head.repo.full_name }}" # source repository
+            REPO_BASE="${{ github.event.pull_request.head.base.full_name }}" # target repository
+            echo "This is pull request from $REPO_HEAD to $REPO_BASE"
 
-            export REPO_VERSION_HIGHEST=$(git describe --tags --always --abbrev=0)
-            echo "Highest released version was $REPO_VERSION_HIGHEST"
-
-            export REPO_VERSION_DESIRED=`bash ./get-version.sh`
-            echo "Repo declares version $REPO_VERSION_DESIRED"
-
-            if [[ "$REPO_VERSION_HIGHEST" == "$REPO_VERSION_DESIRED" ]]
+            if [[ "$REPO_HEAD" == "${{ github.repository }}" ]]
             then
-              export DOCKER_TAG_VERSION="$BRANCH_NAME"
-              echo "Running push on master but version was not bumped. Will NOT release."
+              echo "This CI run is PR from non-forked repository."
+              IS_FORK="false";
             else
-              export RELEASE_VERSION="$REPO_VERSION_DESIRED"
-              export DOCKER_TAG_VERSION="$REPO_VERSION_DESIRED"
-              echo "Running push on master, version was bumped $REPO_VERSION_HIGHEST->$RELEASE_VERSION. Will release $RELEASE_VERSION."
-            fi
+              echo "This is fork."
+              IS_FORK="true";
+            fi;
           else
-             export DOCKER_TAG_VERSION="$FULL_REPO_SLUG-$BRANCH_NAME"
-             echo "This is not push to master. Will NOT release."
-          fi
+            echo "Not PR so this is not fork."
+            IS_FORK="false";
+          fi;
+
+          REPO_VERSION_MOST_RECENT=$(git describe --tags --always --abbrev=0)
+          export REPO_VERSION_DESIRED=`bash ./get-version.sh`
+          echo "Highest released version was: $REPO_VERSION_MOST_RECENT, desired version (specified in libvcx/Cargo.toml) is $REPO_VERSION_DESIRED"
+
+          RELEASE="false"
+          PRERELEASE="false"
+          if [[ "$IS_FORK" == "false" ]]
+          then
+            if [[ "$REPO_VERSION_DESIRED" != "$REPO_VERSION_MOST_RECENT" ]]
+            then
+              if [[ "$BRANCH_NAME" == "master" ]]
+              then
+                PUBLISH_VERSION="$REPO_VERSION_DESIRED"
+                RELEASE="true"
+                echo "This is push to master, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a release of $REPO_VERSION_DESIRED."
+              elif [[ "${{ github.event_name }}" == "pull_request" ]]
+              then
+                PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-${{ github.run_number }}"
+                PRERELEASE="true"
+                echo "This is push to a non-master branch on a PR, and version was bumped from $REPO_VERSION_MOST_RECENT to $REPO_VERSION_DESIRED. Will publish a pre-release of $REPO_VERSION_DESIRED."
+              fi;
+            else
+              PUBLISH_VERSION="$REPO_VERSION_MOST_RECENT-$BRANCH_NAME-${{ github.run_number }}"
+              if [[ "${{ github.event_name }}" == "pull_request" && ${{ contains(github.event.pull_request.labels.*.name, 'pre-release') }} ]]
+              then
+                PRERELEASE="true"
+                echo "This is a PR with `pre-release` label set. Will publish and prerelease version: $PUBLISH_VERSION."
+              else
+                echo "This is not push to master. Will be publishing version: $PUBLISH_VERSION."
+              fi;
+            fi;
+          else
+            echo "This PR is from fork, nothing will be published because the CI wouldn't be able to access repo secrets to perform publish."
+            PUBLISH_VERSION=""
+          fi;
 
           export DOCKER_BASE_HASH=${{ hashFiles('vcxagency-base') }}
           export CODE_AGENCY_HASH=${{ hashFiles('vcxagency-node') }}
           export CODE_EASYSDK_HASH=${{ hashFiles('easy-indysdk') }}
           export CODE_CLIENT_HASH=${{ hashFiles('vcxagency-client') }}
 
-          echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
-          echo "::set-output name=RELEASE_VERSION::$RELEASE_VERSION"
-
           echo "::set-output name=CACHE_KEY_BASE::$DOCKER_BASE_HASH"
           echo "::set-output name=CACHE_KEY_AGENCY::$(echo basehash-$CACHE_KEY_BASE-agencyhash-$CODE_AGENCY_HASH-clienthash-$CODE_CLIENT_HASH-easyindysdkhash-$CODE_EASYSDK_HASH)"
-
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_BASE::vcxagency-base:cached"
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_AGENCY::vcxagency-node:cached"
 
-          echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_BASE::vcxagency-base:$DOCKER_TAG_VERSION"
-          echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_AGENCY::vcxagency-node:$DOCKER_TAG_VERSION"
+          echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_AGENCY::vcxagency-node:$PUBLISH_VERSION"
+
+          echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
+          echo "::set-output name=PRERELEASE::$PRERELEASE"
+          echo "::set-output name=RELEASE::$RELEASE"
+
 
   build-vcxagency-base:
     needs:
@@ -332,26 +358,10 @@ jobs:
       - lint-easy-indysdk
     runs-on: ubuntu-latest
     env:
-      CACHE_KEY_BASE: ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}}
       CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
-      CACHED_DOCKER_IMG_NAME_BASE: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}}
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
-      GITHUB_REPOSITORY_LOWERCASE: ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}}
-      PUBLISH_DOCKER_IMG_NAME_BASE: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_BASE}}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY}}
     steps:
-      - name: Load base image cache
-        id: load-cached-image-base
-        uses: actions/cache@v2
-        with:
-          path: /tmp/imgcache
-          key: ${{ env.CACHE_KEY_BASE }}
-      - name: If no cached image found
-        if: steps.load-cached-image-base.outputs.cache-hit != 'true'
-        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_BASE"; exit -1
-      - name: Load base image
-        run: docker load < /tmp/imgcache/img_base.rar
-
       - name: Load agency image cache
         id: load-cached-image-node
         uses: actions/cache@v2
@@ -366,7 +376,6 @@ jobs:
 
       - name: Verify images were loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_BASE" || { echo "Image $CACHED_DOCKER_IMG_NAME_BASE was not found!"; docker image ls; exit 1; }
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Docker Login
@@ -378,17 +387,14 @@ jobs:
 
       - name: Publish images
         run: |
-          REMOTE_DOCKER_IMG_NAME_BASE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_BASE"
+          GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
           REMOTE_DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_AGENCY"
-
-          docker tag "$CACHED_DOCKER_IMG_NAME_BASE"   "$REMOTE_DOCKER_IMG_NAME_BASE"
           docker tag "$CACHED_DOCKER_IMG_NAME_AGENCY" "$REMOTE_DOCKER_IMG_NAME_AGENCY"
           docker image ls
-
-          docker push "$REMOTE_DOCKER_IMG_NAME_BASE" || true
           docker push "$REMOTE_DOCKER_IMG_NAME_AGENCY" || true
 
   make-release:
+    runs-on: ubuntu-16.04
     needs:
       - workflow-setup
       - build-vcxagency-base
@@ -399,18 +405,18 @@ jobs:
       - lint-vcxagency-node
       - lint-vcxagency-client
       - lint-easy-indysdk
-    runs-on: ubuntu-latest
-    env:
-      RELEASE_VERSION: ${{needs.workflow-setup.outputs.RELEASE_VERSION}}
-    if: ${{ needs.workflow-setup.outputs.RELEASE_VERSION }}
+    if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+    outputs:
+      RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
+
       - name: Generate changelog
-        uses: heinrichreimer/github-changelog-generator-action@v2.1.1
+        uses: heinrichreimer/github-changelog-generator-action@v2.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          futureRelease: ${{ env.RELEASE_VERSION }}
+          futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           releaseBranch: master
           pullRequests: true
           unreleased: true
@@ -418,15 +424,31 @@ jobs:
           issuesWoLabels: true
           prWoLabels: true
           stripGeneratorNotice: true
-          stripHeaders: true
-          verbose: true
-      - name: Release for master pushes
+          stripHeaders: false
+          maxIssues: 50
+          excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
+          breakingLabels: backwards-incompatible,breaking
+          deprecatedLabels: deprecated
+          headerLabel: "# Changelog"
+          breakingLabel: '### Breaking changes'
+          enhancementLabel: '### Enhancements'
+          bugsLabel: '### Bug fixes'
+          deprecatedLabel: '###  Deprecations'
+          removedLabel: '### Removals'
+          securityLabel: '### Security fixes'
+          issuesLabel: '### Other issues'
+          prLabel: '### Other pull requests'
+          addSections: '{"ci":{"prefix":"### CI changes","labels":["ci"]}}'
+          excludeTagsRegex: '^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))+)?)$'
+
+      - name: Create a new release
+        id: create-release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.RELEASE_VERSION }}
-          release_name: ${{ env.RELEASE_VERSION }}
-          body_path: /github/workspace/CHANGELOG.md
-          draft: false
-          prerelease: false
+          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          body_path: ./CHANGELOG.md
+          draft: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+          prerelease: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
