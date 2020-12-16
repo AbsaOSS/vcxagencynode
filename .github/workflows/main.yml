@@ -17,6 +17,9 @@ jobs:
       CACHED_DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_BASE }}
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_AGENCY }}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY }}
+      PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
+      RELEASE: ${{ steps.mainstep.outputs.RELEASE }}
+      PRERELEASE: ${{ steps.mainstep.outputs.PRERELEASE }}
     steps:
       - run: echo $GITHUB_REF
       - run: echo $GITHUB_HEAD_REF
@@ -105,11 +108,14 @@ jobs:
 
           echo "::set-output name=CACHE_KEY_BASE::$DOCKER_BASE_HASH"
           echo "::set-output name=CACHE_KEY_AGENCY::$(echo basehash-$CACHE_KEY_BASE-agencyhash-$CODE_AGENCY_HASH-clienthash-$CODE_CLIENT_HASH-easyindysdkhash-$CODE_EASYSDK_HASH)"
-
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_BASE::vcxagency-base:cached"
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_AGENCY::vcxagency-node:cached"
 
           echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_AGENCY::vcxagency-node:$PUBLISH_VERSION"
+
+          echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
+          echo "::set-output name=PRERELEASE::$PRERELEASE"
+          echo "::set-output name=RELEASE::$RELEASE"
 
 
   build-vcxagency-base:
