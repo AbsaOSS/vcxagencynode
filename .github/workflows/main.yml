@@ -12,15 +12,12 @@ jobs:
   workflow-setup:
     runs-on: ubuntu-latest
     outputs:
-      GITHUB_REPOSITORY_LOWERCASE: ${{ steps.mainstep.outputs.GITHUB_REPOSITORY_LOWERCASE }}
-      RELEASE_VERSION: ${{ steps.mainstep.outputs.RELEASE_VERSION }}
       CACHE_KEY_BASE: ${{ steps.mainstep.outputs.CACHE_KEY_BASE }}
       CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
       CACHED_DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_BASE }}
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_AGENCY }}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY }}
     steps:
-      - run: echo $GITHUB_REPOSITORY
       - run: echo $GITHUB_REF
       - run: echo $GITHUB_HEAD_REF
       - run: echo $GITHUB_BASE_REF
@@ -105,9 +102,6 @@ jobs:
           export CODE_AGENCY_HASH=${{ hashFiles('vcxagency-node') }}
           export CODE_EASYSDK_HASH=${{ hashFiles('easy-indysdk') }}
           export CODE_CLIENT_HASH=${{ hashFiles('vcxagency-client') }}
-
-          echo "::set-output name=GITHUB_REPOSITORY_LOWERCASE::$GITHUB_REPOSITORY_LOWERCASE"
-          echo "::set-output name=RELEASE_VERSION::$RELEASE_VERSION"
 
           echo "::set-output name=CACHE_KEY_BASE::$DOCKER_BASE_HASH"
           echo "::set-output name=CACHE_KEY_AGENCY::$(echo basehash-$CACHE_KEY_BASE-agencyhash-$CODE_AGENCY_HASH-clienthash-$CODE_CLIENT_HASH-easyindysdkhash-$CODE_EASYSDK_HASH)"
@@ -359,7 +353,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
-      GITHUB_REPOSITORY_LOWERCASE: ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}}
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY}}
     steps:
@@ -388,12 +381,14 @@ jobs:
 
       - name: Publish images
         run: |
+          GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
           REMOTE_DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_AGENCY"
           docker tag "$CACHED_DOCKER_IMG_NAME_AGENCY" "$REMOTE_DOCKER_IMG_NAME_AGENCY"
           docker image ls
           docker push "$REMOTE_DOCKER_IMG_NAME_AGENCY" || true
 
   make-release:
+    runs-on: ubuntu-16.04
     needs:
       - workflow-setup
       - build-vcxagency-base
@@ -404,18 +399,18 @@ jobs:
       - lint-vcxagency-node
       - lint-vcxagency-client
       - lint-easy-indysdk
-    runs-on: ubuntu-latest
-    env:
-      RELEASE_VERSION: ${{needs.workflow-setup.outputs.RELEASE_VERSION}}
-    if: ${{ needs.workflow-setup.outputs.RELEASE_VERSION }}
+    if: ${{ needs.workflow-setup.outputs.RELEASE == 'true' || needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+    outputs:
+      RELEASE_UPLOAD_URL: ${{ steps.create-release.outputs.upload_url }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
+
       - name: Generate changelog
-        uses: heinrichreimer/github-changelog-generator-action@v2.1.1
+        uses: heinrichreimer/github-changelog-generator-action@v2.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          futureRelease: ${{ env.RELEASE_VERSION }}
+          futureRelease: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
           releaseBranch: master
           pullRequests: true
           unreleased: true
@@ -423,15 +418,31 @@ jobs:
           issuesWoLabels: true
           prWoLabels: true
           stripGeneratorNotice: true
-          stripHeaders: true
-          verbose: true
-      - name: Release for master pushes
+          stripHeaders: false
+          maxIssues: 50
+          excludeLabels: duplicate,question,invalid,wontfix,changelog-excluded
+          breakingLabels: backwards-incompatible,breaking
+          deprecatedLabels: deprecated
+          headerLabel: "# Changelog"
+          breakingLabel: '### Breaking changes'
+          enhancementLabel: '### Enhancements'
+          bugsLabel: '### Bug fixes'
+          deprecatedLabel: '###  Deprecations'
+          removedLabel: '### Removals'
+          securityLabel: '### Security fixes'
+          issuesLabel: '### Other issues'
+          prLabel: '### Other pull requests'
+          addSections: '{"ci":{"prefix":"### CI changes","labels":["ci"]}}'
+          excludeTagsRegex: '^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))+)?)$'
+
+      - name: Create a new release
+        id: create-release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.RELEASE_VERSION }}
-          release_name: ${{ env.RELEASE_VERSION }}
-          body_path: /github/workspace/CHANGELOG.md
-          draft: false
-          prerelease: false
+          tag_name: ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          release_name: Release ${{ needs.workflow-setup.outputs.PUBLISH_VERSION }}
+          body_path: ./CHANGELOG.md
+          draft: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
+          prerelease: ${{ needs.workflow-setup.outputs.PRERELEASE == 'true' }}
