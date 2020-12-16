@@ -18,7 +18,6 @@ jobs:
       CACHE_KEY_AGENCY: ${{ steps.mainstep.outputs.CACHE_KEY_AGENCY }}
       CACHED_DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_BASE }}
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_AGENCY }}
-      PUBLISH_DOCKER_IMG_NAME_BASE: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_BASE }}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY }}
     steps:
       - run: echo $GITHUB_REPOSITORY
@@ -116,8 +115,7 @@ jobs:
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_BASE::vcxagency-base:cached"
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_AGENCY::vcxagency-node:cached"
 
-          echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_BASE::vcxagency-base:$DOCKER_TAG_VERSION"
-          echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_AGENCY::vcxagency-node:$DOCKER_TAG_VERSION"
+          echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_AGENCY::vcxagency-node:$PUBLISH_VERSION"
 
 
   build-vcxagency-base:
@@ -360,26 +358,11 @@ jobs:
       - lint-easy-indysdk
     runs-on: ubuntu-latest
     env:
-      CACHE_KEY_BASE: ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}}
       CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
-      CACHED_DOCKER_IMG_NAME_BASE: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_BASE}}
-      CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
       GITHUB_REPOSITORY_LOWERCASE: ${{needs.workflow-setup.outputs.GITHUB_REPOSITORY_LOWERCASE}}
-      PUBLISH_DOCKER_IMG_NAME_BASE: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_BASE}}
+      CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY}}
     steps:
-      - name: Load base image cache
-        id: load-cached-image-base
-        uses: actions/cache@v2
-        with:
-          path: /tmp/imgcache
-          key: ${{ env.CACHE_KEY_BASE }}
-      - name: If no cached image found
-        if: steps.load-cached-image-base.outputs.cache-hit != 'true'
-        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_BASE"; exit -1
-      - name: Load base image
-        run: docker load < /tmp/imgcache/img_base.rar
-
       - name: Load agency image cache
         id: load-cached-image-node
         uses: actions/cache@v2
@@ -394,7 +377,6 @@ jobs:
 
       - name: Verify images were loaded
         run: |
-          docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_BASE" || { echo "Image $CACHED_DOCKER_IMG_NAME_BASE was not found!"; docker image ls; exit 1; }
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Docker Login
@@ -406,14 +388,9 @@ jobs:
 
       - name: Publish images
         run: |
-          REMOTE_DOCKER_IMG_NAME_BASE="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_BASE"
           REMOTE_DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_AGENCY"
-
-          docker tag "$CACHED_DOCKER_IMG_NAME_BASE"   "$REMOTE_DOCKER_IMG_NAME_BASE"
           docker tag "$CACHED_DOCKER_IMG_NAME_AGENCY" "$REMOTE_DOCKER_IMG_NAME_AGENCY"
           docker image ls
-
-          docker push "$REMOTE_DOCKER_IMG_NAME_BASE" || true
           docker push "$REMOTE_DOCKER_IMG_NAME_AGENCY" || true
 
   make-release:
