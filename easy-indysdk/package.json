@@ -18,13 +18,13 @@
     "test:perf": "jest --runInBand  ./test/perf"
   },
   "dependencies": {
-    "@saleae/ffi": "^3.0.2",
-    "@types/ffi": "0.0.19",
+    "ffi-napi": "^3.1.0",
     "indy-sdk": "^1.15.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
     "@types/jest": "^25.2.2",
+    "@types/ffi": "0.0.19",
     "jest": "^26.0.1",
     "jest-cli": "^26.0.1",
     "sleep-promise": "^8.0.0",

@@ -36,7 +36,7 @@ async function indyLoadPostgresPlugin (storageConfig, storageCredentials) {
   // For more info: https://github.com/facebook/jest/issues/3552
   // So we are requiring ffi only when really needed. This avoids failures when running unit tests using easy-indysdk
   // which are not using indy postgres plugin.
-  const ffi = require('@saleae/ffi')
+  const ffi = require('ffi-napi')
   const myffi = ffi.Library(getLibraryPath('libindystrgpostgres'), {
     init_storagetype: ['void', ['string', 'string']],
     postgresstorage_init: ['void', []]
