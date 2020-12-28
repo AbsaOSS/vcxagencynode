@@ -38,10 +38,6 @@
     "standard": "^14.3.4"
   },
   "dependencies": {
-    "@saleae/ffi": "^3.0.2",
-    "@types/node": "^8.0.47",
-    "@types/ref": "0.0.28",
-    "@types/ref-struct": "0.0.28",
     "axios": "^0.19.2",
     "body-parser": "^1.18.3",
     "dotenv": "^7.0.0",

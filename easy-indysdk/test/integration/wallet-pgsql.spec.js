@@ -43,8 +43,8 @@ describe('pgsql wallet', () => {
     await indyLoadPostgresPlugin(storageConfig, storageCredentials)
     const walletName = uuid.v4()
     const walletKey = await indyGenerateWalletKey()
-    await indyCreateWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
-    const wh = await indyOpenWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
+    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
+    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
     await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
 
     // Replace
@@ -59,13 +59,13 @@ describe('pgsql wallet', () => {
   async function createAndOpenWallet () {
     const walletKey = await indyGenerateWalletKey()
     const walletName = uuid.v4()
-    await indyCreateWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
-    const wh = await indyOpenWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
+    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
+    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
     await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
     return { wh, walletKey, walletName, storageConfig, storageCredentials }
   }
 
-  it('should open 300 wallets without crashing', async () => {
+  it('should open 500 wallets without crashing', async () => {
     const walletRecs = []
     try {
       await indyLoadPostgresPlugin(storageConfig, storageCredentials)
@@ -74,10 +74,14 @@ describe('pgsql wallet', () => {
         promises.push(createAndOpenWallet())
         promises.push(createAndOpenWallet())
         promises.push(createAndOpenWallet())
-        const [r1, r2, r3] = await Promise.all(promises)
+        promises.push(createAndOpenWallet())
+        promises.push(createAndOpenWallet())
+        const [r1, r2, r3, r4, r5] = await Promise.all(promises)
         walletRecs.push(r1)
         walletRecs.push(r2)
         walletRecs.push(r3)
+        walletRecs.push(r4)
+        walletRecs.push(r5)
       }
     } finally {
       for (let i = 0; i < walletRecs.length; i++) {

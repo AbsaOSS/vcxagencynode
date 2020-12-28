@@ -63,8 +63,8 @@ describe('pgsql wallet', () => {
     await indyLoadPostgresPlugin(storageConfig, storageCredentials)
     const walletName = uuid.v4()
     const walletKey = await indyGenerateWalletKey()
-    await indyCreateWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
-    const wh = await indyOpenWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
+    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
+    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
     await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
 
     // Replace
@@ -79,8 +79,8 @@ describe('pgsql wallet', () => {
   async function createAndOpenWallet () {
     const walletKey = await indyGenerateWalletKey()
     const walletName = uuid.v4()
-    await indyCreateWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
-    const wh = await indyOpenWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
+    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
+    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
     await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
     return { wh, walletKey, walletName, storageConfig, storageCredentials }
   }
