@@ -20,8 +20,9 @@ const { asyncHandler } = require('./middleware')
 const validate = require('express-validation')
 const logger = require('../logging/logger-builder')(__filename)
 const Joi = require('joi')
+const { longpollNotifications } = require('../service/notifications/longpoll')
 
-module.exports = function (app, forwardAgent, servicePollNotifications) {
+module.exports = function (app, forwardAgent, serviceNewMessages) {
   app.get('/agency',
     asyncHandler(async function (req, res) {
       const { did, verkey } = forwardAgent.getForwadAgentInfo()
@@ -39,10 +40,24 @@ module.exports = function (app, forwardAgent, servicePollNotifications) {
     ),
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
-      const hasNotifications = await servicePollNotifications.pollHasNewMessage(agentDid, 30)
-      logger.info(`Returning long-poll with result hasNotifications=${hasNotifications}`)
-      res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
-      res.status(200).send({ hasNotifications })
+      const start = Date.now()
+
+      function responseHasNewMessage () {
+        const duration = Date.now() - start
+        logger.info(`Returning long-poll after ${duration}ms, agent ${agentDid} has new messages.`)
+        res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+        res.status(200).send({ hasNotifications: true })
+      }
+
+      function responseNoNewMessage () {
+        const duration = Date.now() - start
+        logger.info(`Returning long-poll after ${duration}ms, agent ${agentDid} does not have new messages.`)
+        res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+        res.status(200).send({ hasNotifications: false })
+      }
+
+      const timeoutMs = req.body.timeout || 30000
+      await longpollNotifications(serviceNewMessages, agentDid, timeoutMs, responseHasNewMessage, responseNoNewMessage)
     })
   )
 
@@ -56,7 +71,7 @@ module.exports = function (app, forwardAgent, servicePollNotifications) {
     ),
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
-      await servicePollNotifications.ackNewMessage(agentDid)
+      await serviceNewMessages.ackNewMessage(agentDid)
       res.status(200).send()
     })
   )

@@ -53,6 +53,8 @@ const configValidation = Joi.object().keys({
   AGENCY_SEED_SECRET: Joi.string().min(20).required(),
   AGENCY_WALLET_KEY_SECRET: Joi.string().min(20).required(),
 
+  REDIS_URL: Joi.string().required(),
+
   PG_STORE_HOST: Joi.string().required(),
   PG_STORE_PORT: Joi.number().integer().min(1025).max(65535).required(),
   PG_STORE_ACCOUNT: Joi.string().required(),

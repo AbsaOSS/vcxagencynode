@@ -16,27 +16,38 @@
 
 'use strict'
 
-const { createPollNotificationService } = require('./service/notifications/notifications')
 const { createPgStorageEntities } = require('./service/storage/pgstorage-entities')
 const { createRouter } = require('./service/delivery/router')
 const { createResolver } = require('./service/delivery/resolver')
 const { buildForwardAgent } = require('./service/entities/fwa/entity-fwa')
 const { createServiceIndyWallets } = require('./service/state/service-indy-wallets')
 const { assureDb } = require('./service/storage/pgdb')
+const { createServiceNewMessages } = require('./service/notifications/service-new-messages')
+const logger = require('./logging/logger-builder')(__filename)
+const redis = require('redis')
 
-async function wireUp (appStorageConfig, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, walletStorageType = 'default', walletStorageConfig = null, walletStorageCredentials = null) {
+async function wireUp (appStorageConfig, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, walletStorageType = 'default', walletStorageConfig = null, walletStorageCredentials = null) {
+  const redisClientSubscriber = redis.createClient(redisUrl)
+  const redisClientRw = redis.createClient(redisUrl)
+  redisClientRw.on('error', function (err) {
+    logger.error(`Redis rw-client encountered error: ${err}`)
+  })
+  redisClientRw.on('error', function (err) {
+    logger.error(`Redis subscription-client encountered error: ${err}`)
+  })
+  const serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
+
   const serviceIndyWallets = await createServiceIndyWallets(walletStorageType, walletStorageConfig, walletStorageCredentials)
   const { user, password, host, port, database } = appStorageConfig
   await assureDb(user, password, host, port, database)
   const serviceStorage = await createPgStorageEntities(appStorageConfig)
   const entityForwardAgent = await buildForwardAgent(serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
-  const resolver = createResolver(serviceIndyWallets, serviceStorage, entityForwardAgent)
+  const resolver = createResolver(serviceIndyWallets, serviceStorage, serviceNewMessages, entityForwardAgent)
   const router = createRouter(resolver)
   resolver.setRouter(router)
   entityForwardAgent.setRouter(router)
   entityForwardAgent.setResolver(resolver)
-  const servicePollNotifications = createPollNotificationService(resolver)
-  return { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, servicePollNotifications }
+  return { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, serviceNewMessages }
 }
 
 module.exports = { wireUp }

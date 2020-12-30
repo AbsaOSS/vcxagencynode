@@ -91,8 +91,8 @@ afterEach(async () => {
   await rimraf.sync(attackerWalletPath)
 })
 
-describe('onboarding', () => {
-  it('should create agent and agent connection', async () => {
+describe('longpoll', () => {
+  it('should return new message longpoll correctly', async () => {
     // arrange
     const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     const { did: aliceUserPairwiseDid, vkey: aliceUserPairwiseVerkey } = await indyCreateAndStoreMyDid(aliceWh)
