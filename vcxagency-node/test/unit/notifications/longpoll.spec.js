@@ -45,10 +45,11 @@ describe('longpoll', () => {
     let countNewMessage = 0
     let countTimeout = 0
     const timeoutMs = 1000
-    function onNewMessage () { countNewMessage += 1 }
-    function onTimeout () { countTimeout += 1 }
 
-    await longpollNotifications(serviceNewMessages, agentDid, timeoutMs, onNewMessage, onTimeout)
+    longpollNotifications(serviceNewMessages, agentDid, timeoutMs)
+      .then((hasMessage) => {
+        if (hasMessage) { countNewMessage += 1 } else { countTimeout += 1 }
+      })
 
     await sleep(10) // no callback should be call at this point
     expect(countNewMessage).toBe(0)
@@ -69,10 +70,11 @@ describe('longpoll', () => {
     let countNewMessage = 0
     let countTimeout = 0
     const timeoutMs = 1000
-    function onNewMessage () { countNewMessage += 1 }
-    function onTimeout () { countTimeout += 1 }
 
-    await longpollNotifications(serviceNewMessages, agentDid, timeoutMs, onNewMessage, onTimeout)
+    longpollNotifications(serviceNewMessages, agentDid, timeoutMs)
+      .then((hasMessage) => {
+        if (hasMessage) { countNewMessage += 1 } else { countTimeout += 1 }
+      })
 
     await sleep(10) // no callback should be call at this point
     expect(countNewMessage).toBe(0)
@@ -87,13 +89,15 @@ describe('longpoll', () => {
     let countNewMessage = 0
     let countTimeout = 0
     const timeoutMs = 1000
-    function onNewMessage () { countNewMessage += 1 }
-    function onTimeout () { countTimeout += 1 }
 
     await serviceNewMessages.flagNewMessage(agentDid)
     await sleep(50)
 
-    await longpollNotifications(serviceNewMessages, agentDid, timeoutMs, onNewMessage, onTimeout)
+    longpollNotifications(serviceNewMessages, agentDid, timeoutMs)
+      .then((hasMessage) => {
+        if (hasMessage) { countNewMessage += 1 } else { countTimeout += 1 }
+      })
+    await sleep(10)
     expect(countNewMessage).toBe(1)
     expect(countTimeout).toBe(0)
 

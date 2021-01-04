@@ -85,7 +85,7 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
     await redisSubscribe(`__keyspace@0__:${agentDid}`)
   }
 
-  async function cleanupCallback (agentDid, callbackId) {
+  function cleanupCallback (agentDid, callbackId) {
     if (agentSubscriptions[agentDid] && agentSubscriptions[agentDid].callbackId === callbackId) {
       _cleanupSubscription(agentDid)
     } else {

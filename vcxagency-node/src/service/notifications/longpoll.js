@@ -22,34 +22,39 @@ const logger = require('../../logging/logger-builder')(__filename)
 module.exports.longpollNotifications = async function longpollNotifications (
   serviceNewMessages,
   agentDid,
-  timeoutMs,
-  responseHasNewMessage,
-  responseNoNewMessage
+  timeoutMs
 ) {
   logger.info(`Going to longpoll new message for agent ${agentDid} with timeout ${timeoutMs}ms.`)
-  if (await serviceNewMessages.hasNewMessage(agentDid)) {
-    await responseHasNewMessage()
-  } else {
-    let wasResponseSent
-    const callbackId = uuid.v4()
+  return new Promise(async (resolve, reject) => {
+    if (await serviceNewMessages.hasNewMessage(agentDid)) {
+      await resolve(true)
+    } else {
+      let wasResponseSent
+      const callbackId = uuid.v4()
 
-    const reactOnNewMessage = async function () {
-      if (!wasResponseSent) {
-        wasResponseSent = true
-        await serviceNewMessages.cleanupCallback(agentDid, callbackId)
-        await responseHasNewMessage()
+      const reactOnNewMessage = async function () {
+        if (!wasResponseSent) {
+          wasResponseSent = true
+          serviceNewMessages.cleanupCallback(agentDid, callbackId)
+          resolve(true)
+        }
       }
-    }
 
-    const reactOnTimeout = async function () {
-      if (!wasResponseSent) {
-        wasResponseSent = true
-        await serviceNewMessages.cleanupCallback(agentDid, callbackId)
-        await responseNoNewMessage()
+      const reactOnTimeout = async function () {
+        if (!wasResponseSent) {
+          wasResponseSent = true
+          serviceNewMessages.cleanupCallback(agentDid, callbackId)
+          resolve(false)
+        }
       }
-    }
 
-    await serviceNewMessages.registerCallback(agentDid, callbackId, reactOnNewMessage)
-    setTimeout(reactOnTimeout, timeoutMs)
-  }
+      serviceNewMessages.registerCallback(agentDid, callbackId, reactOnNewMessage)
+        .then(() => {
+          setTimeout(reactOnTimeout, timeoutMs)
+        })
+        .catch((err) => {
+          reject(err)
+        })
+    }
+  })
 }

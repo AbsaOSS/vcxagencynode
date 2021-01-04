@@ -51,6 +51,7 @@ let agencyUserWh
 
 const WALLET_KDF = 'RAW'
 let sendToAgency
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0"
 
 let tmpPgDb
 beforeAll(async () => {
@@ -59,7 +60,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   tmpPgDb = await createTestPgDb()
-  const app = await wireUp(tmpPgDb.info, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
+  const app = await wireUp(tmpPgDb.info, REDIS_URL, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
   serviceIndyWallets = app.serviceIndyWallets
   entityForwardAgent = app.entityForwardAgent
   serviceStorage = app.serviceStorage

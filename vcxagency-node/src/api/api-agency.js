@@ -40,24 +40,13 @@ module.exports = function (app, forwardAgent, serviceNewMessages) {
     ),
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
-      const start = Date.now()
-
-      function responseHasNewMessage () {
-        const duration = Date.now() - start
-        logger.info(`Returning long-poll after ${duration}ms, agent ${agentDid} has new messages.`)
-        res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
-        res.status(200).send({ hasNotifications: true })
-      }
-
-      function responseNoNewMessage () {
-        const duration = Date.now() - start
-        logger.info(`Returning long-poll after ${duration}ms, agent ${agentDid} does not have new messages.`)
-        res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
-        res.status(200).send({ hasNotifications: false })
-      }
-
       const timeoutMs = req.body.timeout || 30000
-      await longpollNotifications(serviceNewMessages, agentDid, timeoutMs, responseHasNewMessage, responseNoNewMessage)
+      const start = Date.now()
+      const hasNotifications = await longpollNotifications(serviceNewMessages, agentDid, timeoutMs)
+      const duration = Date.now() - start
+      logger.info(`Returning long-poll after ${duration}ms for agent ${agentDid}. Has new message = ${hasNotifications}.`)
+      res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+      res.status(200).send({ hasNotifications })
     })
   )
 
