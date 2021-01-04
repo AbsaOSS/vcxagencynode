@@ -1,0 +1,82 @@
+version: '3.5'
+
+x-standard-logging:
+  &service-logging
+  options:
+    max-size: '500m'
+    max-file: '3'
+  driver: json-file
+
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:12.1
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
+    volumes:
+      - ./postgresql.conf:/etc/postgresql.conf
+    networks:
+      - absadocker
+    expose:
+      - "5432"
+    command: [ "-c", "config_file=/etc/postgresql.conf" ]
+
+  redis:
+    container_name: redis
+    image: redis:6.0.8
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - absadocker
+    expose:
+      - "6379"
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+
+  agency:
+    image: ${AGENCY_IMAGE:-vcxagency:latest}
+    container_name: agency
+    logging: *service-logging
+    depends_on:
+      - postgres
+    environment:
+      - LOG_JSON_TO_CONSOLE=false
+      - LOG_LEVEL=info
+      - SERVER_PORT=9090
+      - SERVER_MAX_REQUEST_SIZE_KB=300
+
+      - PG_WALLET_MIN_IDLE_COUNT=0
+      - PG_WALLET_MAX_CONNECTIONS=90
+      - PG_WALLET_CONNECTION_TIMEOUT_MINS=30
+
+      - AGENCY_WALLET_NAME=vcxagency-node-ea
+      - AGENCY_DID=VsKV7grR1BUE29mG2Fm2kX
+      - AGENCY_SEED_SECRET=0000000000000000000000000Forward
+      - AGENCY_WALLET_KEY_SECRET=98765432109876543210
+
+      - REDIS_URL=redis://redis.absadocker:6379/0
+
+      - PG_STORE_HOST=postgres.absadocker
+      - PG_STORE_PORT=5432
+      - PG_STORE_ACCOUNT=postgres
+      - PG_STORE_PASSWORD_SECRET=mysecretpassword
+      - PG_STORE_DATABASE=storage-ea
+
+      - PG_WALLET_ACCOUNT=postgres
+      - PG_WALLET_PASSWORD_SECRET=mysecretpassword
+      - PG_WALLET_ADMIN_ACCOUNT=postgres
+      - PG_WALLET_ADMIN_PASSWORD_SECRET=mysecretpassword
+      - PG_WALLET_URL=postgres.absadocker:5432
+
+      - SERVER_ENABLE_TLS=false
+    networks:
+      - absadocker
+    expose:
+      - "9090"
+
+networks:
+  absadocker:
+    name: absadocker
+    driver: bridge
