@@ -51,7 +51,7 @@ let agencyUserWh
 
 const WALLET_KDF = 'RAW'
 let sendToAgency
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379/0"
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379/0'
 
 let tmpPgDb
 beforeAll(async () => {

@@ -25,36 +25,39 @@ module.exports.longpollNotifications = async function longpollNotifications (
   timeoutMs
 ) {
   logger.info(`Going to longpoll new message for agent ${agentDid} with timeout ${timeoutMs}ms.`)
-  return new Promise(async (resolve, reject) => {
-    if (await serviceNewMessages.hasNewMessage(agentDid)) {
-      await resolve(true)
-    } else {
-      let wasResponseSent
-      const callbackId = uuid.v4()
-
-      const reactOnNewMessage = async function () {
-        if (!wasResponseSent) {
-          wasResponseSent = true
-          serviceNewMessages.cleanupCallback(agentDid, callbackId)
+  return new Promise((resolve, reject) => {
+    serviceNewMessages.hasNewMessage(agentDid)
+      .then((hasNewMessage) => {
+        if (hasNewMessage) {
           resolve(true)
-        }
-      }
+        } else {
+          let wasResponseSent
+          const callbackId = uuid.v4()
 
-      const reactOnTimeout = async function () {
-        if (!wasResponseSent) {
-          wasResponseSent = true
-          serviceNewMessages.cleanupCallback(agentDid, callbackId)
-          resolve(false)
-        }
-      }
+          const reactOnNewMessage = async function () {
+            if (!wasResponseSent) {
+              wasResponseSent = true
+              serviceNewMessages.cleanupCallback(agentDid, callbackId)
+              resolve(true)
+            }
+          }
 
-      serviceNewMessages.registerCallback(agentDid, callbackId, reactOnNewMessage)
-        .then(() => {
-          setTimeout(reactOnTimeout, timeoutMs)
-        })
-        .catch((err) => {
-          reject(err)
-        })
-    }
+          const reactOnTimeout = async function () {
+            if (!wasResponseSent) {
+              wasResponseSent = true
+              serviceNewMessages.cleanupCallback(agentDid, callbackId)
+              resolve(false)
+            }
+          }
+
+          serviceNewMessages.registerCallback(agentDid, callbackId, reactOnNewMessage)
+            .then(() => {
+              setTimeout(reactOnTimeout, timeoutMs)
+            })
+            .catch((err) => {
+              reject(err)
+            })
+        }
+      })
   })
 }
