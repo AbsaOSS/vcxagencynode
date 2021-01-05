@@ -25,12 +25,15 @@ const uuid = require('uuid')
 let serviceNewMessages
 let agentDid = 'foobar-123'
 let callbackId = 123
+let redisClientSubscriber
+let redisClientRw
 
 beforeEach(async () => {
   agentDid = uuid.v4()
   callbackId = uuid.v4()
-  const redisClientSubscriber = redis.createClient('redis://localhost:6379/0')
-  const redisClientRw = redis.createClient('redis://localhost:6379/0')
+  redisClientSubscriber = redis.createClient('redis://localhost:6379/0')
+  redisClientRw = redis.createClient('redis://localhost:6379/0')
+
   redisClientRw.on('error', function (err) {
     console.log(`Redis rw client encountered error: ${err}`)
   })
@@ -39,6 +42,11 @@ beforeEach(async () => {
   })
   await sleep(100)
   serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
+})
+
+afterEach(async () => {
+  redisClientSubscriber.quit()
+  redisClientRw.quit()
 })
 
 describe('notifications', () => {

@@ -420,6 +420,10 @@ async function createPgStorageEntities (appStorageConfig) {
     return res
   }
 
+  function cleanUp () {
+    pgPool.end()
+  }
+
   return {
     // entity records
     loadEntityRecordByDid,
@@ -446,7 +450,9 @@ async function createPgStorageEntities (appStorageConfig) {
     aconnDidToPwDid,
 
     setHasNewMessage,
-    getHasNewMessage
+    getHasNewMessage,
+
+    cleanUp
   }
 }
 

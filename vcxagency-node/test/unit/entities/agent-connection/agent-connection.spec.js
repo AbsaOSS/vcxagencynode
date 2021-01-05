@@ -62,6 +62,10 @@ beforeEach(async () => {
   clientPairwiseVkey = vkey2
 })
 
+afterAll(async () => {
+  serviceStorage.cleanUp()
+})
+
 afterEach(async () => {
   const homedir = os.homedir()
   const clientWalletPath = `${homedir}/.indy_client/wallet/${clientWalletName}`

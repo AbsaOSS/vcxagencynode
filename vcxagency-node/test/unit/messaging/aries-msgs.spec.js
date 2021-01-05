@@ -41,7 +41,7 @@ const sleep = require('sleep-promise')
 const { longpollNotifications } = require('../../../src/service/notifications/longpoll')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
-const { wireUp } = require('../../../src/app')
+const { wireUpApplication, cleanUpApplication } = require('../../../src/app')
 const { buildAgencyClientVirtual } = require('./common')
 
 const agencyWalletName = `vcxagency-node-${uuid.v4()}`
@@ -50,6 +50,7 @@ const agencySeed = '0000000000000000000000000Forward'
 const agencyWalletKey = '@key'
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379/0'
 
+let app // eslint-disable-line
 let serviceIndyWallets // eslint-disable-line
 let entityForwardAgent // eslint-disable-line
 let serviceStorage // eslint-disable-line
@@ -78,7 +79,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   const tmpPgDb = await createTestPgDb()
-  const app = await wireUp(tmpPgDb.info, REDIS_URL, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
+  app = await wireUpApplication(tmpPgDb.info, REDIS_URL, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
   serviceIndyWallets = app.serviceIndyWallets
   entityForwardAgent = app.entityForwardAgent
   serviceStorage = app.serviceStorage
@@ -113,6 +114,10 @@ afterEach(async () => {
   const attackerWalletPath = `${homedir}/.indy_client/wallet/${bobWalletName}`
   await rimraf.sync(clientWalletPath)
   await rimraf.sync(attackerWalletPath)
+})
+
+afterAll(async () => {
+  cleanUpApplication(app)
 })
 
 async function setWebhookUrlForAgent (agentDid, webhookUrl) {

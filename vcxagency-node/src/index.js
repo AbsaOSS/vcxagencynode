@@ -40,7 +40,7 @@ validateAppConfig(appConfig, (err, ok) => {
   const apiMessaging = require('./api/api-messaging')
 
   const { indyLoadPostgresPlugin } = require('easy-indysdk')
-  const { wireUp } = require('./app')
+  const { wireUpApplication } = require('./app')
   const { setReqId, logRequestsWithoutBody } = require('./api/middleware')
   const { indySetLogger } = require('easy-indysdk')
   const httpContext = require('express-http-context')
@@ -157,7 +157,7 @@ validateAppConfig(appConfig, (err, ok) => {
 
     logger.info('Building services and wiring up dependencies.')
     const { entityForwardAgent, resolver, serviceNewMessages } =
-      await wireUp(appStoragePgConfig, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, storageType, storageConfig, storageCredentials)
+      await wireUpApplication(appStoragePgConfig, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, storageType, storageConfig, storageCredentials)
 
     logger.info('Building express http server.')
     setupServer(entityForwardAgent, resolver, serviceNewMessages, appConfig.SERVER_MAX_REQUEST_SIZE_KB)

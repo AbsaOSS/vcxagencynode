@@ -8,22 +8,17 @@
       "url": "http://www.apache.org/licenses/LICENSE-2.0"
     }
   ],
-  "description": "Massively scalable Aries Cloud Agency with pluggable storage and transport architecture.",
+  "description": "Horizontally scalable Aries-VCX compatible mediator agency",
   "main": "src/index.js",
   "scripts": {
-    "tag": "git tag `cat package.json | jq -r .version`",
     "lint": "standard",
     "lint:fix": "standard --fix",
     "serve": "NODE_ENV=production node src/index.js",
     "dev": "APP_CONFIG=localhost NODE_ENV=development nodemon src/index.js",
     "tls": "APP_CONFIG=localhost-tls NODE_ENV=dev nodemon src/index.js",
-    "docker:build": "cd .. && ./dockerbuild.sh vcxagency-node  --yes --build-context .",
-    "docker:build-publish": "cd .. && ./dockerbuild.sh vcxagency-node --push --yes --build-context .",
     "test:perf:generatedata": "node ./test/perf/storage/generate-dataset.js",
     "test:perf": "jest --runInBand  ./test/perf/storage/pgstorage.perf.spec.js",
-    "test:unit": "SILENT_WINSTON=true jest --runInBand  ./test/unit",
-    "test:unit:messaging": "SILENT_WINSTON=true jest --runInBand  ./test/unit/messaging",
-    "test:unit:messaging:aries": "SILENT_WINSTON=true jest --runInBand  ./test/unit/messaging/aries-msgs.spec.js"
+    "test:unit": "SILENT_WINSTON=true jest --runInBand ./test/unit"
   },
   "devDependencies": {
     "@types/jest": "^25.2.2",

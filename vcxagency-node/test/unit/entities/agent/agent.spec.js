@@ -45,6 +45,10 @@ beforeAll(async () => {
   serviceStorage = await createPgStorageEntities(info)
 })
 
+afterAll(async () => {
+  serviceStorage.cleanUp()
+})
+
 beforeEach(async () => {
   clientWalletKey = await indyGenerateWalletKey()
   clientWalletName = `unit-test-${uuid.v4()}`

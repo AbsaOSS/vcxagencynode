@@ -35,6 +35,11 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
   const redisDel = util.promisify(redisClientRw.del).bind(redisClientRw)
   const redisSubscribe = util.promisify(redisClientSubscriber.subscribe).bind(redisClientSubscriber)
 
+  function cleanUp () {
+    redisClientSubscriber.quit()
+    redisClientRw.quit()
+  }
+
   redisClientSubscriber.on('subscribe', function (channel, _count) {
     logger.info(`Subscribed on channel ${channel}.`)
   })
@@ -110,6 +115,7 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
     hasNewMessage,
     registerCallback,
     flagNewMessage,
-    cleanupCallback
+    cleanupCallback,
+    cleanUp
   }
 }

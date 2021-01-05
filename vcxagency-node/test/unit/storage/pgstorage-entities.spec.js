@@ -52,5 +52,6 @@ describe('storage', () => {
     await pgStorage.saveEntityRecord(uuid.v4(), uuid.v4(), { foo: 'foo2' })
     const entityByDid = await pgStorage.loadEntityRecordByDidOrVerkey(entityDid)
     expect(entityByDid.foo).toBe('foo1')
+    pgStorage.cleanUp()
   })
 })

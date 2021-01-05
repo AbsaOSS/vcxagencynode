@@ -31,6 +31,10 @@ beforeEach(async () => {
   storage = await createPgStorageEntities(info)
 })
 
+afterEach(async () => {
+  storage.cleanUp()
+})
+
 describe('storage', () => {
   // todo: add test for failing status updates
   it('should store messages and update status codes for specific messages', async () => {

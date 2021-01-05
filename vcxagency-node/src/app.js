@@ -26,7 +26,7 @@ const { createServiceNewMessages } = require('./service/notifications/service-ne
 const logger = require('./logging/logger-builder')(__filename)
 const redis = require('redis')
 
-async function wireUp (appStorageConfig, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, walletStorageType = 'default', walletStorageConfig = null, walletStorageCredentials = null) {
+async function wireUpApplication (appStorageConfig, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, walletStorageType = 'default', walletStorageConfig = null, walletStorageCredentials = null) {
   const redisClientSubscriber = redis.createClient(redisUrl)
   const redisClientRw = redis.createClient(redisUrl)
   redisClientRw.on('error', function (err) {
@@ -36,7 +36,6 @@ async function wireUp (appStorageConfig, redisUrl, agencyWalletName, agencyDid, 
     logger.error(`Redis subscription-client encountered error: ${err}`)
   })
   const serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
-
   const serviceIndyWallets = await createServiceIndyWallets(walletStorageType, walletStorageConfig, walletStorageCredentials)
   const { user, password, host, port, database } = appStorageConfig
   await assureDb(user, password, host, port, database)
@@ -47,7 +46,14 @@ async function wireUp (appStorageConfig, redisUrl, agencyWalletName, agencyDid, 
   resolver.setRouter(router)
   entityForwardAgent.setRouter(router)
   entityForwardAgent.setResolver(resolver)
-  return { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, serviceNewMessages }
+  const application = { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, serviceNewMessages }
+  return application
 }
 
-module.exports = { wireUp }
+async function cleanUpApplication (application) {
+  logger.info('Cleaning up application resources.')
+  application.serviceNewMessages.cleanUp()
+  application.serviceStorage.cleanUp()
+}
+
+module.exports = { wireUpApplication, cleanUpApplication }
