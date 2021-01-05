@@ -2823,9 +2823,9 @@ inherits@2.0.3:
   integrity sha1-Yzwsg+PaQqUC9SRmAiSA9CCCYd4=
 
 ini@^1.3.4, ini@~1.3.0:
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/ini/-/ini-1.3.5.tgz#eee25f56db1c9ec6085e0c22778083f596abf927"
-  integrity sha512-RZY5huIKCMRWDUqZlEi72f/lmXKMvuszcMBduliQ3nnWbx9X/ZBQO7DijMEYS9EhHBb2qacRUMtC7svLwe0lcw==
+  version "1.3.8"
+  resolved "https://registry.yarnpkg.com/ini/-/ini-1.3.8.tgz#a29da425b48806f34767a4efce397269af28432c"
+  integrity sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==
 
 inquirer@^7.0.0:
   version "7.3.2"
@@ -6164,7 +6164,7 @@ vary@~1.1.2:
   version "1.0.0"
   dependencies:
     axios "^0.18.1"
-    easy-indysdk "file:../../../../Library/Caches/Yarn/v6/npm-vcxagency-client-1.0.0-41d5bb17-aa2e-4574-81c5-d37805b2bd0c-1609171943876/node_modules/easy-indysdk"
+    easy-indysdk "file:../easy-indysdk"
     query-string "^6.8.2"
 
 verror@1.10.0:
