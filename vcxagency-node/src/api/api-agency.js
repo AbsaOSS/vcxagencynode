@@ -17,34 +17,51 @@
 'use strict'
 
 const { asyncHandler } = require('./middleware')
-const bodyParser = require('body-parser')
 const validate = require('express-validation')
+const logger = require('../logging/logger-builder')(__filename)
 const Joi = require('joi')
+const { longpollNotifications } = require('../service/notifications/longpoll')
 
-module.exports = function (app, forwardAgent, resolver) {
+module.exports = function (app, forwardAgent, serviceNewMessages) {
   app.get('/agency',
     asyncHandler(async function (req, res) {
       const { did, verkey } = forwardAgent.getForwadAgentInfo()
+      res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
       res.status(200).send({ DID: did, verKey: verkey })
     }))
 
-  app.post('/agent/:agentDid',
-    bodyParser.json(),
+  app.get('/experimental/agent/:agentDid/notifications',
     validate(
       {
         params: {
           agentDid: Joi.string().required()
-        },
-        body: {
-          webhookUrl: Joi.string().required()
         }
       }
     ),
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
-      const { webhookUrl } = req.body
-      const agentAo = await resolver.resolveEntityAO(agentDid)
-      await agentAo.setWebhook(webhookUrl)
+      const timeoutMs = req.body.timeout || 30000
+      const start = Date.now()
+      const hasNotifications = await longpollNotifications(serviceNewMessages, agentDid, timeoutMs)
+      const duration = Date.now() - start
+      logger.info(`Returning long-poll after ${duration}ms for agent ${agentDid}. Has new message = ${hasNotifications}.`)
+      res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+      res.status(200).send({ hasNotifications })
+    })
+  )
+
+  app.post('/experimental/agent/:agentDid/notifications/ack',
+    validate(
+      {
+        params: {
+          agentDid: Joi.string().required()
+        }
+      }
+    ),
+    asyncHandler(async function (req, res) {
+      const { agentDid } = req.params
+      await serviceNewMessages.ackNewMessage(agentDid)
       res.status(200).send()
-    }))
+    })
+  )
 }

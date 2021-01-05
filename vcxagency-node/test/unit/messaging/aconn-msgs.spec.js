@@ -26,9 +26,9 @@ const { indyCreateWallet, indyCreateAndStoreMyDid, indyOpenWallet, indyGenerateW
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
+const { wireUpApplication, cleanUpApplication } = require('../../../src/app')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
-const { wireUp } = require('../../../src/app')
 const { buildAgencyClientVirtual } = require('./common')
 
 const agencyWalletName = `vcxagency-node-${uuid.v4()}`
@@ -36,6 +36,7 @@ const agencyDid = 'VsKV7grR1BUE29mG2Fm2kX'
 const agencySeed = '0000000000000000000000000Forward'
 const agencyWalletKey = '@key'
 
+let application
 let serviceIndyWallets // eslint-disable-line
 let entityForwardAgent // eslint-disable-line
 let serviceStorage // eslint-disable-line
@@ -51,6 +52,7 @@ let agencyUserWh
 
 const WALLET_KDF = 'RAW'
 let sendToAgency
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379/0'
 
 let tmpPgDb
 beforeAll(async () => {
@@ -59,12 +61,12 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   tmpPgDb = await createTestPgDb()
-  const app = await wireUp(tmpPgDb.info, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
-  serviceIndyWallets = app.serviceIndyWallets
-  entityForwardAgent = app.entityForwardAgent
-  serviceStorage = app.serviceStorage
-  resolver = app.resolver
-  router = app.router
+  application = await wireUpApplication(tmpPgDb.info, REDIS_URL, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
+  serviceIndyWallets = application.serviceIndyWallets
+  entityForwardAgent = application.entityForwardAgent
+  serviceStorage = application.serviceStorage
+  resolver = application.resolver
+  router = application.router
 
   const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
   sendToAgency = agencyClient.sendToAgency
@@ -72,9 +74,10 @@ beforeAll(async () => {
   agencyVerkey = agencyInfo.verkey
 })
 
-// afterAll(async () => {
+afterAll(async () => {
+  cleanUpApplication(application)
 //   await tmpPgDb.dropDb()
-// })
+})
 
 beforeEach(async () => {
   {

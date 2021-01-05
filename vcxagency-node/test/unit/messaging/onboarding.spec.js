@@ -24,14 +24,16 @@ const rimraf = require('rimraf')
 const os = require('os')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
-const { wireUp } = require('../../../src/app')
+const { wireUpApplication, cleanUpApplication } = require('../../../src/app')
 const { buildAgencyClientVirtual } = require('./common')
 
 const agencyWalletName = `vcxagency-node-${uuid.v4()}`
 const agencyDid = 'VsKV7grR1BUE29mG2Fm2kX'
 const agencySeed = '0000000000000000000000000Forward'
 const agencyWalletKey = '@key'
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379/0'
 
+let app
 let agencyUserWalletName
 let agencyUserWalletKey
 let agencyUserDid
@@ -55,7 +57,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   tmpPgDb = await createTestPgDb()
-  const app = await wireUp(tmpPgDb.info, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
+  app = await wireUpApplication(tmpPgDb.info, REDIS_URL, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
   const entityForwardAgent = app.entityForwardAgent
   const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
   sendToAgency = agencyClient.sendToAgency
@@ -63,9 +65,9 @@ beforeAll(async () => {
   agencyVerkey = agencyInfo.verkey
 })
 
-// afterAll(async () => {
-//   await tmpPgDb.dropDb()
-// })
+afterAll(async () => {
+  cleanUpApplication(app)
+})
 
 beforeEach(async () => {
   {

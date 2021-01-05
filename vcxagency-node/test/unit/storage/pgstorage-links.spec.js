@@ -50,6 +50,10 @@ describe('storage', () => {
     await storage.linkAgentToItsConnection(A2, A2Conn2, A2Conn2Pw)
   })
 
+  afterAll(async () => {
+    storage.cleanUp()
+  })
+
   it('should link create Agent-AgentConnection links, then map UserPwDids to AgentConnDids', async () => {
     // assert
     const res1 = await storage.aconnLinkPairsByPwDids(A1, [A1Conn1Pw, A1Conn3Pw])

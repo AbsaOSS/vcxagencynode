@@ -46,6 +46,8 @@ function buildAppConfigFromEnvVariables () {
     AGENCY_SEED_SECRET: process.env.AGENCY_SEED_SECRET,
     AGENCY_WALLET_KEY_SECRET: process.env.AGENCY_WALLET_KEY_SECRET,
 
+    REDIS_URL: process.env.REDIS_URL,
+
     PG_STORE_HOST: process.env.PG_STORE_HOST,
     PG_STORE_PORT: process.env.PG_STORE_PORT,
     PG_STORE_ACCOUNT: process.env.PG_STORE_ACCOUNT,

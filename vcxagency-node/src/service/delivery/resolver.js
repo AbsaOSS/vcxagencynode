@@ -21,7 +21,12 @@ const { buildAgentConnectionAO } = require('../entities/agent-connection/agent-c
 const logger = require('../../logging/logger-builder')(__filename)
 const { entityType } = require('../entities/entities-common')
 
-function createResolver (serviceWallets, serviceStorage, forwardAgentEntity) {
+const ENTITY_RECORD_RESOLUTION_STRATEGY = {
+  BY_DID_OR_VERKEY: 1,
+  BY_DID: 2
+}
+
+function createResolver (serviceWallets, serviceStorage, serviceNewMessages, forwardAgentEntity) {
   const { did: fwaDid, verkey: fwaVerkey } = forwardAgentEntity.getForwadAgentInfo()
 
   let router
@@ -30,36 +35,80 @@ function createResolver (serviceWallets, serviceStorage, forwardAgentEntity) {
     router = newRouter
   }
 
+  function _isFwa (resolutionKey, resolutionStrategy) {
+    if (resolutionStrategy === ENTITY_RECORD_RESOLUTION_STRATEGY.BY_DID) {
+      return resolutionKey === fwaDid
+    } else if (resolutionStrategy === ENTITY_RECORD_RESOLUTION_STRATEGY.BY_DID_OR_VERKEY) {
+      return (resolutionKey === fwaDid || resolutionKey === fwaVerkey)
+    } else {
+      throw Error(`Unknown entity record resolution strategy ${resolutionStrategy}.`)
+    }
+  }
+
+  async function _loadEntityRecord (resolutionKey, resolutionStrategy) {
+    if (resolutionStrategy === ENTITY_RECORD_RESOLUTION_STRATEGY.BY_DID_OR_VERKEY) {
+      return serviceStorage.loadEntityRecordByDidOrVerkey(resolutionKey)
+    } else if (resolutionStrategy === ENTITY_RECORD_RESOLUTION_STRATEGY.BY_DID) {
+      return serviceStorage.loadEntityRecordByDid(resolutionKey)
+    } else {
+      throw Error(`Unknown entity record resolution strategy ${resolutionStrategy}.`)
+    }
+  }
+
+  async function _entityRecordToEntityAO (entityRecord) {
+    switch (entityRecord.entityType) {
+      case entityType.agent: {
+        return buildAgentAO(entityRecord, serviceWallets, serviceStorage, router)
+      }
+      case entityType.agentConnection: {
+        return buildAgentConnectionAO(entityRecord, serviceWallets, serviceStorage, serviceNewMessages)
+      }
+      default:
+        throw Error(`Unknown entity type. Full record: ${JSON.stringify(entityRecord)}`)
+    }
+  }
+
+  async function _resolveEntityAO (resolutionKey, resolutionStrategy, expectedEntityType) {
+    if (_isFwa(resolutionKey, resolutionStrategy)) {
+      logger.debug(`Resolver: For ${resolutionKey} resolved Forward Agent Entity.`)
+      return forwardAgentEntity
+    }
+    const entityRecord = await _loadEntityRecord(resolutionKey, resolutionStrategy)
+    if (!entityRecord) {
+      logger.warn(`Resolver: For ${resolutionKey} no entity record was found.`)
+      return undefined
+    }
+    if (expectedEntityType) {
+      if (entityRecord.entityType !== expectedEntityType) {
+        logger.warn(`Resolved an entity by resolutionKey=${resolutionKey} but it was expected to be of entity type ${expectedEntityType} but actually was ${entityRecord.entityType}.`)
+        return undefined
+      }
+    }
+    logger.debug(`For resolution key ${resolutionKey} was resolved entity of type ${entityRecord.entityType}`)
+    return _entityRecordToEntityAO(entityRecord)
+  }
+
   /**
-   * Routes message to recipient
+   * Tries to resolve an Entity by its DID or Verkey.
    * @param {string} didOrVerkey - DID or Verkey of an entity
    * @return {object} Entity identified by the DID/Verkey. Undefined if DID/Verkey is not matching any entity's DID/Verkey.
    */
   async function resolveEntityAO (didOrVerkey) {
-    if (!(didOrVerkey === fwaDid || didOrVerkey === fwaVerkey)) {
-      const entityRecord = await serviceStorage.loadEntityRecord(didOrVerkey)
-      if (!entityRecord) {
-        logger.info(`Resolver: For ${didOrVerkey} no entity record was found.`)
-        return undefined
-      }
-      switch (entityRecord.entityType) {
-        case entityType.agent:
-          logger.info(`Resolver: For ${didOrVerkey} resolved Agent Entity.`)
-          return buildAgentAO(entityRecord, serviceWallets, serviceStorage, router)
-        case entityType.agentConnection:
-          logger.info(`Resolver: For ${didOrVerkey} resolved Agent Connection Entity.`)
-          return buildAgentConnectionAO(entityRecord, serviceWallets, serviceStorage)
-        default:
-          throw Error(`Unknown entity type. Full record: ${JSON.stringify(entityRecord)}`)
-      }
-    } else {
-      logger.debug(`Resolver: For ${didOrVerkey} resolved Forward Agent Entity.`)
-      return forwardAgentEntity
-    }
+    return _resolveEntityAO(didOrVerkey, ENTITY_RECORD_RESOLUTION_STRATEGY.BY_DID_OR_VERKEY)
+  }
+
+  /**
+   * Tries to resolve Agent Entity by DID.
+   * @param {string} did - DID  of an entity
+   * @return {object} Agent Entity identified by the DID. Undefined if DID
+   */
+  async function resolveAgentAOByDid (did) {
+    return _resolveEntityAO(did, ENTITY_RECORD_RESOLUTION_STRATEGY.BY_DID, entityType.agent)
   }
 
   return {
     resolveEntityAO,
+    resolveAgentAOByDid,
     setRouter
   }
 }

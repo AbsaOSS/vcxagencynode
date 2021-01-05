@@ -28,6 +28,8 @@ const requiredConfig = {
   AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
   AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
 
+  REDIS_URL: 'redis://localhost:6379/0',
+
   PG_STORE_HOST: 'localhost',
   PG_STORE_PORT: '5432',
   PG_STORE_ACCOUNT: 'postgres',
@@ -94,6 +96,8 @@ describe('app configuration', () => {
       AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
       AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
 
+      REDIS_URL: 'redis://localhost:6379/0',
+
       PG_STORE_HOST: 'localhost',
       PG_STORE_PORT: '5432',
       PG_STORE_ACCOUNT: 'postgres',
@@ -127,6 +131,8 @@ describe('app configuration', () => {
       AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
       AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
 
+      REDIS_URL: 'redis://localhost:6379/0',
+
       PG_STORE_HOST: 'localhost',
       PG_STORE_PORT: '5432',
       PG_STORE_ACCOUNT: 'postgres',
@@ -157,6 +163,8 @@ describe('app configuration', () => {
       AGENCY_DID: 'VsKV7grR1BUE29mG2Fm2kX',
       AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
       AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
+
+      REDIS_URL: 'redis://localhost:6379/0',
 
       PG_STORE_HOST: 'localhost',
       PG_STORE_PORT: '5432',

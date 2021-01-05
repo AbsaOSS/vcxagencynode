@@ -38,22 +38,26 @@ const { objectToBuffer } = require('../../utils')
 const express = require('express')
 const bodyParser = require('body-parser')
 const sleep = require('sleep-promise')
+const { longpollNotifications } = require('../../../src/service/notifications/longpoll')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
-const { wireUp } = require('../../../src/app')
+const { wireUpApplication, cleanUpApplication } = require('../../../src/app')
 const { buildAgencyClientVirtual } = require('./common')
 
 const agencyWalletName = `vcxagency-node-${uuid.v4()}`
 const agencyDid = 'VsKV7grR1BUE29mG2Fm2kX'
 const agencySeed = '0000000000000000000000000Forward'
 const agencyWalletKey = '@key'
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379/0'
 
+let app // eslint-disable-line
 let serviceIndyWallets // eslint-disable-line
 let entityForwardAgent // eslint-disable-line
 let serviceStorage // eslint-disable-line
 let resolver // eslint-disable-line
 let router // eslint-disable-line
 let agencyVerkey // eslint-disable-line
+let serviceNewMessages // eslint-disable-line
 
 let aliceWalletName
 let aliceWalletKey
@@ -75,22 +79,19 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   const tmpPgDb = await createTestPgDb()
-  const app = await wireUp(tmpPgDb.info, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
+  app = await wireUpApplication(tmpPgDb.info, REDIS_URL, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
   serviceIndyWallets = app.serviceIndyWallets
   entityForwardAgent = app.entityForwardAgent
   serviceStorage = app.serviceStorage
   resolver = app.resolver
   router = app.router
+  serviceNewMessages = app.serviceNewMessages
 
   const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
   sendToAgency = agencyClient.sendToAgency
   const agencyInfo = await agencyClient.getAgencyInfo()
   agencyVerkey = agencyInfo.verkey
 })
-
-// afterAll(async () => {
-//   await tmpPgDb.dropDb()
-// })
 
 beforeEach(async () => {
   aliceWalletKey = await indyGenerateWalletKey()
@@ -113,6 +114,10 @@ afterEach(async () => {
   const attackerWalletPath = `${homedir}/.indy_client/wallet/${bobWalletName}`
   await rimraf.sync(clientWalletPath)
   await rimraf.sync(attackerWalletPath)
+})
+
+afterAll(async () => {
+  cleanUpApplication(app)
 })
 
 async function setWebhookUrlForAgent (agentDid, webhookUrl) {
@@ -228,6 +233,127 @@ describe('onboarding', () => {
       if (testServer) {
         await testServer.close()
       }
+    }
+  })
+
+  it('should be informed after timeout that no new messages are available', async () => {
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+
+    const utimeBeforeSecs = Math.floor(new Date() / 1000)
+    const hasNotifications = await longpollNotifications(serviceNewMessages, aliceAgentDid, 2000)
+    await serviceNewMessages.ackNewMessage(aliceAgentDid)
+    const utimeAfterSecs = Math.floor(new Date() / 1000)
+    expect(hasNotifications).toBeFalsy()
+    expect(utimeAfterSecs - utimeBeforeSecs).toBe(2)
+  })
+
+  it('should be informed after about new message within 1 second of arrival', async () => {
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+    const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
+
+    const utimePollStarted = Math.floor(new Date() / 1000)
+    let pollResolvedWithSuccess
+
+    longpollNotifications(serviceNewMessages, aliceAgentDid, 10000)
+      .then(async function (hasNotifications) {
+        expect(hasNotifications).toBeTruthy()
+        pollResolvedWithSuccess = true
+        const utimePollReturned = Math.floor(new Date() / 1000)
+        await serviceNewMessages.ackNewMessage(aliceAgentDid)
+        expect(utimePollReturned - utimePollStarted).toBeGreaterThanOrEqual(2)
+        expect(utimePollReturned - utimePollStarted).toBeLessThanOrEqual(3)
+      }, function (error) {
+        pollResolvedWithSuccess = false
+        throw error
+      })
+
+    await sleep(2000)
+
+    const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
+
+    await sleep(3100)
+    expect(pollResolvedWithSuccess).toBeTruthy()
+  })
+
+  it('should be informed immediately if messages has arrived since last poll', async () => {
+    // set up alice's agent and agent'connection to receive message Bob
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+    const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
+
+    const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
+
+    const utimePollStarted = Math.floor(new Date() / 1000)
+    const hasNotifications = await longpollNotifications(serviceNewMessages, aliceAgentDid, 10000)
+    expect(hasNotifications).toBeTruthy()
+    await serviceNewMessages.ackNewMessage(aliceAgentDid)
+    const utimePollEnded = Math.floor(new Date() / 1000)
+    expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(1)
+  })
+
+  it('subsequent poll should hang if no new message has arrived', async () => {
+    // set up alice's agent and agent'connection to receive message Bob
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+    const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
+
+    const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
+    {
+      const utimePollStarted = Math.floor(new Date() / 1)
+      const hasNotifications = await longpollNotifications(serviceNewMessages, aliceAgentDid, 2000)
+      expect(hasNotifications).toBeTruthy()
+      await serviceNewMessages.ackNewMessage(aliceAgentDid)
+      const utimePollEnded = Math.floor(new Date() / 1)
+      expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(100)
+    }
+    {
+      const utimePollStarted = Math.floor(new Date() / 1000)
+      const hasNotifications = await longpollNotifications(serviceNewMessages, aliceAgentDid, 2000)
+      expect(hasNotifications).toBeFalsy()
+      const utimePollEnded = Math.floor(new Date() / 1000)
+      expect(utimePollEnded - utimePollStarted).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('subsequent poll should recieve information about received message if update callback was not called', async () => {
+    // set up alice's agent and agent'connection to receive message Bob
+    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
+    const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
+    const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
+
+    const { vkey: bobToAliceVerkey } = await indyCreateAndStoreMyDid(bobWh)
+    await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
+    {
+      const utimePollStarted = Math.floor(new Date() / 1)
+      const hasNotifications = await longpollNotifications(serviceNewMessages, aliceAgentDid, 2000)
+      expect(hasNotifications).toBeTruthy()
+      const utimePollEnded = Math.floor(new Date() / 1)
+      expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(100)
+    }
+    {
+      const utimePollStarted = Math.floor(new Date() / 1000)
+      const hasNotifications = await longpollNotifications(serviceNewMessages, aliceAgentDid, 2000)
+      expect(hasNotifications).toBeTruthy()
+      await serviceNewMessages.ackNewMessage(aliceAgentDid)
+      const utimePollEnded = Math.floor(new Date() / 1000)
+      expect(utimePollEnded - utimePollStarted).toBeLessThanOrEqual(100)
+    }
+    {
+      const utimePollStarted = Math.floor(new Date() / 1000)
+      const hasNotifications = await longpollNotifications(serviceNewMessages, aliceAgentDid, 2000)
+      expect(hasNotifications).toBeFalsy()
+      const utimePollEnded = Math.floor(new Date() / 1000)
+      expect(utimePollEnded - utimePollStarted).toBeGreaterThanOrEqual(2)
     }
   })
 })

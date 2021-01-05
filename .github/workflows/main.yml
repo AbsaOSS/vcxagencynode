@@ -211,6 +211,8 @@ jobs:
       CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
     steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
       - name: Load agency image cache
         id: load-cached-image-node
         uses: actions/cache@v2
@@ -232,10 +234,8 @@ jobs:
         run: |
           set -x
           docker image ls
-          docker run -d --name postgres \
-                         -e POSTGRES_PASSWORD=mysecretpassword \
-                         -p 5432:5432 \
-                         postgres:12.1
+          docker-compose -f ci/docker-compose.yml -f ci/docker-compose.dbs.yml up -d
+          sleep 5
           docker run --rm --name vcxagencynode \
                         --network host \
                          "$CACHED_DOCKER_IMG_NAME_AGENCY" \

@@ -31,6 +31,10 @@ beforeEach(async () => {
   storage = await createPgStorageEntities(info)
 })
 
+afterEach(async () => {
+  storage.cleanUp()
+})
+
 describe('storage', () => {
   it('should set, update and get webhook for agent', async () => {
     const A = uuid.v4()

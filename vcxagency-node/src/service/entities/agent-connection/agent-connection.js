@@ -80,7 +80,7 @@ async function createAgentConnectionData (agentDid, ownerDid, ownerVerkey, userP
  * @param {object} serviceWallets - Service for indy wallet management interface
  * @param {object} serviceStorage - Service for accessing entity storage
  */
-async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStorage) {
+async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStorage, serviceNewMessages) {
   const { walletName, walletKey, agentDid } = entityRecord
 
   const { agentConnectionDid, agentConnectionVerkey } = loadInfo()
@@ -168,6 +168,7 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
     const msgUid = uuid.v4()
     const statusCode = 'MS-103'
     await serviceStorage.storeMessage(agentDid, agentConnectionDid, msgUid, statusCode, msgObject.msg)
+    serviceNewMessages.flagNewMessage(agentDid)
     trySendNotification(msgUid, statusCode)
   }
 

@@ -40,7 +40,7 @@ validateAppConfig(appConfig, (err, ok) => {
   const apiMessaging = require('./api/api-messaging')
 
   const { indyLoadPostgresPlugin } = require('easy-indysdk')
-  const { wireUp } = require('./app')
+  const { wireUpApplication } = require('./app')
   const { setReqId, logRequestsWithoutBody } = require('./api/middleware')
   const { indySetLogger } = require('easy-indysdk')
   const httpContext = require('express-http-context')
@@ -91,7 +91,7 @@ validateAppConfig(appConfig, (err, ok) => {
     })
   }
 
-  function setupServer (entityForwardAgent, resolver, maxRequestSizeKb) {
+  function setupServer (entityForwardAgent, resolver, serviceNewMessages, maxRequestSizeKb) {
     const appAgent = express()
     const appAgentJson = express.Router()
     const appAgentMsg = express.Router()
@@ -114,7 +114,7 @@ validateAppConfig(appConfig, (err, ok) => {
     appAgentJson.use(expressWinstonLogger)
     appAgentMsg.use(expressWinstonLogger)
 
-    apiAgency(appAgentJson, entityForwardAgent, resolver)
+    apiAgency(appAgentJson, entityForwardAgent, serviceNewMessages)
     apiMessaging(appAgentMsg, entityForwardAgent)
 
     addStandardErrorMidlleware(appAgentJson)
@@ -153,12 +153,14 @@ validateAppConfig(appConfig, (err, ok) => {
     logger.info(`Initializing postgres plugin with config: ${JSON.stringify(storageConfig)}`)
     await indyLoadPostgresPlugin(storageConfig, storageCredentials)
 
+    const redisUrl = appConfig.REDIS_URL
+
     logger.info('Building services and wiring up dependencies.')
-    const { entityForwardAgent, resolver } =
-      await wireUp(appStoragePgConfig, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, storageType, storageConfig, storageCredentials)
+    const { entityForwardAgent, resolver, serviceNewMessages } =
+      await wireUpApplication(appStoragePgConfig, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, storageType, storageConfig, storageCredentials)
 
     logger.info('Building express http server.')
-    setupServer(entityForwardAgent, resolver, appConfig.SERVER_MAX_REQUEST_SIZE_KB)
+    setupServer(entityForwardAgent, resolver, serviceNewMessages, appConfig.SERVER_MAX_REQUEST_SIZE_KB)
   }
 
   async function startup () {

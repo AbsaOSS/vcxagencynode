@@ -31,6 +31,10 @@ beforeEach(async () => {
   storage = await createPgStorageEntities(info)
 })
 
+afterEach(async () => {
+  storage.cleanUp()
+})
+
 describe('storage', () => {
   it('should store and retrieve messages of all agent connections', async () => {
     const uid1 = uuid.v4()
