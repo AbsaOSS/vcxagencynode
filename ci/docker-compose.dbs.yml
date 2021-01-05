@@ -1,0 +1,34 @@
+version: '3.5'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:12.1
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
+    volumes:
+      - ./postgresql.conf:/etc/postgresql.conf
+    networks:
+      - absadocker
+    ports:
+      - "5432:5432"
+    command: [ "-c", "config_file=/etc/postgresql.conf" ]
+
+  redis:
+    container_name: redis
+    image: redis:6.0.8
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - absadocker
+    ports:
+      - "6379:6379"
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+
+
+networks:
+  absadocker:
+    name: absadocker
+    driver: bridge
