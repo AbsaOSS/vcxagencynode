@@ -19,7 +19,7 @@
 const uuid = require('uuid')
 const logger = require('../../logging/logger-builder')(__filename)
 
-module.exports.longpollNotifications = async function longpollNotifications (
+module.exports.longpollNotifications = function longpollNotifications (
   serviceNewMessages,
   agentDid,
   timeoutMs
