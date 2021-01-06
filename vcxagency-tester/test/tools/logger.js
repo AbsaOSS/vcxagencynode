@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-"use strict"
+'use strict'
 
 const winston = require('winston')
 const path = require('path')
