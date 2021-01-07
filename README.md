@@ -6,13 +6,13 @@
 Assuming the sending party has properly end2end encrypted the message for recipient, according to Aries connection  
 protocol, the agency itself can't decrypt content of received messages.
 
-- VCX Agency implements 2 notifications mechanism. 
-  1. Webhooks - The agency call specified url when a particular agent receives a message. This is useful when using
-     AriesVCX on server.
-  2. Longpoll - Agent owners can poll agency to check whether any new messages has arrived. This is implemented via 
-     longpoll mechanism - the server returns response only if new message has arrived, or certain amount of time has 
+- VCX Agency implements 2 notification mechanisms. 
+  1. Webhooks - The agency calls a specified url when an agent receives a message. This is useful when using 
+     AriesVcx on a server.
+  2. Longpolls - Agent owners can poll agency to check whether any new messages have arrived. This is implemented via 
+     longpoll mechanism - the server returns response only if a new message has arrived, or certain amount of time has 
      passed since the query request was received. This is to prevent overloading agency with client requests.
-     In future, longpoll mechanism might be replaced by websockets.   
+     In the future, longpoll mechanism might be replaced by websockets.   
       
 
 # Repository structure
@@ -28,7 +28,7 @@ Repository structure details:
 └-- vcx-tester/        # AriesVCX integration tests using AriesVCX
 ```
 
-- Rust client for agency is to be found [here](https://github.com/hyperledger/aries-vcx/tree/master/agency_client).
+- Rust client for agency can be found [here](https://github.com/hyperledger/aries-vcx/tree/master/agency_client).
 
 # Note
 - Project is using `yarn` instead of `npm` to install dependencies in all modules. The reason is that 
