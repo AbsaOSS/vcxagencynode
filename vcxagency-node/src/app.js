@@ -23,19 +23,37 @@ const { buildForwardAgent } = require('./service/entities/fwa/entity-fwa')
 const { createServiceIndyWallets } = require('./service/state/service-indy-wallets')
 const { assureDb } = require('./service/storage/pgdb')
 const { createServiceNewMessages } = require('./service/notifications/service-new-messages')
+const { createServiceNewMessagesUnavailable } = require('./service/notifications/service-new-messages-unavailable')
 const logger = require('./logging/logger-builder')(__filename)
 const redis = require('redis')
 
-async function wireUpApplication (appStorageConfig, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, walletStorageType = 'default', walletStorageConfig = null, walletStorageCredentials = null) {
-  const redisClientSubscriber = redis.createClient(redisUrl)
-  const redisClientRw = redis.createClient(redisUrl)
-  redisClientRw.on('error', function (err) {
-    logger.error(`Redis rw-client encountered error: ${err}`)
-  })
-  redisClientRw.on('error', function (err) {
-    logger.error(`Redis subscription-client encountered error: ${err}`)
-  })
-  const serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
+async function wireUpApplication (appStorageConfig, agencyType, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, walletStorageType = 'default', walletStorageConfig = null, walletStorageCredentials = null) {
+  let serviceNewMessages
+  if (agencyType === 'enterprise') {
+    serviceNewMessages = createServiceNewMessagesUnavailable()
+  } else if (agencyType === 'client') {
+    if (!redisUrl) {
+      throw Error('Redis URL was not provided.')
+    }
+    const redisClientSubscriber = redis.createClient(redisUrl)
+    const redisClientRw = redis.createClient(redisUrl)
+    redisClientRw.on('error', function (err) {
+      logger.error(`Redis rw-client encountered error: ${err}`)
+    })
+    redisClientSubscriber.on('error', function (err) {
+      logger.error(`Redis subscription-client encountered error: ${err}`)
+    })
+    redisClientRw.on('connect', function () {
+      logger.info('Redis rw-client connected.')
+    })
+    redisClientSubscriber.on('connect', function () {
+      logger.info('Redis subscription-client connected.')
+    })
+    serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
+  } else {
+    throw Error(`Unknown agency type ${agencyType}`)
+  }
+
   const serviceIndyWallets = await createServiceIndyWallets(walletStorageType, walletStorageConfig, walletStorageCredentials)
   const { user, password, host, port, database } = appStorageConfig
   await assureDb(user, password, host, port, database)

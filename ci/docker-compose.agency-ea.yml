@@ -17,7 +17,7 @@ services:
     environment:
       - LOG_JSON_TO_CONSOLE=false
       - LOG_LEVEL=info
-      - SERVER_PORT=9090
+      - SERVER_PORT=8080
       - SERVER_MAX_REQUEST_SIZE_KB=300
 
       - PG_WALLET_MIN_IDLE_COUNT=0
@@ -29,7 +29,7 @@ services:
       - AGENCY_SEED_SECRET=0000000000000000000000000Forward
       - AGENCY_WALLET_KEY_SECRET=98765432109876543210
 
-      - REDIS_URL=redis://redis.absadocker:6379/0
+      - AGENCY_TYPE=enterprise
 
       - PG_STORE_HOST=postgres.absadocker
       - PG_STORE_PORT=5432
@@ -47,5 +47,4 @@ services:
     networks:
       - absadocker
     ports:
-      - "9090:9090"
-
+      - "8080:8080"

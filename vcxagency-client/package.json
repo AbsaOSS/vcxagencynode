@@ -13,13 +13,14 @@
   "scripts": {
     "lint": "standard",
     "lint:fix": "standard --fix",
-    "test:unit": "jest --runInBand  ./test/unit",
-    "test:integration": "jest --runInBand  ./test/integration",
-    "test:integration:longpoll": "jest --runInBand  ./test/integration/longpoll.spec.js",
-    "test:perf": "jest --runInBand  ./test/perf",
+    "test:unit": "jest --runInBand ./test/unit",
+    "test:e2e:ea": "jest --runInBand ./test/e2e/ea ./test/e2e/shared",
+    "test:e2e:ca": "jest --runInBand ./test/e2e/ca ./test/e2e/shared",
+    "test:e2e:ca:longpoll": "jest --runInBand ./test/e2e/ca/longpoll.spec.js",
+    "test:perf": "jest --runInBand ./test/perf",
     "test:perf:onboarding": "jest --runInBand  ./test/perf/onboarding.perf.spec.js",
-    "test:perf:msgs": "jest --runInBand  ./test/perf/messaging.perf.spec.js",
-    "test:perf:info": "jest --runInBand  ./test/perf/info.perf.spec.js"
+    "test:perf:msgs": "jest --runInBand ./test/perf/messaging.perf.spec.js",
+    "test:perf:info": "jest --runInBand ./test/perf/info.perf.spec.js"
   },
   "dependencies": {
     "axios": "^0.18.1",

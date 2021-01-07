@@ -48,7 +48,6 @@ const agencyWalletName = `vcxagency-node-${uuid.v4()}`
 const agencyDid = 'VsKV7grR1BUE29mG2Fm2kX'
 const agencySeed = '0000000000000000000000000Forward'
 const agencyWalletKey = '@key'
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379/0'
 
 let app // eslint-disable-line
 let serviceIndyWallets // eslint-disable-line
@@ -70,6 +69,7 @@ let bobWalletKey
 let bobWh
 
 const WALLET_KDF = 'RAW'
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379/0'
 
 let sendToAgency
 
@@ -79,7 +79,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   const tmpPgDb = await createTestPgDb()
-  app = await wireUpApplication(tmpPgDb.info, REDIS_URL, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
+  app = await wireUpApplication(tmpPgDb.info, 'client', redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
   serviceIndyWallets = app.serviceIndyWallets
   entityForwardAgent = app.entityForwardAgent
   serviceStorage = app.serviceStorage

@@ -19,16 +19,24 @@
 const uuid = require('uuid')
 const logger = require('../logging/logger-builder')(__filename)
 const httpContext = require('express-http-context')
+const { ErrorFeatureDisabled } = require('../errors/error-feature-disabled')
 
 module.exports.asyncHandler = function asyncHandler (fn) {
   return (req, res, next) => {
     const result = Promise
       .resolve(fn(req, res, next))
       .catch(function (err) {
-        const errorId = httpContext.get('reqId')
-        logger.error(`ErrorID: '${errorId}'. Unhandled error from async express handler. Error details:`)
-        logger.error(err.stack)
-        res.status(500).send({ message: 'Something went wrong unexpectedly.', errorId })
+        const traceId = httpContext.get('reqId')
+        const responsePayload = { 'trace-id': traceId }
+        if (err instanceof ErrorFeatureDisabled) {
+          responsePayload.message = err.message
+          logger.error(`ErrorFeatureDisabled. Error: ${JSON.stringify(responsePayload)}`)
+          res.status(409).send({ error: responsePayload })
+        } else {
+          logger.error(`Unexpected error: '${traceId}'. Unhandled error from async express handler. Error details:`)
+          logger.error(err.stack)
+          res.status(500).send({ message: `Something went wrong unexpectedly. traceId=${traceId}`, errorId: traceId })
+        }
       })
     return result
   }

@@ -53,7 +53,8 @@ const configValidation = Joi.object().keys({
   AGENCY_SEED_SECRET: Joi.string().min(20).required(),
   AGENCY_WALLET_KEY_SECRET: Joi.string().min(20).required(),
 
-  REDIS_URL: Joi.string().required(),
+  REDIS_URL: Joi.string().allow(''),
+  AGENCY_TYPE: Joi.string().valid(['enterprise', 'client']).required(),
 
   PG_STORE_HOST: Joi.string().required(),
   PG_STORE_PORT: Joi.number().integer().min(1025).max(65535).required(),
@@ -72,25 +73,40 @@ const configValidation = Joi.object().keys({
   PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100)
 })
 
-function testConfigPathExist (appConfig, key) {
-  const path = appConfig[key]
-  if (!fs.existsSync(path)) {
-    throw Error(`${key} = ${path} is not a valid path or the path does not exist`)
-  }
-}
+async function validateAppConfig (appConfig) {
+  return new Promise((resolve, reject) => {
+    function testConfigPathExist (appConfig, key) {
+      const path = appConfig[key]
+      if (!fs.existsSync(path)) {
+        reject(new Error(`${key} = ${path} is not a valid path or the path does not exist`))
+      }
+    }
 
-function validateAppConfig (appConfig, callback) {
-  Joi.validate(appConfig, configValidation, callback)
-  if (appConfig.SERVER_ENABLE_TLS === 'true') {
-    if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
-      throw Error('Valid certificate and key paths must be specified when TLS enabled!')
+    const joiCallback = function (err) {
+      if (err) {
+        reject(err)
+      } else {
+        if (appConfig.AGENCY_TYPE === 'client') {
+          if (!appConfig.REDIS_URL) {
+            reject(new Error("Configuration for agency of type 'client' must have REDIS_URL specified."))
+          }
+        }
+        if (appConfig.SERVER_ENABLE_TLS === 'true') {
+          if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
+            reject(new Error('Valid certificate and key paths must be specified when TLS enabled!'))
+          }
+          testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
+          testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
+          if (appConfig.CERTIFICATE_AUTHORITY_PATH) {
+            testConfigPathExist(appConfig, 'CERTIFICATE_AUTHORITY_PATH')
+          }
+        }
+        resolve()
+      }
     }
-    testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
-    testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
-    if (appConfig.CERTIFICATE_AUTHORITY_PATH) {
-      testConfigPathExist(appConfig, 'CERTIFICATE_AUTHORITY_PATH')
-    }
-  }
+
+    Joi.validate(appConfig, configValidation, joiCallback)
+  })
 }
 
 module.exports = {
