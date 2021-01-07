@@ -26,8 +26,29 @@ const { createServiceNewMessages } = require('./service/notifications/service-ne
 const { createServiceNewMessagesUnavailable } = require('./service/notifications/service-new-messages-unavailable')
 const logger = require('./logging/logger-builder')(__filename)
 const redis = require('redis')
+const assert = require('assert')
 
-async function wireUpApplication (appStorageConfig, agencyType, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, walletStorageType = 'default', walletStorageConfig = null, walletStorageCredentials = null) {
+async function wireUpApplication ({
+  appStorageConfig,
+  agencyType,
+  redisUrl,
+  agencyWalletName,
+  agencyDid,
+  agencySeed,
+  agencyWalletKey,
+  walletStorageType = 'default',
+  walletStorageConfig = null,
+  walletStorageCredentials = null
+}
+) {
+  assert(appStorageConfig, 'Missing appStorageConfig.')
+  assert(agencyType, 'Missing agencyType.')
+  assert(agencyWalletName, 'Missing agencyWalletName.')
+  assert(agencyDid, 'Missing agencyDid.')
+  assert(agencySeed, 'Missing agencySeed.')
+  assert(agencyWalletKey, 'Missing agencyWalletKey.')
+  assert(walletStorageType, 'Missing walletStorageType.')
+
   let serviceNewMessages
   if (agencyType === 'enterprise') {
     serviceNewMessages = createServiceNewMessagesUnavailable()

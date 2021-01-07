@@ -92,7 +92,7 @@ describe('app configuration', () => {
   })
 
   it('should pass app config validation with AGENCY_TYPE enterprise', async () => {
-    const appConfig = getValidClientAgencyConfig()
+    const appConfig = getValidEnterpriseAgencyConfig()
     await validateAppConfig(appConfig)
   })
 

@@ -56,7 +56,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   tmpPgDb = await createTestPgDb()
-  app = await wireUpApplication(tmpPgDb.info, 'enterprise', undefined, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
+  app = await wireUpApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'enterprise', agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
   const entityForwardAgent = app.entityForwardAgent
   const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
   sendToAgency = agencyClient.sendToAgency

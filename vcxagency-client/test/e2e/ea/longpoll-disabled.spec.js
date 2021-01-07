@@ -70,7 +70,6 @@ afterEach(async () => {
 
 describe('longpoll', () => {
   it('should return HTTP Code 409 when trying to use longpoll on agency of enterprise type', async () => {
-    // arrange
     const { agentDid: aliceAgentDid } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     await indyCreateAndStoreMyDid(aliceWh)
 

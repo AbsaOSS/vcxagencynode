@@ -140,7 +140,7 @@ async function run () {
     const agencySeed = appConfig.AGENCY_SEED_SECRET
     const agencyWalletKey = appConfig.AGENCY_WALLET_KEY_SECRET
 
-    const appStoragePgConfig = {
+    const appStorageConfig = {
       host: appConfig.PG_STORE_HOST,
       port: appConfig.PG_STORE_PORT,
       user: appConfig.PG_STORE_ACCOUNT,
@@ -158,7 +158,18 @@ async function run () {
 
     logger.info('Building services and wiring up dependencies.')
     const { entityForwardAgent, resolver, serviceNewMessages } =
-      await wireUpApplication(appStoragePgConfig, agencyType, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, storageType, storageConfig, storageCredentials)
+      await wireUpApplication({
+        appStorageConfig,
+        agencyType,
+        redisUrl,
+        agencyWalletName,
+        agencyDid,
+        agencySeed,
+        agencyWalletKey,
+        storageType,
+        storageConfig,
+        storageCredentials
+      })
 
     logger.info('Building express http server.')
     setupServer(entityForwardAgent, resolver, serviceNewMessages, appConfig.SERVER_MAX_REQUEST_SIZE_KB)

@@ -79,7 +79,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   const tmpPgDb = await createTestPgDb()
-  app = await wireUpApplication(tmpPgDb.info, 'client', redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey)
+  app = await wireUpApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'client', redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
   serviceIndyWallets = app.serviceIndyWallets
   entityForwardAgent = app.entityForwardAgent
   serviceStorage = app.serviceStorage
