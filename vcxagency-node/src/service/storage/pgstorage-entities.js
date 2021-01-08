@@ -16,9 +16,39 @@
 
 'use strict'
 
-const { Pool } = require('pg')
+const { Pool, Client } = require('pg')
 const logger = require('../../logging/logger-builder')(__filename)
 const { buildStoredMessage } = require('./store-util')
+const sleep = require('sleep-promise')
+
+function _canConnectToPostgres ({ user, password, host, port }) {
+  const client = new Client({ host, port, user, password })
+  return new Promise((resolve, reject) => {
+    client.connect(err => {
+      if (err) {
+        resolve(false)
+      } else {
+        client.end()
+        resolve(true)
+      }
+    })
+  })
+}
+
+async function waitUntilConnectsToPostgres (appStorageConfig, attemptsThreshold = 10, timeoutMs = 2000) {
+  let attempts = 0
+  while (true) {
+    if (await _canConnectToPostgres(appStorageConfig)) {
+      return
+    }
+    attempts += 1
+    if (attempts > attemptsThreshold) {
+      throw Error(`Couldn't connect to postgres after ${attemptsThreshold} attempts.`)
+    }
+    logger.warn(`Couldn't connect to postgres, will try again after ${timeoutMs}ms.`)
+    await sleep(timeoutMs)
+  }
+}
 
 /**
  * Creates object for custom storage read/writes in following areas:
@@ -457,5 +487,6 @@ async function createPgStorageEntities (appStorageConfig) {
 }
 
 module.exports = {
-  createPgStorageEntities
+  createPgStorageEntities,
+  waitUntilConnectsToPostgres
 }
