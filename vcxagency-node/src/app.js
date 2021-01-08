@@ -48,6 +48,10 @@ async function wireUpApplication ({
   assert(agencySeed, 'Missing agencySeed.')
   assert(agencyWalletKey, 'Missing agencyWalletKey.')
   assert(walletStorageType, 'Missing walletStorageType.')
+  if (walletStorageType !== 'default') {
+    assert(walletStorageConfig, 'Not using default wallet type and missing walletStorageConfig.')
+    assert(walletStorageCredentials, 'Not using default wallet type and missing walletStorageCredentials.')
+  }
 
   let serviceNewMessages
   if (agencyType === 'enterprise') {

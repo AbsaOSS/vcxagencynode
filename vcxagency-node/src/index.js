@@ -57,7 +57,7 @@ async function run () {
   }
 
   function getStorageInfoPgsql () {
-    const storageConfig = {
+    const walletStorageConfig = {
       url: appConfig.PG_WALLET_URL,
       // 'tls', todo: add this when tls code is merged into pgsql plugin
       max_connections: appConfig.PG_WALLET_MAX_CONNECTIONS, /// Sets the maximum number of connections managed by the pool.
@@ -67,16 +67,16 @@ async function run () {
       // 'database_name' : todo: add support into pgsql for this when using MultiWalletSingleTableSharedPool strategy
     }
 
-    const storageCredentials = {
+    const walletStorageCredentials = {
       account: appConfig.PG_WALLET_ACCOUNT,
       password: appConfig.PG_WALLET_PASSWORD_SECRET,
       admin_account: appConfig.PG_WALLET_ADMIN_ACCOUNT,
       admin_password: appConfig.PG_WALLET_ADMIN_PASSWORD_SECRET
     }
     return {
-      storageType: 'postgres_storage',
-      storageConfig,
-      storageCredentials
+      walletStorageType: 'postgres_storage',
+      walletStorageConfig,
+      walletStorageCredentials
     }
   }
 
@@ -148,9 +148,9 @@ async function run () {
       database: appConfig.PG_STORE_DATABASE
     }
 
-    const { storageType, storageConfig, storageCredentials } = getStorageInfoPgsql()
-    logger.info(`Initializing postgres plugin with config: ${JSON.stringify(storageConfig)}`)
-    await indyLoadPostgresPlugin(storageConfig, storageCredentials)
+    const { walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoPgsql()
+    logger.info(`Initializing postgres plugin with config: ${JSON.stringify(walletStorageConfig)}`)
+    await indyLoadPostgresPlugin(walletStorageConfig, walletStorageCredentials)
 
     const redisUrl = appConfig.REDIS_URL
 
@@ -166,9 +166,9 @@ async function run () {
         agencyDid,
         agencySeed,
         agencyWalletKey,
-        storageType,
-        storageConfig,
-        storageCredentials
+        walletStorageType,
+        walletStorageConfig,
+        walletStorageCredentials
       })
 
     logger.info('Building express http server.')
