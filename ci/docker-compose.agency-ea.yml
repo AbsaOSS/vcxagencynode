@@ -13,7 +13,8 @@ services:
     container_name: agency
     logging: *service-logging
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       - LOG_JSON_TO_CONSOLE=false
       - LOG_LEVEL=info
