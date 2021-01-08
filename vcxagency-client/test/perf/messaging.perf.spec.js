@@ -90,7 +90,7 @@ const ROUNDS = process.env.ROUNDS || 1000
 const OPS_IN_ROUND = process.env.OPS_IN_ROUND || 2
 
 describe('onboarding', () => {
-  it('should create agent and agent connection', async () => {
+  it('should send many messages', async () => {
     const clientAlice = await setupVcxClient()
     const clientBob = await setupVcxClient()
     const clientJohn = await setupVcxClient()

@@ -16,19 +16,3 @@ services:
       - "5432:5432"
     command: [ "-c", "config_file=/etc/postgresql.conf" ]
 
-  redis:
-    container_name: redis
-    image: redis:6.0.8
-    volumes:
-      - ./redis.conf:/usr/local/etc/redis/redis.conf
-    networks:
-      - absadocker
-    ports:
-      - "6379:6379"
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
-
-
-networks:
-  absadocker:
-    name: absadocker
-    driver: bridge

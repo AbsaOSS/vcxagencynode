@@ -93,7 +93,7 @@ async function setupVcxClients (n) {
 }
 
 describe('onboarding', () => {
-  it('should create agent and agent connection', async () => {
+  it('should onboard many clients', async () => {
     const tStart = performance.now()
     for (const vcxClient of vcxClients) {
       const { wh, client2AgencyDid, client2AgencyVerkey } = vcxClient

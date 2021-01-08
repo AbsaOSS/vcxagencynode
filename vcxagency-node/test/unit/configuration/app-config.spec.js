@@ -16,7 +16,7 @@
 
 'use strict'
 
-const requiredConfig = {
+const BASE_CONFIG = {
   LOG_LEVEL: 'debug',
   LOG_ENABLE_INDYSDK: 'false',
   LOG_JSON_TO_CONSOLE: 'false',
@@ -27,8 +27,6 @@ const requiredConfig = {
   AGENCY_DID: 'VsKV7grR1BUE29mG2Fm2kX',
   AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
   AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
-
-  REDIS_URL: 'redis://localhost:6379/0',
 
   PG_STORE_HOST: 'localhost',
   PG_STORE_PORT: '5432',
@@ -47,9 +45,16 @@ const requiredConfig = {
   PG_WALLET_CONNECTION_TIMEOUT_MINS: '30'
 }
 
+function getValidEnterpriseAgencyConfig () {
+  return { ...BASE_CONFIG, AGENCY_TYPE: 'enterprise' }
+}
+
+function getValidClientAgencyConfig () {
+  return { ...BASE_CONFIG, REDIS_URL: 'redis://localhost:6379/0', AGENCY_TYPE: 'client' }
+}
+
 /* eslint-env jest */
 const { stringifyAndHideSensitive } = require('../../../src/configuration/app-config')
-const util = require('util')
 const { validateAppConfig } = require('../../../src/configuration/app-config')
 const path = require('path')
 
@@ -71,7 +76,10 @@ describe('app configuration', () => {
       CERTIFICATE_PATH: '',
       CERTIFICATE_KEY_PATH: ''
     }
-    expect(() => { validateAppConfig({ ...requiredConfig, ...tlsConfig }) }).toThrow(Error)
+    const config = { ...getValidEnterpriseAgencyConfig(), ...tlsConfig }
+    await expect(validateAppConfig(config))
+      .rejects
+      .toThrow('Valid certificate and key paths must be specified when TLS enabled!')
   })
 
   it('if TLS enabled, allow empty cert key path for self-signed certificate', async () => {
@@ -80,114 +88,39 @@ describe('app configuration', () => {
       CERTIFICATE_PATH: path.join(__dirname, 'mock_certs', 'mock_cert.pem'),
       CERTIFICATE_KEY_PATH: path.join(__dirname, 'mock_certs', 'mock_key.pem')
     }
-    validateAppConfig({ ...requiredConfig, ...tlsConfig })
+    await validateAppConfig({ ...getValidEnterpriseAgencyConfig(), ...tlsConfig })
   })
 
-  it('should pass app config validation', async () => {
-    const appConfig = {
-      LOG_LEVEL: 'debug',
-      LOG_ENABLE_INDYSDK: 'false',
-      LOG_JSON_TO_CONSOLE: 'false',
-      SERVER_PORT: '8080',
-      SERVER_MAX_REQUEST_SIZE_KB: '300',
+  it('should pass app config validation with AGENCY_TYPE enterprise', async () => {
+    const appConfig = getValidEnterpriseAgencyConfig()
+    await validateAppConfig(appConfig)
+  })
 
-      AGENCY_WALLET_NAME: 'vcxagency-node',
-      AGENCY_DID: 'VsKV7grR1BUE29mG2Fm2kX',
-      AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
-      AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
-
-      REDIS_URL: 'redis://localhost:6379/0',
-
-      PG_STORE_HOST: 'localhost',
-      PG_STORE_PORT: '5432',
-      PG_STORE_ACCOUNT: 'postgres',
-      PG_STORE_PASSWORD_SECRET: 'mysecretpassword',
-      PG_STORE_DATABASE: 'agency-storage',
-
-      PG_WALLET_ACCOUNT: 'postgres',
-      PG_WALLET_PASSWORD_SECRET: 'mysecretpassword',
-      PG_WALLET_ADMIN_ACCOUNT: 'postgres',
-      PG_WALLET_ADMIN_PASSWORD_SECRET: 'mysecretpassword',
-
-      PG_WALLET_URL: 'localhost:5432',
-      PG_WALLET_MIN_IDLE_COUNT: '0',
-      PG_WALLET_MAX_CONNECTIONS: '90',
-      PG_WALLET_CONNECTION_TIMEOUT_MINS: '30'
-    }
-    const validationAsync = await util.promisify(validateAppConfig)
-    await validationAsync(appConfig)
+  it('should pass app config validation with AGENCY_TYPE client', async () => {
+    const appConfig = getValidClientAgencyConfig()
+    await validateAppConfig(appConfig)
   })
 
   it('should validate app config when PG_WALLET_ADMIN_* info is omitted', async () => {
-    const appConfig = {
-      LOG_LEVEL: 'debug',
-      LOG_ENABLE_INDYSDK: 'false',
-      LOG_JSON_TO_CONSOLE: 'false',
-      SERVER_PORT: '8080',
-      SERVER_MAX_REQUEST_SIZE_KB: '300',
-
-      AGENCY_WALLET_NAME: 'vcxagency-node',
-      AGENCY_DID: 'VsKV7grR1BUE29mG2Fm2kX',
-      AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
-      AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
-
-      REDIS_URL: 'redis://localhost:6379/0',
-
-      PG_STORE_HOST: 'localhost',
-      PG_STORE_PORT: '5432',
-      PG_STORE_ACCOUNT: 'postgres',
-      PG_STORE_PASSWORD_SECRET: 'mysecretpassword',
-      PG_STORE_DATABASE: 'agency-storage',
-
-      PG_WALLET_ACCOUNT: 'postgres',
-      PG_WALLET_PASSWORD_SECRET: 'mysecretpassword',
-
-      PG_WALLET_URL: 'localhost:5432',
-      PG_WALLET_MIN_IDLE_COUNT: '0',
-      PG_WALLET_MAX_CONNECTIONS: '90',
-      PG_WALLET_CONNECTION_TIMEOUT_MINS: '30'
-    }
-    const validationAsync = await util.promisify(validateAppConfig)
-    await validationAsync(appConfig)
+    const appConfig = getValidClientAgencyConfig()
+    delete appConfig.PG_WALLET_ADMIN_ACCOUNT
+    delete appConfig.PG_WALLET_ADMIN_PASSWORD_SECRET
+    await validateAppConfig(appConfig)
   })
 
   it('should invalidate app config when PG_WALLET_PASSWORD_SECRET is omitted', async () => {
-    const appConfig = {
-      LOG_LEVEL: 'debug',
-      LOG_ENABLE_INDYSDK: 'false',
-      LOG_JSON_TO_CONSOLE: 'false',
-      SERVER_PORT: '8080',
-      SERVER_MAX_REQUEST_SIZE_KB: '300',
+    const config = getValidEnterpriseAgencyConfig()
+    delete config.PG_WALLET_PASSWORD_SECRET
+    await expect(validateAppConfig(config))
+      .rejects
+      .toThrow('"PG_WALLET_PASSWORD_SECRET" is required')
+  })
 
-      AGENCY_WALLET_NAME: 'vcxagency-node',
-      AGENCY_DID: 'VsKV7grR1BUE29mG2Fm2kX',
-      AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
-      AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
-
-      REDIS_URL: 'redis://localhost:6379/0',
-
-      PG_STORE_HOST: 'localhost',
-      PG_STORE_PORT: '5432',
-      PG_STORE_ACCOUNT: 'postgres',
-      PG_STORE_PASSWORD_SECRET: 'mysecretpassword',
-      PG_STORE_DATABASE: 'agency-storage',
-
-      PG_WALLET_ACCOUNT: 'postgres',
-      PG_WALLET_ADMIN_ACCOUNT: 'postgres',
-      PG_WALLET_ADMIN_PASSWORD_SECRET: 'mysecretpassword',
-
-      PG_WALLET_URL: 'localhost:5432',
-      PG_WALLET_MIN_IDLE_COUNT: '1',
-      PG_WALLET_MAX_CONNECTIONS: '90',
-      PG_WALLET_CONNECTION_TIMEOUT_MINS: '30'
-    }
-    const validationAsync = await util.promisify(validateAppConfig)
-    let thrown
-    try {
-      await validationAsync(appConfig)
-    } catch (err) {
-      thrown = err
-    }
-    expect(thrown).toBeDefined()
+  it('should invalidate client agency config if REDIS_URL is omitted', async () => {
+    const config = getValidClientAgencyConfig()
+    delete config.REDIS_URL
+    await expect(validateAppConfig(config))
+      .rejects
+      .toThrow("Configuration for agency of type 'client' must have REDIS_URL specified.")
   })
 })

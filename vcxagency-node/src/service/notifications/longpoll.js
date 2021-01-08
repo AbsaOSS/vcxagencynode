@@ -49,7 +49,6 @@ module.exports.longpollNotifications = function longpollNotifications (
               resolve(false)
             }
           }
-
           serviceNewMessages.registerCallback(agentDid, callbackId, reactOnNewMessage)
             .then(() => {
               setTimeout(reactOnTimeout, timeoutMs)
@@ -58,6 +57,9 @@ module.exports.longpollNotifications = function longpollNotifications (
               reject(err)
             })
         }
+      })
+      .catch((err) => {
+        reject(err)
       })
   })
 }

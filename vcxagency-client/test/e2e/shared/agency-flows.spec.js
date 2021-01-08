@@ -22,15 +22,15 @@ const { indyCreateAndStoreMyDid } = require('easy-indysdk')
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
-const { vcxFlowSendAriesMessage } = require('../../src')
-const { vcxFlowGetMsgsFromAgent } = require('../../src')
-const { buildAgencyClientNetwork } = require('../common')
-const { vcxFlowCreateAgentConnection } = require('vcxagency-client')
-const { vcxFlowFullOnboarding } = require('vcxagency-client')
+const { vcxFlowUpdateMsgsFromAgent } = require('../../../src')
+const { vcxFlowGetMsgsFromAgentConn } = require('../../../src')
+const { vcxFlowSendAriesMessage } = require('../../../src')
+const { vcxFlowGetMsgsFromAgent } = require('../../../src')
+const { buildAgencyClientNetwork } = require('../../common')
+const { vcxFlowCreateAgentConnection } = require('vcxagency-client/src')
+const { vcxFlowFullOnboarding } = require('vcxagency-client/src')
 const { indyGenerateWalletKey } = require('easy-indysdk')
 const { indyOpenWallet } = require('easy-indysdk')
-const axios = require('axios')
-const sleep = require('sleep-promise')
 
 let aliceWalletName
 let aliceWalletKey
@@ -54,8 +54,14 @@ const agencyUrl = process.env.AGENCY_URL || 'http://localhost:8080'
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 120)
-  const agencyClient = await buildAgencyClientNetwork(agencyUrl)
+  // logger.error = (data) => console.error(data)
+  // logger.warn = (data) => console.warn(data)
+  // logger.info = (data) => console.log(data)
+  // logger.debug = (data) => console.log(data)
+  // logger.silly = (data) => console.log(data)
+  // indySetLogger(logger)
   console.log(`Using agency url ${agencyUrl}`)
+  const agencyClient = await buildAgencyClientNetwork(agencyUrl)
   sendToAgency = agencyClient.sendToAgency
   const agencyInfo = await agencyClient.getAgencyInfo()
   agencyVerkey = agencyInfo.verkey
@@ -91,8 +97,8 @@ afterEach(async () => {
   await rimraf.sync(attackerWalletPath)
 })
 
-describe('longpoll', () => {
-  it('should return new message longpoll correctly', async () => {
+describe('onboarding', () => {
+  it('should exchange messages between alice and bob via agency', async () => {
     // arrange
     const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     const { did: aliceUserPairwiseDid, vkey: aliceUserPairwiseVerkey } = await indyCreateAndStoreMyDid(aliceWh)
@@ -105,49 +111,39 @@ describe('longpoll', () => {
     // create agent connection, both alice and bob
     console.log(`Alice is going to create agent connection. aliceAgentDid=${aliceAgentDid} aliceVerkey=${aliceVerkey} aliceUserPairwiseDid=${aliceUserPairwiseDid} aliceUserPairwiseVerkey=${aliceUserPairwiseVerkey}`)
     const alicesAconn = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceUserPairwiseDid, aliceUserPairwiseVerkey)
+    const alicesRoutingAgentDid = alicesAconn.withPairwiseDID
     const alicesRoutingAgentVerkey = alicesAconn.withPairwiseDIDVerKey
     console.log('Alice created agent connection!')
     await vcxFlowCreateAgentConnection(bobWh, sendToAgency, bobAgentDid, bobAgentVerkey, bobVerkey, bobUserPairwiseDid, bobUserPairwiseVerkey)
 
     const aliceAllMsgs1 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
     console.log(`Alice queries agency for all messages, she should have none. Response = ${JSON.stringify(aliceAllMsgs1)}`)
-    {
-      let hasLongpollTimedOut = false
-      axios.get(`${agencyUrl}/experimental/agent/${aliceAgentDid}/notifications`, { timeout: 2000 })
-        .then(_result => {
-          console.error('Did not expect longpoll to return so early with success!')
-          expect(true).toBeFalsy()
-        })
-        .catch(_err => {
-          console.info('Axios returned error as expected.')
-          hasLongpollTimedOut = true
-        })
 
-      await sleep(3000)
-      expect(hasLongpollTimedOut).toBeTruthy()
-    }
     // bobs sends message to alices routing agent
     const bobSendMsgRes1 = await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceUserPairwiseVerkey, alicesRoutingAgentVerkey, bobUserPairwiseVerkey, 'This is Bob!')
     console.log(`Bob sends aries message to Alice's agent. Response = ${JSON.stringify(bobSendMsgRes1)}`)
-    await sleep(2000)
 
-    // alice asks for new messages and get right away response with hasNotifications=true
-    {
-      const { data: { hasNotifications } } = await axios.get(`${agencyUrl}/experimental/agent/${aliceAgentDid}/notifications`, { timeout: 500 })
-      expect(hasNotifications).toBeTruthy()
-      await axios.post(`${agencyUrl}/experimental/agent/${aliceAgentDid}/notifications/ack`)
-    }
+    // alice fetches messages
+    const aliceAllMsgs2 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
+    console.log(`Alice queries agency for all messages, she should have one. Response = ${JSON.stringify(aliceAllMsgs2)}`)
 
-    // since new messages were acked, next time the longpoll should keep hanging, and given short client timeout of 2000ms, we should get timeout error
-    axios.get(`${agencyUrl}/experimental/agent/${aliceAgentDid}/notifications`, { timeout: 2000 })
-      .then(_result => {
-        console.error('Did not expect longpoll to return so early with success!')
-        expect(true).toBeFalsy()
-      })
-      .catch(_err => {
-        console.info('Axios returned error as expected.')
-      })
+    const aliceToBoMsgs = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, alicesRoutingAgentDid, alicesRoutingAgentVerkey, aliceUserPairwiseVerkey, [], [])
+    console.log(`Alice queries agency for alice2bob messages, she should have one. Response = ${JSON.stringify(aliceToBoMsgs)}`)
 
-    await sleep(3000)
+    // alice updates message status
+    const aliceMsgsByConns = [
+      { pairwiseDID: aliceUserPairwiseDid, uids: [aliceToBoMsgs.msgs[0].uid] }
+    ]
+    const aliceNewMsgStatus = 'MS-104'
+    const updateResponse = await vcxFlowUpdateMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceMsgsByConns, aliceNewMsgStatus)
+    console.log(`Alice run msg status update for msgs ${JSON.stringify(aliceMsgsByConns)} to status ${aliceNewMsgStatus}. Response = ${JSON.stringify(updateResponse)}`)
+
+    // alice tries to update msg status on connection she doesn't have
+    const updateMsgForNonExistingUserPwDid = [
+      { pairwiseDID: '4aA6TyH2Cgq7gg2wGFiRXS', uids: [aliceToBoMsgs.msgs[0].uid] }
+    ]
+    const aliceNewMsgStatus2 = 'MS-105'
+    const updateResponse2 = await vcxFlowUpdateMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, updateMsgForNonExistingUserPwDid, aliceNewMsgStatus2)
+    console.log(`Alice run msg status update for agent connection which does not exists on her agent. Response = ${JSON.stringify(updateResponse2)}`)
   })
 })

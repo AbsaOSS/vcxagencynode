@@ -23,18 +23,17 @@ const https = require('https')
 const fs = require('fs')
 
 const appConfig = buildAppConfigFromEnvVariables()
-console.log(stringifyAndHideSensitive(appConfig))
+const logger = require('./logging/logger-builder')(__filename)
+logger.info(stringifyAndHideSensitive(appConfig))
 
-validateAppConfig(appConfig, (err, ok) => {
-  if (err) {
-    throw Error(err.message)
-  }
+async function run () {
+  await validateAppConfig(appConfig)
+
   // Import order is important in this file - first we need to validate config, then set up logger
   // if we require any other of our files before we load/validate appConfig, that file might happen to require
   // logger, which relies on environment variables being loaded - which is side effect of calling buildAppConfigFromEnvVariables()
   // This could be improved if logger-builder wouldn't rely on environment variables, but rather having this information
   // passed in arguments
-  const logger = require('./logging/logger-builder')(__filename)
   const express = require('express')
   const apiAgency = require('./api/api-agency')
   const apiMessaging = require('./api/api-messaging')
@@ -141,7 +140,7 @@ validateAppConfig(appConfig, (err, ok) => {
     const agencySeed = appConfig.AGENCY_SEED_SECRET
     const agencyWalletKey = appConfig.AGENCY_WALLET_KEY_SECRET
 
-    const appStoragePgConfig = {
+    const appStorageConfig = {
       host: appConfig.PG_STORE_HOST,
       port: appConfig.PG_STORE_PORT,
       user: appConfig.PG_STORE_ACCOUNT,
@@ -155,9 +154,22 @@ validateAppConfig(appConfig, (err, ok) => {
 
     const redisUrl = appConfig.REDIS_URL
 
+    const agencyType = appConfig.AGENCY_TYPE
+
     logger.info('Building services and wiring up dependencies.')
     const { entityForwardAgent, resolver, serviceNewMessages } =
-      await wireUpApplication(appStoragePgConfig, redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey, storageType, storageConfig, storageCredentials)
+      await wireUpApplication({
+        appStorageConfig,
+        agencyType,
+        redisUrl,
+        agencyWalletName,
+        agencyDid,
+        agencySeed,
+        agencyWalletKey,
+        storageType,
+        storageConfig,
+        storageCredentials
+      })
 
     logger.info('Building express http server.')
     setupServer(entityForwardAgent, resolver, serviceNewMessages, appConfig.SERVER_MAX_REQUEST_SIZE_KB)
@@ -174,4 +186,10 @@ validateAppConfig(appConfig, (err, ok) => {
       throw Error(`Unhandled agency error: ${util.inspect(e)}`)
     }
   }
-})
+}
+
+run()
+  .catch((err) => {
+    logger.error(`Agency failed. ${err.stack}`)
+    process.exit(255)
+  })

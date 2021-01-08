@@ -195,7 +195,7 @@ jobs:
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
 
-  test-vcxagency-node:
+  test-unit-vcxagency:
     runs-on: ubuntu-latest
     needs:
       - build-image-vcxagency
@@ -227,14 +227,14 @@ jobs:
         run: |
           set -x
           docker image ls
-          docker-compose -f ci/docker-compose.yml -f ci/docker-compose.dbs.yml up -d
+          docker-compose -f ci/docker-compose.yml -f ci/docker-compose.pg.yml -f ci/docker-compose.redis.yml up -d
           sleep 5
           docker run --rm --name vcxagencynode \
                         --network host \
                          "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "yarn install && yarn run test:unit"
 
-  test-easy-indysdk:
+  test-unit-easy-indysdk:
     runs-on: ubuntu-latest
     needs:
       - build-image-vcxagency
@@ -268,7 +268,7 @@ jobs:
                          "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "cd /home/node/easy-indysdk && yarn install && yarn run test:unit"
 
-  test-vcxagency-client:
+  test-unit-vcxagency-client:
     runs-on: ubuntu-latest
     needs:
       - build-image-vcxagency
@@ -301,6 +301,87 @@ jobs:
                         --network host \
                          "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "cd /home/node/vcxagency-client && yarn install && yarn run test:unit"
+
+  test-e2e-vcxagency:
+    runs-on: ubuntu-latest
+    needs:
+      - build-image-vcxagency
+      - workflow-setup
+    env:
+      CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
+      CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
+    steps:
+      - name: Load agency image cache
+        id: load-cached-image-node
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_AGENCY }}
+
+      - name: If no cached image found -> ERROR
+        if: steps.load-cached-image-node.outputs.cache-hit != 'true'
+        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_AGENCY";exit -1
+
+      - name: Load agency image from cache
+        run: docker load < /tmp/imgcache/img_agency.rar
+
+      - name: Verify image was loaded
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
+
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Run client agency services
+        run: |
+          set -x
+          export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
+          docker-compose -f ./ci/docker-compose.yml \
+                         -f ./ci/docker-compose.agency-ca.yml \
+                         -f ./ci/docker-compose.pg.yml \
+                         -f ./ci/docker-compose.redis.yml up -d
+          sleep 5
+          docker-compose -f ./ci/docker-compose.yml \
+                         -f ./ci/docker-compose.agency-ca.yml \
+                         -f ./ci/docker-compose.pg.yml \
+                         -f ./ci/docker-compose.redis.yml logs
+
+      - name: E2E Test client agency
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode \
+                         --network host \
+                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/vcxagency-client && yarn install && yarn run test:e2e:ca"
+
+      - name: Stop docker containers
+        run: |
+          set -x
+          export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
+          docker-compose -f ./ci/docker-compose.yml \
+                         -f ./ci/docker-compose.agency-ca.yml \
+                         -f ./ci/docker-compose.pg.yml \
+                         -f ./ci/docker-compose.redis.yml \
+                         down
+
+      - name: Run enterprise agency services
+        run: |
+          set -x
+          export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
+          docker-compose -f ./ci/docker-compose.yml \
+                         -f ./ci/docker-compose.agency-ea.yml \
+                         -f ./ci/docker-compose.pg.yml up -d
+          sleep 5
+          docker-compose -f ./ci/docker-compose.yml \
+                         -f ./ci/docker-compose.agency-ea.yml \
+                         -f ./ci/docker-compose.pg.yml logs
+
+      - name: E2E Test enterprise agency
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode \
+                         --network host \
+                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/vcxagency-client && yarn install && yarn run test:e2e:ea"
 
   lint-vcxagency-node:
     runs-on: ubuntu-latest
@@ -343,9 +424,10 @@ jobs:
       - workflow-setup
       - build-vcxagency-base
       - build-image-vcxagency
-      - test-vcxagency-node
-      - test-easy-indysdk
-      - test-vcxagency-client
+      - test-unit-vcxagency
+      - test-e2e-vcxagency
+      - test-unit-easy-indysdk
+      - test-unit-vcxagency-client
       - lint-vcxagency-node
       - lint-vcxagency-client
       - lint-easy-indysdk
@@ -392,9 +474,9 @@ jobs:
       - workflow-setup
       - build-vcxagency-base
       - build-image-vcxagency
-      - test-vcxagency-node
-      - test-easy-indysdk
-      - test-vcxagency-client
+      - test-unit-vcxagency
+      - test-unit-easy-indysdk
+      - test-unit-vcxagency-client
       - lint-vcxagency-node
       - lint-vcxagency-client
       - lint-easy-indysdk
