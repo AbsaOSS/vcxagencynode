@@ -41,7 +41,7 @@ async function assureFwaWalletWasSetUp (serviceIndyWallets, agencyWalletName, ag
   const wh = await serviceIndyWallets.getWalletHandle(agencyWalletName, agencyWalletKey, FWA_KDF)
   const agencyDidWasSetUp = await indyDidExists(wh, agencyDid)
   if (!agencyDidWasSetUp) {
-    logger.info(`Agency DID '${agencyWalletName}' not found in wallet. Creating.`)
+    logger.info(`Agency DID '${agencyDid}' not found in wallet. Creating.`)
     await indyCreateAndStoreMyDid(wh, agencyDid, agencySeed)
     logger.debug(`Forward agent create ${agencyDid}`)
   }
