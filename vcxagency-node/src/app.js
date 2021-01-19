@@ -63,18 +63,6 @@ async function wireUpApplication ({
     }
     const redisClientSubscriber = redis.createClient(redisUrl)
     const redisClientRw = redis.createClient(redisUrl)
-    redisClientRw.on('error', function (err) {
-      logger.error(`Redis rw-client encountered error: ${err}`)
-    })
-    redisClientSubscriber.on('error', function (err) {
-      logger.error(`Redis subscription-client encountered error: ${err}`)
-    })
-    redisClientRw.on('connect', function () {
-      logger.info('Redis rw-client connected.')
-    })
-    redisClientSubscriber.on('connect', function () {
-      logger.info('Redis subscription-client connected.')
-    })
     serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
   } else {
     throw Error(`Unknown agency type ${agencyType}`)
@@ -82,7 +70,7 @@ async function wireUpApplication ({
 
   const serviceIndyWallets = await createServiceIndyWallets(walletStorageType, walletStorageConfig, walletStorageCredentials)
   const { user, password, host, port, database } = appStorageConfig
-  await waitUntilConnectsToPostgres(appStorageConfig, 1, 2000)
+  await waitUntilConnectsToPostgres(appStorageConfig, 1, 20000)
   await assureDb(user, password, host, port, database)
   const serviceStorage = await createPgStorageEntities(appStorageConfig)
   const entityForwardAgent = await buildForwardAgent(serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)

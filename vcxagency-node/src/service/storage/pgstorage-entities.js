@@ -35,7 +35,7 @@ function _canConnectToPostgres ({ user, password, host, port }) {
   })
 }
 
-async function waitUntilConnectsToPostgres (appStorageConfig, attemptsThreshold = 10, timeoutMs = 2000) {
+async function waitUntilConnectsToPostgres (appStorageConfig, attemptsThreshold = 10, timeoutMs = 10000) {
   let attempts = 0
   while (true) {
     if (await _canConnectToPostgres(appStorageConfig)) {
