@@ -37,6 +37,7 @@ async function run () {
   const express = require('express')
   const apiAgency = require('./api/api-agency')
   const apiMessaging = require('./api/api-messaging')
+  const apiHealth = require('./api/api-health')
 
   const { indyLoadPostgresPlugin } = require('easy-indysdk')
   const { wireUpApplication } = require('./app')
@@ -94,6 +95,7 @@ async function run () {
     const appAgent = express()
     const appAgentJson = express.Router()
     const appAgentMsg = express.Router()
+    const appAgentHealth = express.Router()
     appAgentMsg.use(bodyParser.raw({
       inflate: true,
       limit: `${maxRequestSizeKb}kb`,
@@ -115,11 +117,14 @@ async function run () {
 
     apiAgency(appAgentJson, entityForwardAgent, serviceNewMessages)
     apiMessaging(appAgentMsg, entityForwardAgent)
+    apiHealth(appAgentHealth)
 
     addStandardErrorMidlleware(appAgentJson)
     addStandardErrorMidlleware(appAgentMsg)
+    addStandardErrorMidlleware(appAgentHealth)
 
     appAgent.use('/agency/msg', appAgentMsg)
+    appAgent.use('/api/health', appAgentHealth)
     appAgent.use('/', appAgentJson)
 
     if (appConfig.SERVER_ENABLE_TLS === 'true') {

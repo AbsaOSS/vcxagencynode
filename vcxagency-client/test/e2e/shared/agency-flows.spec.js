@@ -50,6 +50,8 @@ let agencyVerkey
 let agencyDid
 let sendToAgency
 
+let agencyClient
+
 const agencyUrl = process.env.AGENCY_URL || 'http://localhost:8080'
 
 beforeAll(async () => {
@@ -61,7 +63,7 @@ beforeAll(async () => {
   // logger.silly = (data) => console.log(data)
   // indySetLogger(logger)
   console.log(`Using agency url ${agencyUrl}`)
-  const agencyClient = await buildAgencyClientNetwork(agencyUrl)
+  agencyClient = await buildAgencyClientNetwork(agencyUrl)
   sendToAgency = agencyClient.sendToAgency
   const agencyInfo = await agencyClient.getAgencyInfo()
   agencyVerkey = agencyInfo.verkey
@@ -145,5 +147,12 @@ describe('onboarding', () => {
     const aliceNewMsgStatus2 = 'MS-105'
     const updateResponse2 = await vcxFlowUpdateMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, updateMsgForNonExistingUserPwDid, aliceNewMsgStatus2)
     console.log(`Alice run msg status update for agent connection which does not exists on her agent. Response = ${JSON.stringify(updateResponse2)}`)
+  })
+})
+
+describe('healthchecks', () => {
+  it('agency should be healthy', async () => {
+    const { success } = await agencyClient.isHealthy()
+    expect(success).toBe('true')
   })
 })

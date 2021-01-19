@@ -54,9 +54,15 @@ async function buildAgencyClientNetwork (agencyUrl) {
     return Buffer.from(JSON.stringify(data), 'utf8')
   }
 
+  async function isHealthy () {
+    const { data } = await axios(`${agencyUrl}/api/health`)
+    return data
+  }
+
   return {
     sendToAgency,
-    getAgencyInfo
+    getAgencyInfo,
+    isHealthy
   }
 }
 
