@@ -17,8 +17,7 @@
 'use strict'
 /* eslint-env jest */
 
-const { indyCreateWallet } = require('easy-indysdk')
-const { indyCreateAndStoreMyDid } = require('easy-indysdk')
+const { indyCreateWallet, indyCreateAndStoreMyDid, indyGenerateWalletKey, indyOpenWallet } = require('easy-indysdk')
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
@@ -26,11 +25,7 @@ const { vcxFlowUpdateMsgsFromAgent } = require('../../../src')
 const { vcxFlowGetMsgsFromAgentConn } = require('../../../src')
 const { vcxFlowSendAriesMessage } = require('../../../src')
 const { vcxFlowGetMsgsFromAgent } = require('../../../src')
-const { buildAgencyClientNetwork } = require('../../common')
-const { vcxFlowCreateAgentConnection } = require('vcxagency-client/src')
-const { vcxFlowFullOnboarding } = require('vcxagency-client/src')
-const { indyGenerateWalletKey } = require('easy-indysdk')
-const { indyOpenWallet } = require('easy-indysdk')
+const { buildAgencyClientNetwork, createConnectedAliceAndBob, loadEnvVariables } = require('../../common')
 
 let aliceWalletName
 let aliceWalletKey
@@ -52,7 +47,10 @@ let sendToAgency
 
 let agencyClient
 
+loadEnvVariables()
+
 const agencyUrl = process.env.AGENCY_URL || 'http://localhost:8080'
+const maxRequestsPerMinute = process.env.MAX_REQUESTS_PER_MINUTE || 30
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 120)
@@ -101,22 +99,7 @@ afterEach(async () => {
 
 describe('onboarding', () => {
   it('should exchange messages between alice and bob via agency', async () => {
-    // arrange
-    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
-    const { did: aliceUserPairwiseDid, vkey: aliceUserPairwiseVerkey } = await indyCreateAndStoreMyDid(aliceWh)
-    console.log('Alice was onboarded.')
-
-    const { agentDid: bobAgentDid, agentVerkey: bobAgentVerkey } = await vcxFlowFullOnboarding(bobWh, sendToAgency, agencyDid, agencyVerkey, bobDid, bobVerkey)
-    const { did: bobUserPairwiseDid, vkey: bobUserPairwiseVerkey } = await indyCreateAndStoreMyDid(bobWh)
-    console.log('Bob was onboarded.')
-
-    // create agent connection, both alice and bob
-    console.log(`Alice is going to create agent connection. aliceAgentDid=${aliceAgentDid} aliceVerkey=${aliceVerkey} aliceUserPairwiseDid=${aliceUserPairwiseDid} aliceUserPairwiseVerkey=${aliceUserPairwiseVerkey}`)
-    const alicesAconn = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceUserPairwiseDid, aliceUserPairwiseVerkey)
-    const alicesRoutingAgentDid = alicesAconn.withPairwiseDID
-    const alicesRoutingAgentVerkey = alicesAconn.withPairwiseDIDVerKey
-    console.log('Alice created agent connection!')
-    await vcxFlowCreateAgentConnection(bobWh, sendToAgency, bobAgentDid, bobAgentVerkey, bobVerkey, bobUserPairwiseDid, bobUserPairwiseVerkey)
+    const { aliceAgentDid, aliceAgentVerkey, aliceUserPairwiseDid, aliceUserPairwiseVerkey, bobUserPairwiseVerkey, alicesRoutingAgentDid, alicesRoutingAgentVerkey } = await createConnectedAliceAndBob({ aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey, bobWh, bobDid, bobVerkey })
 
     const aliceAllMsgs1 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
     console.log(`Alice queries agency for all messages, she should have none. Response = ${JSON.stringify(aliceAllMsgs1)}`)
@@ -154,5 +137,31 @@ describe('healthchecks', () => {
   it('agency should be healthy', async () => {
     const { success } = await agencyClient.isHealthy()
     expect(success).toBe('true')
+  })
+})
+
+describe('rate limiting', () => {
+  it('provision an agent, overload with messages, should fail', async () => {
+    const { aliceUserPairwiseVerkey, bobUserPairwiseVerkey, alicesRoutingAgentVerkey } = await createConnectedAliceAndBob({ aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey, bobWh, bobDid, bobVerkey })
+
+    try {
+      for (let i = 0; i < maxRequestsPerMinute; i++) {
+        const bobSendMsgRes = await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceUserPairwiseVerkey, alicesRoutingAgentVerkey, bobUserPairwiseVerkey, 'This is Bob!')
+        console.log(`Bob sends aries message to Alice's agent. Response = ${JSON.stringify(bobSendMsgRes)}`)
+      }
+    } catch (err) {
+      expect(err.message).toMatch(/Too many requests/)
+    }
+  })
+
+  it('provision two agents, send few messages to both, should pass', async () => {
+    const { aliceUserPairwiseVerkey, bobUserPairwiseVerkey, alicesRoutingAgentVerkey, bobsRoutingAgentVerkey } = await createConnectedAliceAndBob({ aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey, bobWh, bobDid, bobVerkey })
+
+    for (let i = 0; i < maxRequestsPerMinute / 2 + 1; i++) {
+      const bobSendMsgRes = await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceUserPairwiseVerkey, alicesRoutingAgentVerkey, bobUserPairwiseVerkey, 'This is Bob!')
+      const aliceSendMsgRes = await vcxFlowSendAriesMessage(aliceWh, sendToAgency, bobUserPairwiseVerkey, bobsRoutingAgentVerkey, aliceUserPairwiseVerkey, 'This is Alice!')
+      console.log(`Bob sends aries message to Alice's agent. Response = ${JSON.stringify(bobSendMsgRes)}`)
+      console.log(`Alice sends aries message to Bob's agent. Response = ${JSON.stringify(aliceSendMsgRes)}`)
+    }
   })
 })

@@ -70,7 +70,9 @@ const configValidation = Joi.object().keys({
   PG_WALLET_URL: Joi.string().required(),
   PG_WALLET_MAX_CONNECTIONS: Joi.number().integer().min(50).max(999),
   PG_WALLET_MIN_IDLE_COUNT: Joi.number().integer().min(0).max(0), // max 1 enforced on plugin level for MultiWalletSingleTableSharedPool strategy
-  PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100)
+  PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100),
+
+  MAX_REQUESTS_PER_MINUTE: Joi.number().integer().min(10).max(100)
 })
 
 async function validateAppConfig (appConfig) {

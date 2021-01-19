@@ -17,6 +17,7 @@
 'use strict'
 
 const logger = require('../../logging/logger-builder')(__filename)
+const httpContext = require('express-http-context')
 
 function createRouter (resolver) {
   /**
@@ -26,6 +27,8 @@ function createRouter (resolver) {
    */
   async function routeMsg (msgAddress, msgBuffer) {
     logger.info(`Router routing a message to '${msgAddress}'.`)
+    httpContext.set('agentDid', msgAddress)
+
     const entityAO = await resolver.resolveEntityAO(msgAddress) // we could version recipientData so we could support new representations of agents?
     if (!entityAO) {
       throw Error('Recipient not found.')

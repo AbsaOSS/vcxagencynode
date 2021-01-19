@@ -28,6 +28,9 @@ const { waitUntilConnectsToPostgres } = require('./service/storage/pgstorage-ent
 const logger = require('./logging/logger-builder')(__filename)
 const redis = require('redis')
 const assert = require('assert')
+const rateLimit = require('express-rate-limit')
+const RedisStore = require('rate-limit-redis')
+const httpContext = require('express-http-context')
 
 async function wireUpApplication ({
   appStorageConfig,
@@ -39,9 +42,9 @@ async function wireUpApplication ({
   agencyWalletKey,
   walletStorageType = 'default',
   walletStorageConfig = null,
-  walletStorageCredentials = null
-}
-) {
+  walletStorageCredentials = null,
+  maxRequestsPerMinute
+}) {
   assert(appStorageConfig, 'Missing appStorageConfig.')
   assert(agencyType, 'Missing agencyType.')
   assert(agencyWalletName, 'Missing agencyWalletName.')
@@ -55,6 +58,7 @@ async function wireUpApplication ({
   }
 
   let serviceNewMessages
+  let redisClientRw
   if (agencyType === 'enterprise') {
     serviceNewMessages = createServiceNewMessagesUnavailable()
   } else if (agencyType === 'client') {
@@ -62,7 +66,7 @@ async function wireUpApplication ({
       throw Error('Redis URL was not provided.')
     }
     const redisClientSubscriber = redis.createClient(redisUrl)
-    const redisClientRw = redis.createClient(redisUrl)
+    redisClientRw = redis.createClient(redisUrl)
     redisClientRw.on('error', function (err) {
       logger.error(`Redis rw-client encountered error: ${err}`)
     })
@@ -80,6 +84,18 @@ async function wireUpApplication ({
     throw Error(`Unknown agency type ${agencyType}`)
   }
 
+  const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: maxRequestsPerMinute,
+    message: 'Too many requests for this agent, try again later',
+    keyGenerator: (req, res) => httpContext.get('agentDid'),
+    store: new RedisStore({
+      redisURL: redisUrl,
+      expiry: 60, // in seconds
+      client: redisClientRw
+    })
+  })
+
   const serviceIndyWallets = await createServiceIndyWallets(walletStorageType, walletStorageConfig, walletStorageCredentials)
   const { user, password, host, port, database } = appStorageConfig
   await waitUntilConnectsToPostgres(appStorageConfig, 1, 2000)
@@ -91,7 +107,7 @@ async function wireUpApplication ({
   resolver.setRouter(router)
   entityForwardAgent.setRouter(router)
   entityForwardAgent.setResolver(resolver)
-  const application = { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, serviceNewMessages }
+  const application = { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, serviceNewMessages, apiLimiter }
   return application
 }
 

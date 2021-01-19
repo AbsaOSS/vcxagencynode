@@ -91,7 +91,7 @@ async function run () {
     })
   }
 
-  function setupServer (entityForwardAgent, resolver, serviceNewMessages, maxRequestSizeKb) {
+  function setupServer (entityForwardAgent, resolver, serviceNewMessages, maxRequestSizeKb, apiLimiter) {
     const appAgent = express()
     const appAgentJson = express.Router()
     const appAgentMsg = express.Router()
@@ -126,6 +126,8 @@ async function run () {
     appAgent.use('/agency/msg', appAgentMsg)
     appAgent.use('/api/health', appAgentHealth)
     appAgent.use('/', appAgentJson)
+
+    appAgent.use(apiLimiter)
 
     if (appConfig.SERVER_ENABLE_TLS === 'true') {
       https.createServer({
@@ -162,7 +164,7 @@ async function run () {
     const agencyType = appConfig.AGENCY_TYPE
 
     logger.info('Building services and wiring up dependencies.')
-    const { entityForwardAgent, resolver, serviceNewMessages } =
+    const { entityForwardAgent, resolver, serviceNewMessages, apiLimiter } =
       await wireUpApplication({
         appStorageConfig,
         agencyType,
@@ -173,11 +175,12 @@ async function run () {
         agencyWalletKey,
         walletStorageType,
         walletStorageConfig,
-        walletStorageCredentials
+        walletStorageCredentials,
+        maxRequestsPerMinute: appConfig.MAX_REQUESTS_PER_MINUTE
       })
 
     logger.info('Building express http server.')
-    setupServer(entityForwardAgent, resolver, serviceNewMessages, appConfig.SERVER_MAX_REQUEST_SIZE_KB)
+    setupServer(entityForwardAgent, resolver, serviceNewMessages, appConfig.SERVER_MAX_REQUEST_SIZE_KB, apiLimiter)
   }
 
   async function startup () {

@@ -16,10 +16,19 @@
 
 'use strict'
 
-const { anonCrypt, indyOpenWallet, indyCreateWallet } = require('easy-indysdk')
+const { anonCrypt, indyOpenWallet, indyCreateWallet, indyCreateAndStoreMyDid } = require('easy-indysdk')
+const { vcxFlowFullOnboarding, vcxFlowCreateAgentConnection } = require('vcxagency-client/src')
 const uuid = require('uuid')
 const axios = require('axios')
 const util = require('util')
+const path = require('path')
+const dotenv = require('dotenv')
+
+module.exports.loadEnvVariables = function loadEnvVariables () {
+  const env = process.env.ENVIRONMENT || 'localhost'
+  const pathToConfig = path.resolve(__dirname, `./config/${env}.env`)
+  dotenv.config({ path: pathToConfig })
+}
 
 /**
  * Builds function which deliver a message to Forward Agent of Agency. This is useful when you want to
@@ -28,7 +37,7 @@ const util = require('util')
  *
  * @param {string} agencyUrl - URL of Agency
  */
-async function buildAgencyClientNetwork (agencyUrl) {
+module.exports.buildAgencyClientNetwork = async function buildAgencyClientNetwork (agencyUrl) {
   const anoncryptWh = await createAnoncryptWallet()
 
   const { verkey: agencyVerkey } = await getAgencyInfo()
@@ -45,7 +54,7 @@ async function buildAgencyClientNetwork (agencyUrl) {
     try {
       res = await axios.post(`${agencyUrl}/agency/msg`, msgForAgencyBuffer.toString('utf8'), { headers })
     } catch (err) {
-      console.error(`Error response from agency! ${util.inspect(err)}`)
+      throw Error(`Error response from agency! ${util.inspect(err)}`)
     }
     const { data } = res
     if (data.errorMsg) {
@@ -77,4 +86,24 @@ async function createAnoncryptWallet () {
   return anoncryptWh
 }
 
-module.exports.buildAgencyClientNetwork = buildAgencyClientNetwork
+module.exports.createConnectedAliceAndBob = async function createConnectedAliceAndBob ({ aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey, bobWh, bobDid, bobVerkey }) {
+  const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+  const { did: aliceUserPairwiseDid, vkey: aliceUserPairwiseVerkey } = await indyCreateAndStoreMyDid(aliceWh)
+  console.log('Alice was onboarded.')
+
+  const { agentDid: bobAgentDid, agentVerkey: bobAgentVerkey } = await vcxFlowFullOnboarding(bobWh, sendToAgency, agencyDid, agencyVerkey, bobDid, bobVerkey)
+  const { did: bobUserPairwiseDid, vkey: bobUserPairwiseVerkey } = await indyCreateAndStoreMyDid(bobWh)
+  console.log('Bob was onboarded.')
+
+  // create agent connection, both alice and bob
+  console.log(`Alice is going to create agent connection. aliceAgentDid=${aliceAgentDid} aliceVerkey=${aliceVerkey} aliceUserPairwiseDid=${aliceUserPairwiseDid} aliceUserPairwiseVerkey=${aliceUserPairwiseVerkey}`)
+  const alicesAconn = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceUserPairwiseDid, aliceUserPairwiseVerkey)
+  const alicesRoutingAgentDid = alicesAconn.withPairwiseDID
+  const alicesRoutingAgentVerkey = alicesAconn.withPairwiseDIDVerKey
+  console.log('Alice created agent connection!')
+  const bobsAconn = await vcxFlowCreateAgentConnection(bobWh, sendToAgency, bobAgentDid, bobAgentVerkey, bobVerkey, bobUserPairwiseDid, bobUserPairwiseVerkey)
+  const bobsRoutingAgentDid = bobsAconn.withPairwiseDID
+  const bobsRoutingAgentVerkey = bobsAconn.withPairwiseDIDVerKey
+
+  return { aliceAgentDid, aliceAgentVerkey, aliceUserPairwiseDid, aliceUserPairwiseVerkey, bobAgentDid, bobAgentVerkey, bobUserPairwiseDid, bobUserPairwiseVerkey, alicesRoutingAgentDid, alicesRoutingAgentVerkey, bobsRoutingAgentDid, bobsRoutingAgentVerkey }
+}
