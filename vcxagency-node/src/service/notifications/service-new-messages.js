@@ -92,8 +92,8 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
   })
 
   async function _processModifiedKeyNotification (key) {
-    if (agentSubscriptions[key]) {
-      const { onNewMessageCallback } = agentSubscriptions[key]
+    if (agentSubscriptions.key) {
+      const { onNewMessageCallback } = agentSubscriptions.key
       if (!onNewMessageCallback) {
         throw Error('Agent notification onNewMessageCallback entry was missing onNewMessageCallback value.')
       }
@@ -105,7 +105,7 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
 
   function _cleanupSubscription (agentDid) {
     logger.debug(`Cleaning up notification subscription for agent ${agentDid}.`)
-    agentSubscriptions[agentDid] = undefined
+    agentSubscriptions.agentDid = undefined
     redisClientSubscriber.unsubscribe(`__keyspace@0__:${agentDid}`)
   }
 
@@ -115,12 +115,12 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
 
   async function registerCallback (agentDid, callbackId, onNewMessageCallback) {
     logger.info(`Registering agent notification callbacks ${agentDid}.`)
-    agentSubscriptions[agentDid] = { onNewMessageCallback, callbackId }
+    agentSubscriptions.agentDid = { onNewMessageCallback, callbackId }
     await redisSubscribe(`__keyspace@0__:${agentDid}`)
   }
 
   function cleanupCallback (agentDid, callbackId) {
-    if (agentSubscriptions[agentDid] && agentSubscriptions[agentDid].callbackId === callbackId) {
+    if (agentSubscriptions.agentDid && agentSubscriptions.agentDid.callbackId === callbackId) {
       _cleanupSubscription(agentDid)
     } else {
       logger.debug(`Tried to cleanup callback new-message callback ${callbackId} for agent ${agentDid} but it doesn't exist anymore.`)
@@ -129,7 +129,7 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
 
   async function ackNewMessage (agentDid) {
     await redisDel(agentDid)
-    if (agentSubscriptions[agentDid]) {
+    if (agentSubscriptions.agentDid) {
       _cleanupSubscription(agentDid)
     }
   }

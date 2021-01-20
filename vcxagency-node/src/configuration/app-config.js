@@ -76,7 +76,7 @@ const configValidation = Joi.object().keys({
 async function validateAppConfig (appConfig) {
   return new Promise((resolve, reject) => {
     function testConfigPathExist (appConfig, key) {
-      const path = appConfig[key]
+      const path = appConfig.key
       if (!fs.existsSync(path)) {
         reject(new Error(`${key} = ${path} is not a valid path or the path does not exist`))
       }
