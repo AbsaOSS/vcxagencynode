@@ -13,8 +13,6 @@
   "scripts": {
     "lint": "standard",
     "lint:fix": "standard --fix",
-    "eslint": "eslint '**/*.js'",
-    "eslint:fix": "eslint --fix '**/*.js'",
     "serve": "NODE_ENV=production node src/index.js",
     "dev:ea": "APP_CONFIG=localhost-ea NODE_ENV=development nodemon src/index.js",
     "dev:ca": "APP_CONFIG=localhost-ca NODE_ENV=development nodemon src/index.js",
@@ -26,7 +24,6 @@
   "devDependencies": {
     "@types/jest": "^25.2.2",
     "@types/node-persist": "^0.0.33",
-    "eslint-plugin-security": "^1.4.0",
     "jest": "^26.0.1",
     "jest-cli": "^26.0.1",
     "mkdirp": "^0.5.1",
