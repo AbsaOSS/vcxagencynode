@@ -35,12 +35,12 @@ async function createServiceIndyWallets (storageType = 'default', storageConfig,
   on long inactivity, deletion of agent and its wallet etc.)
    */
   async function getWalletHandle (walletName, walletKey, keyDerivationMethod) {
-    let wh = openWalletHandlesCache[walletName]
+    let wh = openWalletHandlesCache.walletName
     if (wh) {
       return wh
     }
     wh = await indyOpenWallet(walletName, walletKey, keyDerivationMethod, storageType, storageConfig, storageCredentials)
-    openWalletHandlesCache[walletName] = wh
+    openWalletHandlesCache.walletName = wh
     return wh
   }
 

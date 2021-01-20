@@ -1,4 +1,4 @@
-FROM alpine:3.12 AS builder
+FROM alpine:3.13 AS builder
 
 ARG UID=1001
 ARG GID=1001
@@ -42,7 +42,7 @@ RUN cargo build --release --manifest-path=$INDYSDK_PATH/experimental/plugins/pos
 USER root
 RUN mv $INDYSDK_PATH/experimental/plugins/postgres_storage/target/release/libindystrgpostgres.so /usr/lib
 
-FROM alpine:3.12
+FROM alpine:3.13
 
 ARG UID=1001
 ARG GID=1001
