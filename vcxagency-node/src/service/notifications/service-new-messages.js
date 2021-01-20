@@ -40,6 +40,20 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
     redisClientRw.quit()
   }
 
+  redisClientRw.on('error', function (err) {
+    logger.error(`Redis rw-client encountered error: ${err}`)
+  })
+  redisClientSubscriber.on('error', function (err) {
+    logger.error(`Redis subscription-client encountered error: ${err}`)
+  })
+
+  redisClientRw.on('connect', function () {
+    logger.info('Redis rw-client connected.')
+  })
+  redisClientSubscriber.on('connect', function () {
+    logger.info('Redis subscription-client connected.')
+  })
+
   redisClientSubscriber.on('subscribe', function (channel, _count) {
     logger.info(`Subscribed on channel ${channel}.`)
   })

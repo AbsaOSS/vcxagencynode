@@ -44,8 +44,6 @@ services:
       - PG_WALLET_URL=postgres.absadocker:5432
 
       - SERVER_ENABLE_TLS=false
-
-      - MAX_REQUESTS_PER_MINUTE=30
     networks:
       - absadocker
     ports:

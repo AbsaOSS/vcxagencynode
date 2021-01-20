@@ -57,8 +57,7 @@ async function wireUpApplication ({
     assert(walletStorageCredentials, 'Not using default wallet type and missing walletStorageCredentials.')
   }
 
-  let serviceNewMessages
-  let redisClientRw
+  let serviceNewMessages, apiLimiter
   if (agencyType === 'enterprise') {
     serviceNewMessages = createServiceNewMessagesUnavailable()
   } else if (agencyType === 'client') {
@@ -66,35 +65,22 @@ async function wireUpApplication ({
       throw Error('Redis URL was not provided.')
     }
     const redisClientSubscriber = redis.createClient(redisUrl)
-    redisClientRw = redis.createClient(redisUrl)
-    redisClientRw.on('error', function (err) {
-      logger.error(`Redis rw-client encountered error: ${err}`)
-    })
-    redisClientSubscriber.on('error', function (err) {
-      logger.error(`Redis subscription-client encountered error: ${err}`)
-    })
-    redisClientRw.on('connect', function () {
-      logger.info('Redis rw-client connected.')
-    })
-    redisClientSubscriber.on('connect', function () {
-      logger.info('Redis subscription-client connected.')
-    })
+    const redisClientRw = redis.createClient(redisUrl)
     serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
+    apiLimiter = rateLimit({
+      windowMs: 60 * 1000,
+      max: maxRequestsPerMinute,
+      message: 'Too many requests for this agent, try again later',
+      keyGenerator: (req, res) => httpContext.get('agentDid'),
+      store: new RedisStore({
+        redisURL: redisUrl,
+        expiry: 60, // in seconds
+        client: redisClientRw
+      })
+    })
   } else {
     throw Error(`Unknown agency type ${agencyType}`)
   }
-
-  const apiLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: maxRequestsPerMinute,
-    message: 'Too many requests for this agent, try again later',
-    keyGenerator: (req, res) => httpContext.get('agentDid'),
-    store: new RedisStore({
-      redisURL: redisUrl,
-      expiry: 60, // in seconds
-      client: redisClientRw
-    })
-  })
 
   const serviceIndyWallets = await createServiceIndyWallets(walletStorageType, walletStorageConfig, walletStorageCredentials)
   const { user, password, host, port, database } = appStorageConfig

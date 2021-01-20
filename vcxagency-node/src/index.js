@@ -127,7 +127,11 @@ async function run () {
     appAgent.use('/api/health', appAgentHealth)
     appAgent.use('/', appAgentJson)
 
-    appAgent.use(apiLimiter)
+    if (apiLimiter) {
+      appAgent.use(apiLimiter)
+    } else {
+      logger.warn('Rate limiter is not being used')
+    }
 
     if (appConfig.SERVER_ENABLE_TLS === 'true') {
       https.createServer({
