@@ -40,49 +40,33 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
     redisClientRw.quit()
   }
 
-  let connectionTimeout
-
-  function startTimeout () {
-    connectionTimeout = setTimeout(() => {
-      throw new Error('Redis connection failed')
-    }, 10000)
-  }
-
   redisClientRw.on('error', function (err) {
     logger.error(`Redis rw-client encountered error: ${err}`)
-    startTimeout()
   })
   redisClientSubscriber.on('error', function (err) {
     logger.error(`Redis subscription-client encountered error: ${err}`)
-    startTimeout()
   })
 
   redisClientRw.on('end', () => {
     console.log('Redis rw-client disconnected')
-    startTimeout()
   })
   redisClientSubscriber.on('end', () => {
     console.log('Redis subscription-client disconnected')
-    startTimeout()
   })
 
   redisClientRw.on('reconnecting', () => {
     console.log('Redis rw-client reconnecting')
-    clearTimeout(connectionTimeout)
   })
 
   redisClientSubscriber.on('reconnecting', () => {
     console.log('Redis subscription-client reconnecting')
-    clearTimeout(connectionTimeout)
   })
 
   redisClientRw.on('connect', function () {
     logger.info('Redis rw-client connected.')
-    clearTimeout(connectionTimeout)
   })
   redisClientSubscriber.on('connect', function () {
     logger.info('Redis subscription-client connected.')
-    clearTimeout(connectionTimeout)
   })
 
   redisClientSubscriber.on('subscribe', function (channel, _count) {
