@@ -46,6 +46,7 @@ async function run () {
   const httpContext = require('express-http-context')
   const expressWinstonLogger = require('./logging/express-logger-builder')
   const bodyParser = require('body-parser') // TODO: request parsing must be BEFORE we do stuff with winston express logger
+  const helmet = require('helmet')
 
   startup()
 
@@ -102,6 +103,9 @@ async function run () {
       type: '*/*'
     }))
     appAgentJson.use(bodyParser.json())
+
+    appAgentJson.use(helmet())
+    appAgentMsg.use(helmet())
 
     appAgentJson.use(httpContext.middleware)
     appAgentMsg.use(httpContext.middleware)
