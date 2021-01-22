@@ -25,6 +25,7 @@ const os = require('os')
 const { parseAuthcrypted, parseAnoncrypted } = require('../../../src')
 const { indyOpenWallet } = require('easy-indysdk')
 const { pack } = require('easy-indysdk')
+const { Buffer } = require('safe-buffer')
 
 let aliceWalletName
 const aliceWalletKey = 'key'

@@ -40,6 +40,7 @@ const { createAgentWallet } = require('./agent-internal')
 const logger = require('../../../logging/logger-builder')(__filename)
 const { objectToBuffer } = require('../../util')
 const { entityType } = require('../entities-common')
+const { Buffer } = require('safe-buffer')
 
 const AGENT_WALLET_KDF = 'RAW'
 

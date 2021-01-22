@@ -15,6 +15,7 @@
  */
 
 'use strict'
+const { Buffer } = require('safe-buffer')
 
 function objectToBuffer (object) {
   return Buffer.from(JSON.stringify(object))

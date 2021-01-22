@@ -24,6 +24,7 @@ const os = require('os')
 const { indyGenerateWalletKey } = require('../../src')
 const { pack } = require('../../src')
 const { indyCloseWallet } = require('../../src')
+const { Buffer } = require('safe-buffer')
 
 let walletName
 

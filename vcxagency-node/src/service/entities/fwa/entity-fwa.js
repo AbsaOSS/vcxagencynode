@@ -31,6 +31,7 @@ const { objectToBuffer } = require('../../util')
 const uuid = require('uuid')
 const { createAgentData } = require('../agent/agent')
 const sleep = require('sleep-promise')
+const { Buffer } = require('safe-buffer')
 
 const FWA_KDF = 'ARGON2I_MOD'
 

@@ -27,6 +27,7 @@
     "@types/ffi": "0.0.19",
     "jest": "^26.0.1",
     "jest-cli": "^26.0.1",
+    "safe-buffer": "^5.2.1",
     "sleep-promise": "^8.0.0",
     "standard": "^14.3.4"
   }

@@ -20,6 +20,7 @@ const { Pool, Client } = require('pg')
 const logger = require('../../logging/logger-builder')(__filename)
 const { buildStoredMessage } = require('./store-util')
 const sleep = require('sleep-promise')
+const { Buffer } = require('safe-buffer')
 
 function _canConnectToPostgres ({ user, password, host, port }) {
   const client = new Client({ host, port, user, password })

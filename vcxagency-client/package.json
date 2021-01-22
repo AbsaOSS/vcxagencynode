@@ -25,7 +25,8 @@
   "dependencies": {
     "axios": "0.21.1",
     "easy-indysdk": "file:../easy-indysdk",
-    "query-string": "^6.8.2"
+    "query-string": "^6.8.2",
+    "safe-buffer": "^5.2.1"
   },
   "devDependencies": {
     "@types/jest": "^25.2.2",
