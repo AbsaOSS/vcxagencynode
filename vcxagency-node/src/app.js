@@ -25,8 +25,8 @@ const { assureDb } = require('./service/storage/pgdb')
 const { createServiceNewMessages } = require('./service/notifications/service-new-messages')
 const { createServiceNewMessagesUnavailable } = require('./service/notifications/service-new-messages-unavailable')
 const { waitUntilConnectsToPostgres } = require('./service/storage/pgstorage-entities')
+const { buildRedisClients } = require('./service/storage/redis-client-builder')
 const logger = require('./logging/logger-builder')(__filename)
-const redis = require('redis')
 const assert = require('assert')
 
 async function wireUpApplication ({
@@ -61,8 +61,7 @@ async function wireUpApplication ({
     if (!redisUrl) {
       throw Error('Redis URL was not provided.')
     }
-    const redisClientSubscriber = redis.createClient(redisUrl)
-    const redisClientRw = redis.createClient(redisUrl)
+    const { redisClientSubscriber, redisClientRw } = buildRedisClients(redisUrl)
     serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
   } else {
     throw Error(`Unknown agency type ${agencyType}`)
@@ -70,7 +69,7 @@ async function wireUpApplication ({
 
   const serviceIndyWallets = await createServiceIndyWallets(walletStorageType, walletStorageConfig, walletStorageCredentials)
   const { user, password, host, port, database } = appStorageConfig
-  await waitUntilConnectsToPostgres(appStorageConfig, 1, 10000)
+  await waitUntilConnectsToPostgres(appStorageConfig, 5, 2000)
   await assureDb(user, password, host, port, database)
   const serviceStorage = await createPgStorageEntities(appStorageConfig)
   const entityForwardAgent = await buildForwardAgent(serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
