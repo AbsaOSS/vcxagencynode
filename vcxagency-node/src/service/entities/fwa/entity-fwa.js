@@ -30,6 +30,7 @@ const util = require('util')
 const { objectToBuffer } = require('../../util')
 const uuid = require('uuid')
 const { createAgentData } = require('../agent/agent')
+const sleep = require('sleep-promise')
 
 const FWA_KDF = 'ARGON2I_MOD'
 
@@ -58,9 +59,18 @@ async function assureFwaWalletWasSetUp (serviceIndyWallets, agencyWalletName, ag
  * There should be only 1 instance of Forward Agent. Forward Agent has circular dependency with Router and Resolver.
  * This is design trade off to have simple singleton.
  */
-async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed) {
-  const agencyVerkey = await assureFwaWalletWasSetUp(serviceIndyWallets, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
-  let router, resolver
+async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed, waitTime = 1000, attempts = 10) {
+  let router, resolver, agencyVerkey
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      agencyVerkey = await assureFwaWalletWasSetUp(serviceIndyWallets, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
+      break
+    } catch (err) {
+      console.warn(`Failed to build FWA agent: ${err}\nRemaining attempts: ${attempts - attempt - 1}`)
+      await sleep(waitTime)
+    }
+  }
 
   const whoami = `[ForwardAgent ${agencyDid}]`
 

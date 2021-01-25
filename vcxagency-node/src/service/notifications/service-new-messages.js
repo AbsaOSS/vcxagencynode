@@ -40,14 +40,6 @@ module.exports.createServiceNewMessages = function createServiceNewMessages (red
     redisClientRw.quit()
   }
 
-  redisClientSubscriber.on('subscribe', function (channel, _count) {
-    logger.info(`Subscribed on channel ${channel}.`)
-  })
-
-  redisClientSubscriber.on('unsubscribe', function (channel, _count) {
-    logger.info(`Unsubscribed on channel ${channel}.`)
-  })
-
   redisClientSubscriber.on('message', async function (channel, message) {
     try {
       if (isKeyspaceSetNotification(channel, message)) {
