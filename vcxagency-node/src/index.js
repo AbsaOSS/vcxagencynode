@@ -16,17 +16,20 @@
 
 'use strict'
 
-const { validateAppConfig, stringifyAndHideSensitive } = require('./configuration/app-config')
+const { validateAppConfig } = require('./configuration/app-config')
 const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
+const { fetchAwsAssets } = require('./scripts/download-certs')
+const { fetchAwsSecrets } = require('./scripts/download-secrets')
 const util = require('util')
 const https = require('https')
 const fs = require('fs')
 
 const appConfig = buildAppConfigFromEnvVariables()
 const logger = require('./logging/logger-builder')(__filename)
-logger.info(stringifyAndHideSensitive(appConfig))
 
 async function run () {
+  await fetchAwsSecrets(appConfig)
+  await fetchAwsAssets(appConfig)
   await validateAppConfig(appConfig)
 
   // Import order is important in this file - first we need to validate config, then set up logger
@@ -140,6 +143,7 @@ async function run () {
 
   async function startAgency () {
     logger.info('Starting agency')
+
     const agencyWalletName = appConfig.AGENCY_WALLET_NAME
     const agencyDid = appConfig.AGENCY_DID
     const agencySeed = appConfig.AGENCY_SEED_SECRET

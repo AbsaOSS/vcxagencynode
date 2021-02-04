@@ -18,6 +18,7 @@
 
 const Joi = require('joi')
 const fs = require('fs')
+const logger = require('../logging/logger-builder')(__filename)
 
 function stringifyAndHideSensitive (appConfig) {
   function hideSecrets (key, value) {
@@ -70,10 +71,14 @@ const configValidation = Joi.object().keys({
   PG_WALLET_URL: Joi.string().required(),
   PG_WALLET_MAX_CONNECTIONS: Joi.number().integer().min(50).max(999),
   PG_WALLET_MIN_IDLE_COUNT: Joi.number().integer().min(0).max(0), // max 1 enforced on plugin level for MultiWalletSingleTableSharedPool strategy
-  PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100)
+  PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100),
+  AWS_BUCKET_NAME: Joi.string(),
+  AWS_DOMAIN_NAME: Joi.string(),
+  AWS_SM_KEY_PREFIX: Joi.string()
 })
 
 async function validateAppConfig (appConfig) {
+  logger.info(stringifyAndHideSensitive(appConfig))
   return new Promise((resolve, reject) => {
     function testConfigPathExist (appConfig, key) {
       const path = appConfig[key]
