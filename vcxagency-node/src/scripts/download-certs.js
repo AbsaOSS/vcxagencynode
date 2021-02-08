@@ -4,19 +4,26 @@ const logger = require('../logging/logger-builder')(__filename)
 
 module.exports.fetchAwsAssets = async function fetchAwsAssets (appConfig) {
   if (appConfig.SERVER_ENABLE_TLS === 'false') {
-    logger.info('TLS disable, skipping AWS assets download...')
-  } else if (!appConfig.AWS_BUCKET_NAME || !appConfig.AWS_DOMAIN_NAME) {
-    logger.info('AWS S3 bucket or domain name not defined, skipping AWS assets download...')
-  } else {
-    logger.info('Downloading S3 assets')
-    await fetchAwsAsset(appConfig.AWS_BUCKET_NAME, appConfig.AWS_DOMAIN_NAME + '.crt', appConfig.CERTIFICATE_PATH, { region: 'eu-west-1' })
-    await fetchAwsAsset(appConfig.AWS_BUCKET_NAME, appConfig.AWS_DOMAIN_NAME + '.key', appConfig.CERTIFICATE_KEY_PATH, { region: 'eu-west-1' })
+    logger.info('TLS disabled, skipping AWS assets download...')
+    return
   }
+
+  const certPath = appConfig.CERTIFICATE_PATH
+  const keyPath = appConfig.CERTIFICATE_KEY_PATH
+  const isCertAvailable = (appConfig.AWS_BUCKET_NAME && appConfig.AWS_DOMAIN_NAME) || (fs.existsSync(certPath) && fs.existsSync(keyPath))
+
+  if (!isCertAvailable) {
+    throw Error(`TLS enabled, but AWS S3 bucket or domain name not defined, or no certificate already found on path ${certPath} or no key found on path ${keyPath}`)
+  }
+
+  logger.info('Downloading S3 assets')
+  await fetchAwsAsset(appConfig.AWS_BUCKET_NAME, appConfig.AWS_DOMAIN_NAME + '.crt', certPath)
+  await fetchAwsAsset(appConfig.AWS_BUCKET_NAME, appConfig.AWS_DOMAIN_NAME + '.key', keyPath)
 }
 
-async function fetchAwsAsset (bucketName, key, filePath, clientConfig) {
+async function fetchAwsAsset (bucketName, key, filePath, clientConfig = { region: 'eu-west-1' }) {
   if (fs.existsSync(filePath)) {
-    logger.info(`File ${filePath} already exists`)
+    logger.info(`File ${filePath} already exists, skipping download`)
     return
   }
 

@@ -47,7 +47,6 @@ const configValidation = Joi.object().keys({
   SERVER_ENABLE_TLS: Joi.string().valid(['true', 'false']),
   CERTIFICATE_PATH: Joi.string().allow(''),
   CERTIFICATE_KEY_PATH: Joi.string().allow(''),
-  CERTIFICATE_AUTHORITY_PATH: Joi.string().allow(''),
 
   AGENCY_WALLET_NAME: Joi.string().required(),
   AGENCY_DID: Joi.string().required(),
@@ -100,9 +99,6 @@ async function validateAppConfig (appConfig) {
           }
           testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
           testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
-          if (appConfig.CERTIFICATE_AUTHORITY_PATH) {
-            testConfigPathExist(appConfig, 'CERTIFICATE_AUTHORITY_PATH')
-          }
         }
         resolve()
       }
