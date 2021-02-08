@@ -2,29 +2,25 @@ const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3')
 const fs = require('fs')
 const logger = require('../logging/logger-builder')(__filename)
 
-module.exports.fetchAwsAssets = async function fetchAwsAssets (appConfig) {
-  if (appConfig.SERVER_ENABLE_TLS === 'false') {
-    logger.info('TLS disabled, skipping AWS assets download...')
-    return
+function parseAssetPath (path) {
+  const splitPath = path.split('/')
+  const len = splitPath.length
+  const missing = len === 0
+    ? 'name'
+    : len === 1
+      ? 'key'
+      : ''
+  if (missing) {
+    throw Error(`TLS enabled, but bucket ${missing} not provided`)
+  } else if (len > 2) {
+    throw Error('AWS S3 certificate path must be in format \'bucket_name/key\'')
   }
-
-  const certPath = appConfig.CERTIFICATE_PATH
-  const keyPath = appConfig.CERTIFICATE_KEY_PATH
-  const isCertAvailable = (appConfig.AWS_BUCKET_NAME && appConfig.AWS_DOMAIN_NAME) || (fs.existsSync(certPath) && fs.existsSync(keyPath))
-
-  if (!isCertAvailable) {
-    throw Error(`TLS enabled, but AWS S3 bucket or domain name not defined, or no certificate already found on path ${certPath} or no key found on path ${keyPath}`)
-  }
-
-  logger.info('Downloading S3 assets')
-  await fetchAwsAsset(appConfig.AWS_BUCKET_NAME, appConfig.AWS_DOMAIN_NAME + '.crt', certPath)
-  await fetchAwsAsset(appConfig.AWS_BUCKET_NAME, appConfig.AWS_DOMAIN_NAME + '.key', keyPath)
+  return { bucketName: splitPath[0], key: splitPath[1] }
 }
 
-async function fetchAwsAsset (bucketName, key, filePath, clientConfig = { region: 'eu-west-1' }) {
+async function fetchAwsAsset (bucketName, key, filePath, clientConfig) {
   if (fs.existsSync(filePath)) {
-    logger.info(`File ${filePath} already exists, skipping download`)
-    return
+    throw Error(`Attempting to download file ${filePath}, which already exists`)
   }
 
   logger.debug(`Downloading from bucket ${bucketName} key ${key} using client config ${JSON.stringify(clientConfig)}`)
@@ -41,4 +37,22 @@ async function fetchAwsAsset (bucketName, key, filePath, clientConfig = { region
   data.Body.pipe(writeStream)
 
   logger.debug(`Downloading of asset ${bucketName}/${key} finished`)
+}
+
+module.exports.fetchCertsFromS3 = async function fetchCertsFromS3 ({ s3CertPath, certPath, keyPath, enableTls }) {
+  const reason = enableTls === 'false'
+    ? 'TLS disabled'
+    : fs.existsSync(certPath) && fs.existsSync(keyPath)
+      ? 'Certificates already provided'
+      : ''
+  if (reason) {
+    logger.info(`${reason}, skipping downloading certificates from S3...`)
+    return
+  }
+
+  const { bucketName, key } = parseAssetPath(s3CertPath)
+
+  logger.info('Downloading certificates')
+  await fetchAwsAsset(bucketName, key + '.crt', certPath)
+  await fetchAwsAsset(bucketName, key + '.key', keyPath)
 }

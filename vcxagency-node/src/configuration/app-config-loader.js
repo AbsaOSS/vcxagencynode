@@ -64,8 +64,7 @@ function buildAppConfigFromEnvVariables () {
     PG_WALLET_MAX_CONNECTIONS: process.env.PG_WALLET_MAX_CONNECTIONS || '90',
     PG_WALLET_CONNECTION_TIMEOUT_MINS: process.env.PG_WALLET_CONNECTION_TIMEOUT_MINS || '5',
 
-    AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
-    AWS_DOMAIN_NAME: process.env.AWS_DOMAIN_NAME
+    AWS_S3_CERT_PATH: process.env.AWS_S3_CERT_PATH
   }
   appConfig.SERVER_MAX_REQUEST_SIZE_KB = parseInt(appConfig.SERVER_MAX_REQUEST_SIZE_KB)
   appConfig.PG_WALLET_MIN_IDLE_COUNT = parseInt(appConfig.PG_WALLET_MIN_IDLE_COUNT)
