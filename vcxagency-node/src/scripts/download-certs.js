@@ -1,31 +1,16 @@
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3')
 const fs = require('fs')
 const logger = require('../logging/logger-builder')(__filename)
+const assert = require('assert')
 
-function parseAssetPath (path) {
-  const splitPath = path.split('/')
-  const len = splitPath.length
-  const missing = len === 0
-    ? 'name'
-    : len === 1
-      ? 'key'
-      : ''
-  if (missing) {
-    throw Error(`TLS enabled, but bucket ${missing} not provided`)
-  } else if (len > 2) {
-    throw Error('AWS S3 certificate path must be in format \'bucket_name/key\'')
-  }
-  return { bucketName: splitPath[0], key: splitPath[1] }
-}
-
-async function fetchAwsAsset (bucketName, key, filePath, clientConfig) {
-  if (fs.existsSync(filePath)) {
+async function fetchAwsAsset (bucketName, key, filePath) {
+  if (filePath && fs.existsSync(filePath)) {
     throw Error(`Attempting to download file ${filePath}, which already exists`)
   }
 
-  logger.debug(`Downloading from bucket ${bucketName} key ${key} using client config ${JSON.stringify(clientConfig)}`)
+  logger.debug(`Downloading from bucket ${bucketName} key ${key}`)
 
-  const s3 = new S3Client(clientConfig)
+  const s3 = new S3Client()
 
   const command = new GetObjectCommand({
     Key: key,
@@ -39,20 +24,20 @@ async function fetchAwsAsset (bucketName, key, filePath, clientConfig) {
   logger.debug(`Downloading of asset ${bucketName}/${key} finished`)
 }
 
-module.exports.fetchCertsFromS3 = async function fetchCertsFromS3 ({ s3CertPath, certPath, keyPath, enableTls }) {
-  const reason = enableTls === 'false'
-    ? 'TLS disabled'
-    : fs.existsSync(certPath) && fs.existsSync(keyPath)
-      ? 'Certificates already provided'
-      : ''
-  if (reason) {
-    logger.info(`${reason}, skipping downloading certificates from S3...`)
+module.exports.fetchCertsFromS3 = async function fetchCertsFromS3 (appConfig) {
+  if (appConfig.SERVER_ENABLE_TLS === 'false') {
+    logger.info('TLS disabled, skipping downloading certificates from S3...')
+    return
+  } else if (appConfig.CERTIFICATE_PATH && appConfig.CERTIFICATE_KEY_PATH &&
+    fs.existsSync(appConfig.CERTIFICATE_PATH) && fs.existsSync(appConfig.CERTIFICATE_KEY_PATH)) {
+    logger.info('TLS enabled and certificates already present, skipping downloading certificates from S3...')
     return
   }
 
-  const { bucketName, key } = parseAssetPath(s3CertPath)
-
   logger.info('Downloading certificates')
-  await fetchAwsAsset(bucketName, key + '.crt', certPath)
-  await fetchAwsAsset(bucketName, key + '.key', keyPath)
+  assert(appConfig.AWS_S3_BUCKET_CERTS, 'S3 bucket name to download certificates from not specified')
+  assert(appConfig.AWS_S3_PATH_CERT, 'Path to certificate in S3 bucket not specified')
+  assert(appConfig.AWS_S3_PATH_CERT_KEY, 'Path to certificate key in S3 bucket not specified')
+  await fetchAwsAsset(appConfig.AWS_S3_BUCKET_CERTS, appConfig.AWS_S3_PATH_CERT, appConfig.CERTIFICATE_PATH)
+  await fetchAwsAsset(appConfig.AWS_S3_BUCKET_CERTS, appConfig.AWS_S3_PATH_CERT_KEY, appConfig.CERTIFICATE_KEY_PATH)
 }
