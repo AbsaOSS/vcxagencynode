@@ -8,7 +8,7 @@ async function fetchAwsAsset (bucketName, key, filePath) {
     throw Error(`Attempting to download file ${filePath}, which already exists`)
   }
 
-  logger.debug(`Downloading from bucket ${bucketName} key ${key}`)
+  logger.info(`Downloading ${bucketName}/${key}`)
 
   const s3 = new S3Client()
 
@@ -21,16 +21,16 @@ async function fetchAwsAsset (bucketName, key, filePath) {
   const writeStream = fs.createWriteStream(filePath)
   data.Body.pipe(writeStream)
 
-  logger.debug(`Downloading of asset ${bucketName}/${key} finished`)
+  logger.debug(`Downloading of ${bucketName}/${key} finished`)
 }
 
 module.exports.fetchCertsFromS3 = async function fetchCertsFromS3 (appConfig) {
   if (appConfig.SERVER_ENABLE_TLS === 'false') {
-    logger.info('TLS disabled, skipping downloading certificates from S3...')
+    logger.info('TLS disabled, skipping downloading certificates from S3')
     return
   } else if (appConfig.CERTIFICATE_PATH && appConfig.CERTIFICATE_KEY_PATH &&
     fs.existsSync(appConfig.CERTIFICATE_PATH) && fs.existsSync(appConfig.CERTIFICATE_KEY_PATH)) {
-    logger.info('TLS enabled and certificates already present, skipping downloading certificates from S3...')
+    logger.info('TLS enabled and certificates already present, skipping downloading certificates from S3')
     return
   }
 
