@@ -18,6 +18,7 @@
 
 const { validateAppConfig, stringifyAndHideSensitive } = require('./configuration/app-config')
 const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
+const { fetchCertsFromS3 } = require('./scripts/download-certs')
 const util = require('util')
 const https = require('https')
 const fs = require('fs')
@@ -28,6 +29,7 @@ logger.info(stringifyAndHideSensitive(appConfig))
 
 async function run () {
   await validateAppConfig(appConfig)
+  await fetchCertsFromS3(appConfig)
 
   // Import order is important in this file - first we need to validate config, then set up logger
   // if we require any other of our files before we load/validate appConfig, that file might happen to require
@@ -130,8 +132,7 @@ async function run () {
     if (appConfig.SERVER_ENABLE_TLS === 'true') {
       https.createServer({
         cert: fs.readFileSync(appConfig.CERTIFICATE_PATH),
-        key: fs.readFileSync(appConfig.CERTIFICATE_KEY_PATH),
-        ca: appConfig.CERTIFICATE_AUTHORITY_PATH ? fs.readFileSync(appConfig.CERTIFICATE_AUTHORITY_PATH) : ''
+        key: fs.readFileSync(appConfig.CERTIFICATE_KEY_PATH)
       }, appAgent).listen(appConfig.SERVER_PORT, () => logger.info(`Agency is using TLS and listening on port ${appConfig.SERVER_PORT}!`))
     } else {
       appAgent.listen(appConfig.SERVER_PORT, () => logger.info(`Agency is listening on port ${appConfig.SERVER_PORT}!`))
@@ -140,6 +141,7 @@ async function run () {
 
   async function startAgency () {
     logger.info('Starting agency')
+
     const agencyWalletName = appConfig.AGENCY_WALLET_NAME
     const agencyDid = appConfig.AGENCY_DID
     const agencySeed = appConfig.AGENCY_SEED_SECRET

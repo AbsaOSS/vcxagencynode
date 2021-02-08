@@ -46,7 +46,6 @@ const configValidation = Joi.object().keys({
   SERVER_ENABLE_TLS: Joi.string().valid(['true', 'false']),
   CERTIFICATE_PATH: Joi.string().allow(''),
   CERTIFICATE_KEY_PATH: Joi.string().allow(''),
-  CERTIFICATE_AUTHORITY_PATH: Joi.string().allow(''),
 
   AGENCY_WALLET_NAME: Joi.string().required(),
   AGENCY_DID: Joi.string().required(),
@@ -70,7 +69,11 @@ const configValidation = Joi.object().keys({
   PG_WALLET_URL: Joi.string().required(),
   PG_WALLET_MAX_CONNECTIONS: Joi.number().integer().min(50).max(999),
   PG_WALLET_MIN_IDLE_COUNT: Joi.number().integer().min(0).max(0), // max 1 enforced on plugin level for MultiWalletSingleTableSharedPool strategy
-  PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100)
+  PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100),
+
+  AWS_S3_PATH_CERT: Joi.string().allow(''),
+  AWS_S3_BUCKET_CERT: Joi.string().allow(''),
+  AWS_S3_PATH_CERT_KEY: Joi.string().allow('')
 })
 
 async function validateAppConfig (appConfig) {
@@ -97,9 +100,6 @@ async function validateAppConfig (appConfig) {
           }
           testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
           testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
-          if (appConfig.CERTIFICATE_AUTHORITY_PATH) {
-            testConfigPathExist(appConfig, 'CERTIFICATE_AUTHORITY_PATH')
-          }
         }
         resolve()
       }
