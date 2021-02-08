@@ -18,7 +18,6 @@
 
 const Joi = require('joi')
 const fs = require('fs')
-const logger = require('../logging/logger-builder')(__filename)
 
 function stringifyAndHideSensitive (appConfig) {
   function hideSecrets (key, value) {
