@@ -16,21 +16,20 @@
 
 'use strict'
 
-const { validateAppConfig } = require('./configuration/app-config')
+const { validateAppConfig, stringifyAndHideSensitive } = require('./configuration/app-config')
 const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
 const { fetchAwsAssets } = require('./scripts/download-certs')
-const { fetchAwsSecrets } = require('./scripts/download-secrets')
 const util = require('util')
 const https = require('https')
 const fs = require('fs')
 
 const appConfig = buildAppConfigFromEnvVariables()
 const logger = require('./logging/logger-builder')(__filename)
+logger.info(stringifyAndHideSensitive(appConfig))
 
 async function run () {
-  await fetchAwsSecrets(appConfig)
-  await fetchAwsAssets(appConfig)
   await validateAppConfig(appConfig)
+  await fetchAwsAssets(appConfig)
 
   // Import order is important in this file - first we need to validate config, then set up logger
   // if we require any other of our files before we load/validate appConfig, that file might happen to require

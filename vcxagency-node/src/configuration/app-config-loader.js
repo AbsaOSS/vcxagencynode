@@ -67,7 +67,6 @@ function buildAppConfigFromEnvVariables () {
 
     AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
     AWS_DOMAIN_NAME: process.env.AWS_DOMAIN_NAME,
-    AWS_SM_KEY_PREFIX: process.env.AWS_SM_PREFIX
   }
   appConfig.SERVER_MAX_REQUEST_SIZE_KB = parseInt(appConfig.SERVER_MAX_REQUEST_SIZE_KB)
   appConfig.PG_WALLET_MIN_IDLE_COUNT = parseInt(appConfig.PG_WALLET_MIN_IDLE_COUNT)

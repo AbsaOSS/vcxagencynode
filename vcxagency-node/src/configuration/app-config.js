@@ -73,12 +73,10 @@ const configValidation = Joi.object().keys({
   PG_WALLET_MIN_IDLE_COUNT: Joi.number().integer().min(0).max(0), // max 1 enforced on plugin level for MultiWalletSingleTableSharedPool strategy
   PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100),
   AWS_BUCKET_NAME: Joi.string(),
-  AWS_DOMAIN_NAME: Joi.string(),
-  AWS_SM_KEY_PREFIX: Joi.string()
+  AWS_DOMAIN_NAME: Joi.string()
 })
 
 async function validateAppConfig (appConfig) {
-  logger.info(stringifyAndHideSensitive(appConfig))
   return new Promise((resolve, reject) => {
     function testConfigPathExist (appConfig, key) {
       const path = appConfig[key]
