@@ -28,8 +28,8 @@ const logger = require('./logging/logger-builder')(__filename)
 logger.info(stringifyAndHideSensitive(appConfig))
 
 async function run () {
-  await validateAppConfig(appConfig)
   await fetchCertsFromS3(appConfig)
+  await validateAppConfig(appConfig)
 
   // Import order is important in this file - first we need to validate config, then set up logger
   // if we require any other of our files before we load/validate appConfig, that file might happen to require
