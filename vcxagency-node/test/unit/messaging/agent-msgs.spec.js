@@ -29,7 +29,7 @@ const rimraf = require('rimraf')
 const os = require('os')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
-const { wireUpApplication, cleanUpApplication } = require('../../../src/app')
+const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
 const { buildAgencyClientVirtual } = require('./common')
 
 const agencyWalletName = `vcxagency-node-${uuid.v4()}`
@@ -67,7 +67,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   tmpPgDb = await createTestPgDb()
-  app = await wireUpApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'enterprise', agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
+  app = await buildApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'enterprise', agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
   serviceIndyWallets = app.serviceIndyWallets
   entityForwardAgent = app.entityForwardAgent
   serviceStorage = app.serviceStorage

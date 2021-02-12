@@ -26,7 +26,7 @@ const { indyCreateWallet, indyCreateAndStoreMyDid, indyOpenWallet, indyGenerateW
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
-const { wireUpApplication, cleanUpApplication } = require('../../../src/app')
+const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
 const { buildAgencyClientVirtual } = require('./common')
@@ -60,7 +60,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   tmpPgDb = await createTestPgDb()
-  application = await wireUpApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'enterprise', agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
+  application = await buildApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'enterprise', agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
   serviceIndyWallets = application.serviceIndyWallets
   entityForwardAgent = application.entityForwardAgent
   serviceStorage = application.serviceStorage

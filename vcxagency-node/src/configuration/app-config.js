@@ -38,22 +38,22 @@ function stringifyAndHideSensitive (appConfig) {
 const MB_AS_KB = 1024
 
 const configValidation = Joi.object().keys({
-  LOG_LEVEL: Joi.string().valid(['silly', 'debug', 'info', 'warn', 'error']),
-  LOG_ENABLE_INDYSDK: Joi.string().valid(['true', 'false']),
-  LOG_JSON_TO_CONSOLE: Joi.string().valid(['true', 'false']),
+  LOG_LEVEL: Joi.string().valid('silly', 'debug', 'info', 'warn', 'error'),
+  LOG_ENABLE_INDYSDK: Joi.string().valid('true', 'false'),
+  LOG_JSON_TO_CONSOLE: Joi.string().valid('true', 'false'),
   SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
-  SERVER_MAX_REQUEST_SIZE_KB: Joi.number().integer().min(1).max(MB_AS_KB * 10).required(),
-  SERVER_ENABLE_TLS: Joi.string().valid(['true', 'false']),
-  CERTIFICATE_PATH: Joi.string().allow(''),
-  CERTIFICATE_KEY_PATH: Joi.string().allow(''),
+  SERVER_MAX_REQUEST_SIZE_KB: Joi.number().integer().min(1).max(MB_AS_KB * 10).default(512),
+  SERVER_ENABLE_TLS: Joi.string().valid('true', 'false').default('true'),
+  CERTIFICATE_PATH: Joi.string(),
+  CERTIFICATE_KEY_PATH: Joi.string(),
 
   AGENCY_WALLET_NAME: Joi.string().required(),
   AGENCY_DID: Joi.string().required(),
   AGENCY_SEED_SECRET: Joi.string().min(20).required(),
   AGENCY_WALLET_KEY_SECRET: Joi.string().min(20).required(),
 
-  REDIS_URL: Joi.string().allow(''),
-  AGENCY_TYPE: Joi.string().valid(['enterprise', 'client']).required(),
+  REDIS_URL: Joi.string(),
+  AGENCY_TYPE: Joi.string().valid('enterprise', 'client').required(),
 
   PG_STORE_HOST: Joi.string().required(),
   PG_STORE_PORT: Joi.number().integer().min(1025).max(65535).required(),
@@ -67,13 +67,13 @@ const configValidation = Joi.object().keys({
   PG_WALLET_ADMIN_PASSWORD_SECRET: Joi.string(),
 
   PG_WALLET_URL: Joi.string().required(),
-  PG_WALLET_MAX_CONNECTIONS: Joi.number().integer().min(50).max(999),
-  PG_WALLET_MIN_IDLE_COUNT: Joi.number().integer().min(0).max(0), // max 1 enforced on plugin level for MultiWalletSingleTableSharedPool strategy
-  PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100),
+  PG_WALLET_MAX_CONNECTIONS: Joi.number().integer().min(50).max(999).default(90),
+  PG_WALLET_MIN_IDLE_COUNT: Joi.number().integer().min(0).max(0).default(0), // max 1 enforced on plugin level for MultiWalletSingleTableSharedPool strategy
+  PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100).default(30),
 
-  AWS_S3_PATH_CERT: Joi.string().allow(''),
-  AWS_S3_BUCKET_CERT: Joi.string().allow(''),
-  AWS_S3_PATH_CERT_KEY: Joi.string().allow('')
+  AWS_S3_PATH_CERT: Joi.string(),
+  AWS_S3_BUCKET_CERT: Joi.string(),
+  AWS_S3_PATH_CERT_KEY: Joi.string()
 })
 
 async function validateAppConfig (appConfig) {

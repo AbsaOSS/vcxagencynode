@@ -41,7 +41,7 @@ const sleep = require('sleep-promise')
 const { longpollNotifications } = require('../../../src/service/notifications/longpoll')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
-const { wireUpApplication, cleanUpApplication } = require('../../../src/app')
+const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
 const { buildAgencyClientVirtual } = require('./common')
 
 const agencyWalletName = `vcxagency-node-${uuid.v4()}`
@@ -79,7 +79,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   const tmpPgDb = await createTestPgDb()
-  app = await wireUpApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'client', redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
+  app = await buildApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'client', redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
   serviceIndyWallets = app.serviceIndyWallets
   entityForwardAgent = app.entityForwardAgent
   serviceStorage = app.serviceStorage
