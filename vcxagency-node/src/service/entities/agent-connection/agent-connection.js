@@ -159,11 +159,10 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
         .then(() => {
           logger.info(`Notification ${notificationId} from agentConnectionDid ${agentConnectionDid} sent to ${webhookUrl} successfully.`)
         }, reason => {
-          if (reason.response && reason.response.data) {
-            logger.warn(`Notification ${notificationId} from agentConnectionDid ${agentConnectionDid} sent to ${webhookUrl} encountered problem. Reason: ${reason}. Response data ${JSON.stringify(reason.response.data)}`)
-          } else {
-            logger.warn(`Notification ${notificationId} from agentConnectionDid ${agentConnectionDid} sent to ${webhookUrl} encountered problem. Reason: ${reason}`)
-          }
+          const respData = reason.response && reason.response.data
+            ? ` Response data ${JSON.stringify(reason.response.data)}`
+            : ''
+          logger.warn(`Notification ${notificationId} from agentConnectionDid ${agentConnectionDid} sent to ${webhookUrl} encountered problem. Reason: ${reason}. ${respData}`)
         })
     }
   }
