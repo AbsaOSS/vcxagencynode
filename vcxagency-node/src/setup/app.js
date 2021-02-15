@@ -91,7 +91,6 @@ async function buildApplication (appConfig) {
     assert(walletStorageCredentials, 'Not using default wallet type and missing walletStorageCredentials.')
   }
 
-
   let serviceNewMessages
   if (agencyType === 'enterprise') {
     serviceNewMessages = createServiceNewMessagesUnavailable()

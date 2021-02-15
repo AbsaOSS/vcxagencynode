@@ -34,7 +34,6 @@ const {
   finalExpressHandlers
 } = require('../api/middleware')
 
-
 function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger) {
   if (enableTls) {
     logger.info(`Will start HTTP server with TLS enabled. Cert=${tlsCertPath} Key=${tlsKeyPath}`)
