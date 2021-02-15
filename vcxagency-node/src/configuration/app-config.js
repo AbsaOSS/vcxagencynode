@@ -24,7 +24,7 @@ function stringifyAndHideSensitive (appConfig) {
     if (!value) {
       return value
     }
-    if (key.match(/.*_SECRET/i)) {
+    if (key.match(/.*SECRET.*/i)) {
       if (typeof value === 'string') {
         return value[0] + value.slice(1).replace(/.(?!$)/g, '*')
       } else {
@@ -76,40 +76,38 @@ const configValidation = Joi.object().keys({
   AWS_S3_PATH_CERT_KEY: Joi.string()
 })
 
+async function validateFinalConfig (appConfig) {
+  function testConfigPathExist (appConfig, key) {
+    const path = appConfig[key]
+    if (!fs.existsSync(path)) {
+      throw new Error(`${key} = ${path} is not a valid path or the path does not exist`)
+    }
+  }
+
+  function validateTls () {
+    if (appConfig.ENABLE_TLS === 'true') {
+      if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
+        throw new Error('Valid certificate and key paths must be specified when TLS enabled!')
+      }
+      testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
+      testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
+    }
+  }
+
+  validateTls()
+}
+
 async function validateAppConfig (appConfig) {
-  return new Promise((resolve, reject) => {
-    function testConfigPathExist (appConfig, key) {
-      const path = appConfig[key]
-      if (!fs.existsSync(path)) {
-        reject(new Error(`${key} = ${path} is not a valid path or the path does not exist`))
-      }
-    }
-
-    const joiCallback = function (err) {
-      if (err) {
-        reject(err)
-      } else {
-        if (appConfig.AGENCY_TYPE === 'client') {
-          if (!appConfig.REDIS_URL) {
-            reject(new Error("Configuration for agency of type 'client' must have REDIS_URL specified."))
-          }
-        }
-        if (appConfig.SERVER_ENABLE_TLS === 'true') {
-          if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
-            reject(new Error('Valid certificate and key paths must be specified when TLS enabled!'))
-          }
-          testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
-          testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
-        }
-        resolve()
-      }
-    }
-
-    Joi.validate(appConfig, configValidation, joiCallback)
-  })
+  const { value: effectiveConfig, error } = configValidation.validate(appConfig)
+  if (error) {
+    throw new Error(`Application configuration is not valid. Details ${stringifyAndHideSensitive(error)}`)
+  }
+  await validateFinalConfig(effectiveConfig)
+  return effectiveConfig
 }
 
 module.exports = {
   validateAppConfig,
+  validateFinalConfig,
   stringifyAndHideSensitive
 }

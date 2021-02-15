@@ -75,7 +75,7 @@ async function run () {
 
     await setupExpressApp(expressApp, application, appConfig)
 
-    const port = appConfig.PORT
+    const port = appConfig.SERVER_PORT
     logger.debug(`Going to listen on port ${port}`)
     httpServer.listen(port, () => logger.info(`------------ Listening on port ${port} ------------`))
   } catch (err) {

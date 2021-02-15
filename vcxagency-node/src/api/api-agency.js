@@ -17,9 +17,7 @@
 'use strict'
 
 const { asyncHandler } = require('./middleware')
-const validate = require('express-validation')
 const logger = require('../logging/logger-builder')(__filename)
-const Joi = require('joi')
 const { longpollNotifications } = require('../service/notifications/longpoll')
 
 module.exports = function (app, forwardAgent, serviceNewMessages) {
@@ -31,13 +29,6 @@ module.exports = function (app, forwardAgent, serviceNewMessages) {
     }))
 
   app.get('/experimental/agent/:agentDid/notifications',
-    validate(
-      {
-        params: {
-          agentDid: Joi.string().required()
-        }
-      }
-    ),
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
       const timeoutMs = req.body.timeout || 30000
@@ -51,13 +42,6 @@ module.exports = function (app, forwardAgent, serviceNewMessages) {
   )
 
   app.post('/experimental/agent/:agentDid/notifications/ack',
-    validate(
-      {
-        params: {
-          agentDid: Joi.string().required()
-        }
-      }
-    ),
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
       await serviceNewMessages.ackNewMessage(agentDid)

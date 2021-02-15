@@ -16,13 +16,14 @@
 
 'use strict'
 
+const fs = require('fs')
+const https = require('https')
+const http = require('http')
 const express = require('express')
 const httpContext = require('express-http-context')
 const bodyParser = require('body-parser')
 const { createExpressWinstonLogger } = require('../logging/express-logger-builder')
 const logger = require('../logging/logger-builder')(__filename)
-const https = require('https')
-const fs = require('fs')
 const apiAgency = require('../api/api-agency')
 const apiMessaging = require('../api/api-messaging')
 const apiHealth = require('../api/api-health')
@@ -59,8 +60,9 @@ function reloadTrustedCerts (logger) {
 }
 
 async function setupExpressApp (expressApp, application, appConfig) {
+  const { entityForwardAgent, serviceNewMessages } = application
   logger.info('Setting up express endpoints and middleware.')
-  const loggingExcludedRoutes = ['/api/health']
+  const loggingExcludedRoutes = ['/', '/api/health']
   const expressWinstonLogger = createExpressWinstonLogger(loggingExcludedRoutes)
   expressApp.use(expressWinstonLogger)
 
@@ -71,21 +73,14 @@ async function setupExpressApp (expressApp, application, appConfig) {
   }
 
   const healthRouter = express.Router()
-  expressApp.use('/api/health', healthRouter)
+  expressApp.use(['/api/health', '/'], healthRouter)
   apiHealth(healthRouter)
 
   expressApp.use(httpContext.middleware)
   expressApp.use(setReqId)
 
-  const appRouter = express.Router()
-  expressApp.use('/', appRouter)
-
-  logger.info('Setting up express endpoints.')
-  const appAgentJson = express.Router()
-  appAgentJson.use(bodyParser.json())
-  apiAgency(appAgentJson, entityForwardAgent, serviceNewMessages)
-  appAgent.use('/', appAgentJson)
-
+  logger.info('Setting up express dicomm endpoints.')
+  const maxRequestSizeKb = appConfig.SERVER_MAX_REQUEST_SIZE_KB
   const appAgentMsg = express.Router()
   appAgentMsg.use(bodyParser.raw({
     inflate: true,
@@ -93,7 +88,13 @@ async function setupExpressApp (expressApp, application, appConfig) {
     type: '*/*'
   }))
   apiMessaging(appAgentMsg, entityForwardAgent)
-  appAgent.use('/agency/msg', appAgentMsg)
+  expressApp.use('/agency/msg', appAgentMsg)
+
+  logger.info('Setting up express JSON endpoints.')
+  const appAgentJson = express.Router()
+  appAgentJson.use(bodyParser.json())
+  apiAgency(appAgentJson, entityForwardAgent, serviceNewMessages)
+  expressApp.use('/', appAgentJson)
 
   finalExpressHandlers(expressApp)
   logger.info('Express app endpoints and middleware has been configured.')

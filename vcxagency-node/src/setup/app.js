@@ -39,7 +39,7 @@ function _getStorageInfoDefault () { // eslint-disable-line
   }
 }
 
-function getStorageInfoPgsql () {
+function getStorageInfoPgsql (appConfig) {
   const walletStorageConfig = {
     url: appConfig.PG_WALLET_URL,
     // 'tls', todo: add this when tls code is merged into pgsql plugin
@@ -79,7 +79,7 @@ async function buildApplication (appConfig) {
   if (appConfig.LOG_ENABLE_INDYSDK === 'true') {
     indySetLogger(logger)
   }
-  const { walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoPgsql()
+  const { walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoPgsql(appConfig)
   logger.info(`Initializing postgres plugin with config: ${JSON.stringify(walletStorageConfig)}`)
   await indyLoadPostgresPlugin(walletStorageConfig, walletStorageCredentials)
 

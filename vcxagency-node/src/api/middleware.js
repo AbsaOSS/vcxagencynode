@@ -19,7 +19,23 @@
 const uuid = require('uuid')
 const logger = require('../logging/logger-builder')(__filename)
 const httpContext = require('express-http-context')
+const util = require('util')
 const { ErrorFeatureDisabled } = require('../errors/error-feature-disabled')
+const { ValidationError } = require('express-validation')
+
+module.exports.finalExpressHandlers = function finalExpressHandlers (app) {
+  app.use('*', function (req, res) {
+    res.status(404).send({ message: `Your request: '${req.originalUrl}' didn't reach any handler.` })
+  })
+
+  app.use(function (err, req, res, next) {
+    if (err instanceof ValidationError) {
+      return res.status(err.statusCode).json(err)
+    }
+    logger.error(`Unhandled error catched by express middleware. ${util.inspect(err, { showHidden: false, depth: 4 })}`)
+    res.status(500).send()
+  })
+}
 
 module.exports.asyncHandler = function asyncHandler (fn) {
   return (req, res, next) => {
