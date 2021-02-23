@@ -81,7 +81,7 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   const tmpPgDb = await createTestPgDb()
-  let appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, pgUrl)
+  const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, pgUrl)
   appConfig.PG_STORE_HOST = tmpPgDb.info.host
   appConfig.PG_STORE_PORT = tmpPgDb.info.port
   appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user

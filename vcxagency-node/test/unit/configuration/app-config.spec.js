@@ -112,7 +112,7 @@ describe('app configuration', () => {
     delete config.PG_WALLET_PASSWORD_SECRET
     await expect(validateAppConfig(config))
       .rejects
-      .toThrow('"PG_WALLET_PASSWORD_SECRET\\\" is required')
+      .toThrow('"PG_WALLET_PASSWORD_SECRET\\" is required')
   })
 
   it('should invalidate client agency config if REDIS_URL is omitted', async () => {
