@@ -61,4 +61,28 @@ async function buildAgencyClientVirtual (entityForwardAgent) {
   }
 }
 
-module.exports.buildAgencyClientVirtual = buildAgencyClientVirtual
+function getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, pgUrl) {
+  return {
+    AGENCY_WALLET_NAME: agencyWalletName,
+    AGENCY_DID: agencyDid,
+    AGENCY_SEED_SECRET: agencySeed,
+    AGENCY_WALLET_KEY_SECRET: agencyWalletKey,
+
+    REDIS_URL: redisUrl,
+    AGENCY_TYPE: redisUrl ? 'client' : 'enterprise',
+
+    PG_WALLET_ACCOUNT: 'postgres',
+    PG_WALLET_PASSWORD_SECRET: 'mysecretpassword',
+    PG_WALLET_ADMIN_ACCOUNT: 'postgres',
+    PG_WALLET_ADMIN_PASSWORD_SECRET: 'mysecretpassword',
+    PG_WALLET_URL: pgUrl,
+    PG_WALLET_MIN_IDLE_COUNT: process.env.PG_WALLET_MIN_IDLE_COUNT || 0,
+    PG_WALLET_MAX_CONNECTIONS: process.env.PG_WALLET_MAX_CONNECTIONS || 90,
+    PG_WALLET_CONNECTION_TIMEOUT_MINS: process.env.PG_WALLET_CONNECTION_TIMEOUT_MINS || 5,
+  }
+}
+
+module.exports = {
+  buildAgencyClientVirtual,
+  getBaseAppConfig
+}

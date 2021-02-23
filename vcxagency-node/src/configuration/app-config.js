@@ -76,7 +76,7 @@ const configValidation = Joi.object().keys({
   AWS_S3_PATH_CERT_KEY: Joi.string()
 })
 
-async function validateFinalConfig (appConfig) {
+function validateFinalConfig (appConfig) {
   function testConfigPathExist (appConfig, key) {
     const path = appConfig[key]
     if (!fs.existsSync(path)) {
@@ -85,7 +85,12 @@ async function validateFinalConfig (appConfig) {
   }
 
   function validateTls () {
-    if (appConfig.ENABLE_TLS === 'true') {
+    if (appConfig.AGENCY_TYPE === 'client') {
+      if (!appConfig.REDIS_URL) {
+        throw new Error("Configuration for agency of type 'client' must have REDIS_URL specified.")
+      }
+    }
+    if (appConfig.SERVER_ENABLE_TLS === 'true') {
       if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
         throw new Error('Valid certificate and key paths must be specified when TLS enabled!')
       }
@@ -102,7 +107,7 @@ async function validateAppConfig (appConfig) {
   if (error) {
     throw new Error(`Application configuration is not valid. Details ${stringifyAndHideSensitive(error)}`)
   }
-  await validateFinalConfig(effectiveConfig)
+  validateFinalConfig(effectiveConfig)
   return effectiveConfig
 }
 

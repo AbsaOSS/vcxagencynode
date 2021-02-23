@@ -21,6 +21,7 @@ const BASE_CONFIG = {
   LOG_ENABLE_INDYSDK: 'false',
   LOG_JSON_TO_CONSOLE: 'false',
   SERVER_PORT: '8080',
+  SERVER_ENABLE_TLS: 'false',
   SERVER_MAX_REQUEST_SIZE_KB: '300',
 
   AGENCY_WALLET_NAME: 'vcxagency-node',
@@ -70,11 +71,9 @@ describe('app configuration', () => {
     expect(hiddenParsed.BAR_SECRET).toBe('s********a')
   })
 
-  it('if TLS enabled, throw error on empty path', async () => {
+  it('if TLS enabled, throw error if certificate configs are not provided', async () => {
     const tlsConfig = {
-      SERVER_ENABLE_TLS: 'true',
-      CERTIFICATE_PATH: '',
-      CERTIFICATE_KEY_PATH: ''
+      SERVER_ENABLE_TLS: 'true'
     }
     const config = { ...getValidEnterpriseAgencyConfig(), ...tlsConfig }
     await expect(validateAppConfig(config))
@@ -113,7 +112,7 @@ describe('app configuration', () => {
     delete config.PG_WALLET_PASSWORD_SECRET
     await expect(validateAppConfig(config))
       .rejects
-      .toThrow('"PG_WALLET_PASSWORD_SECRET" is required')
+      .toThrow('"PG_WALLET_PASSWORD_SECRET\\\" is required')
   })
 
   it('should invalidate client agency config if REDIS_URL is omitted', async () => {
