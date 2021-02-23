@@ -13,18 +13,18 @@ module.exports.buildRedisClients = function buildRedisClients (redisUrl) {
   })
 
   redisClientRw.on('end', () => {
-    console.log('Redis rw-client disconnected')
+    logger.info('Redis rw-client disconnected')
   })
   redisClientSubscriber.on('end', () => {
-    console.log('Redis subscription-client disconnected')
+    logger.info('Redis subscription-client disconnected')
   })
 
   redisClientRw.on('reconnecting', () => {
-    console.log('Redis rw-client reconnecting')
+    logger.info('Redis rw-client reconnecting')
   })
 
   redisClientSubscriber.on('reconnecting', () => {
-    console.log('Redis subscription-client reconnecting')
+    logger.info('Redis subscription-client reconnecting')
   })
 
   redisClientRw.on('connect', function () {
