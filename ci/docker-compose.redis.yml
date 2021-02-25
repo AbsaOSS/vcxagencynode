@@ -4,8 +4,6 @@ services:
   redis:
     container_name: redis
     image: ${REDIS_IMAGE:-redis:cached}
-    volumes:
-      - ./redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - absadocker
     ports:

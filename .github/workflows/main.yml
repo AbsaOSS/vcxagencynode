@@ -169,7 +169,6 @@ jobs:
   build-image-vcxagency:
     runs-on: ubuntu-latest
     needs:
-      - build-vcxagency-base
       - workflow-setup
     env:
       DOCKER_BUILDKIT: 1
