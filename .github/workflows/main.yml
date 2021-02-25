@@ -503,6 +503,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
+      CACHE_KEY_REDIS: ${{needs.workflow-setup.outputs.CACHE_KEY_REDIS}}
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
       CACHED_DOCKER_IMG_NAME_REDIS: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_REDIS}}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY}}
