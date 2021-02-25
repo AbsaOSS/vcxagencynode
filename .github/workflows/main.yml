@@ -255,14 +255,14 @@ jobs:
         run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
 
       - name: Load redis image cache
-        id: load-cached-image-node
+        id: load-cached-image-redis
         uses: actions/cache@v2
         with:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_REDIS }}
 
       - name: If no cached image found -> ERROR
-        if: steps.load-cached-image-node.outputs.cache-hit != 'true'
+        if: steps.load-cached-image-redis.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_REDIS"; exit -1
 
       - name: Load Redis image from cache
