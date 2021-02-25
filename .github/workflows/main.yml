@@ -162,6 +162,7 @@ jobs:
         run: |
           set -x
           docker build -t "$CACHED_DOCKER_IMG_NAME_REDIS" ci/redis
+          mkdir -p /tmp/imgcache
           docker save "$CACHED_DOCKER_IMG_NAME_REDIS" > /tmp/imgcache/image.rar
           docker image ls
 
