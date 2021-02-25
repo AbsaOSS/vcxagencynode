@@ -161,7 +161,6 @@ jobs:
         if: steps.cache-image.outputs.cache-hit != 'true'
         run: |
           set -x
-          cd ci/redis;
           docker build -t "$CACHED_DOCKER_IMG_NAME_REDIS" ci/redis
           docker save "$CACHED_DOCKER_IMG_NAME_REDIS" > /tmp/imgcache/image.rar
           docker image ls
