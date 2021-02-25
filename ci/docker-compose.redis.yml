@@ -3,7 +3,7 @@ version: '3.5'
 services:
   redis:
     container_name: redis
-    image: redis:6.0.8
+    image: ${REDIS_IMAGE:-redis:cached}
     volumes:
       - ./redis.conf:/usr/local/etc/redis/redis.conf
     networks:
