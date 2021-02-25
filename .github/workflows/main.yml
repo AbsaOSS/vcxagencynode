@@ -19,6 +19,7 @@ jobs:
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_AGENCY }}
       CACHED_DOCKER_IMG_NAME_REDIS: ${{ steps.mainstep.outputs.CACHED_DOCKER_IMG_NAME_REDIS }}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY }}
+      PUBLISH_DOCKER_IMG_NAME_REDIS: ${{ steps.mainstep.outputs.PUBLISH_DOCKER_IMG_NAME_REDIS }}
       PUBLISH_VERSION: ${{ steps.mainstep.outputs.PUBLISH_VERSION }}
       RELEASE: ${{ steps.mainstep.outputs.RELEASE }}
       PRERELEASE: ${{ steps.mainstep.outputs.PRERELEASE }}
@@ -109,6 +110,7 @@ jobs:
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_REDIS::redis:cached"
 
           echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_AGENCY::vcxagency-node:$PUBLISH_VERSION"
+          echo "::set-output name=PUBLISH_DOCKER_IMG_NAME_REDIS::vcxagency-redis:$PUBLISH_VERSION"
 
           echo "::set-output name=PUBLISH_VERSION::$PUBLISH_VERSION"
           echo "::set-output name=PRERELEASE::$PRERELEASE"
@@ -502,7 +504,9 @@ jobs:
     env:
       CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
       CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
+      CACHED_DOCKER_IMG_NAME_REDIS: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_REDIS}}
       PUBLISH_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_AGENCY}}
+      PUBLISH_DOCKER_IMG_NAME_REDIS: ${{needs.workflow-setup.outputs.PUBLISH_DOCKER_IMG_NAME_REDIS}}
     steps:
       - name: Load agency image cache
         id: load-cached-image-node
@@ -510,15 +514,36 @@ jobs:
         with:
           path: /tmp/imgcache
           key: ${{ env.CACHE_KEY_AGENCY }}
+
       - name: If no cached image found -> ERROR
         if: steps.load-cached-image-node.outputs.cache-hit != 'true'
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_AGENCY"; exit -1
+
       - name: Load agency image
         run: docker load < /tmp/imgcache/img_agency.rar
 
       - name: Verify images were loaded
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
+
+
+      - name: Load Redis image cache
+        id: load-cached-image-redis
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache
+          key: ${{ env.CACHE_KEY_REDIS }}
+
+      - name: If no cached image found -> ERROR
+        if: steps.load-cached-image-redis.outputs.cache-hit != 'true'
+        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_REDIS"; exit -1
+
+      - name: Load Redis image from cache
+        run: docker load < /tmp/imgcache/image.rar
+
+      - name: Verify Redis image was loaded
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_REDIS" || { echo "Image $CACHED_DOCKER_IMG_NAME_REDIS was not found!"; docker image ls; exit 1; }
+
 
       - name: Docker Login
         uses: azure/docker-login@v1
@@ -531,9 +556,12 @@ jobs:
         run: |
           GITHUB_REPOSITORY_LOWERCASE=`echo $GITHUB_REPOSITORY | awk '{print tolower($0)}'`
           REMOTE_DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_AGENCY"
+          REMOTE_DOCKER_IMG_NAME_REDIS="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_REDIS"
           docker tag "$CACHED_DOCKER_IMG_NAME_AGENCY" "$REMOTE_DOCKER_IMG_NAME_AGENCY"
+          docker tag "PUBLISH_DOCKER_IMG_NAME_REDIS" "$REMOTE_DOCKER_IMG_NAME_REDIS"
           docker image ls
           docker push "$REMOTE_DOCKER_IMG_NAME_AGENCY" || true
+          docker push "$PUBLISH_DOCKER_IMG_NAME_REDIS" || true
 
   make-release:
     runs-on: ubuntu-16.04
