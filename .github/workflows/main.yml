@@ -559,10 +559,10 @@ jobs:
           REMOTE_DOCKER_IMG_NAME_AGENCY="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_AGENCY"
           REMOTE_DOCKER_IMG_NAME_REDIS="docker.pkg.github.com/$GITHUB_REPOSITORY_LOWERCASE/$PUBLISH_DOCKER_IMG_NAME_REDIS"
           docker tag "$CACHED_DOCKER_IMG_NAME_AGENCY" "$REMOTE_DOCKER_IMG_NAME_AGENCY"
-          docker tag "$PUBLISH_DOCKER_IMG_NAME_REDIS" "$REMOTE_DOCKER_IMG_NAME_REDIS"
+          docker tag "$CACHED_DOCKER_IMG_NAME_REDIS" "$REMOTE_DOCKER_IMG_NAME_REDIS"
           docker image ls
           docker push "$REMOTE_DOCKER_IMG_NAME_AGENCY" || true
-          docker push "$PUBLISH_DOCKER_IMG_NAME_REDIS" || true
+          docker push "$REMOTE_DOCKER_IMG_NAME_REDIS" || true
 
   make-release:
     runs-on: ubuntu-16.04
