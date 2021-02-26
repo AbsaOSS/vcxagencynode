@@ -173,6 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - workflow-setup
+      - build-vcxagency-base
     env:
       DOCKER_BUILDKIT: 1
       CACHE_KEY_BASE: ${{needs.workflow-setup.outputs.CACHE_KEY_BASE}}
