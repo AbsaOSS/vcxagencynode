@@ -18,7 +18,7 @@
 
 const indy = require('indy-sdk')
 const os = require('os')
-const { indyErrorCodeWalletItemNotFound } = require('./indy-errors')
+const { indyErrorWalletItemNotFound } = require('./indy-errors')
 
 const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' }
 const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
@@ -132,7 +132,7 @@ async function indyDidExists (wh, did) {
   try {
     await indy.getMyDidWithMeta(wh, did)
   } catch (err) {
-    if (err.message === indyErrorCodeWalletItemNotFound) {
+    if (err.indyName === indyErrorWalletItemNotFound.indyName) {
       return false
     } else {
       throw err
