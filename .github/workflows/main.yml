@@ -97,14 +97,17 @@ jobs:
             PUBLISH_VERSION=""
           fi;
 
-          export DOCKER_BASE_HASH=${{ hashFiles('vcxagency-base') }}
-          export CODE_AGENCY_HASH=${{ hashFiles('vcxagency-node') }}
-          export CODE_EASYSDK_HASH=${{ hashFiles('easy-indysdk') }}
-          export CODE_CLIENT_HASH=${{ hashFiles('vcxagency-client') }}
+          # change REBUILD_SEED if you want to manually enforce rebuilding all images
+          REBUILD_SEED="1"
 
-          echo "::set-output name=CACHE_KEY_BASE::$DOCKER_BASE_HASH"
-          echo "::set-output name=CACHE_KEY_AGENCY::$(echo basehash-$CACHE_KEY_BASE-agencyhash-$CODE_AGENCY_HASH-clienthash-$CODE_CLIENT_HASH-easyindysdkhash-$CODE_EASYSDK_HASH)"
-          echo "::set-output name=CACHE_KEY_REDIS::${{ hashFiles('ci/redis') }}"
+          export CODE_AGENCY_HASH=${{ hashFiles('vcxagency-node') }}
+          export CODE_CLIENT_HASH=${{ hashFiles('vcxagency-client') }}
+          export CODE_EASYSDK_HASH=${{ hashFiles('easy-indysdk') }}
+
+          echo "::set-output name=CACHE_KEY_REDIS::$REBUILD_SEED-${{ hashFiles('ci/redis') }}"
+          echo "::set-output name=CACHE_KEY_BASE::$REBUILD_SEED-${{ hashFiles('vcxagency-base') }}"
+          echo "::set-output name=CACHE_KEY_AGENCY::$REBUILD_SEED-$(echo basehash-$CACHE_KEY_BASE-agencyhash-$CODE_AGENCY_HASH-clienthash-$CODE_CLIENT_HASH-easyindysdkhash-$CODE_EASYSDK_HASH)"
+
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_BASE::vcxagency-base:cached"
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_AGENCY::vcxagency-node:cached"
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_REDIS::redis:cached"
@@ -128,19 +131,18 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
-      - name: Try load from cache.
+      - name: Try to load from cache.
         id: cache-image
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-base
           key: ${{ env.CACHE_KEY_BASE }}
-      - name: If NOT found in cache, Build and cache image.
+      - name: If NOT found in cache, build and cache image.
         if: steps.cache-image.outputs.cache-hit != 'true'
         run: |
           vcxagency-base/build.sh "$CACHED_DOCKER_IMG_NAME_BASE"
-          mkdir -p /tmp/imgcache
-          docker save "$CACHED_DOCKER_IMG_NAME_BASE" > /tmp/imgcache/img_base.rar
-          docker image ls
+          mkdir -p /tmp/imgcache-base
+          docker save "$CACHED_DOCKER_IMG_NAME_BASE" > /tmp/imgcache-base/image.rar
 
   build-vcxagency-redis:
     needs:
@@ -153,20 +155,19 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
-      - name: Try load from cache.
+      - name: Try to load from cache.
         id: cache-image
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-redis
           key: ${{ env.CACHE_KEY_REDIS }}
-      - name: If NOT found in cache, Build and cache image.
+      - name: If NOT found in cache, build and cache image.
         if: steps.cache-image.outputs.cache-hit != 'true'
         run: |
           set -x
           docker build -t "$CACHED_DOCKER_IMG_NAME_REDIS" ci/redis
-          mkdir -p /tmp/imgcache
-          docker save "$CACHED_DOCKER_IMG_NAME_REDIS" > /tmp/imgcache/image.rar
-          docker image ls
+          mkdir -p /tmp/imgcache-redis
+          docker save "$CACHED_DOCKER_IMG_NAME_REDIS" > /tmp/imgcache-redis/image.rar
 
   build-image-vcxagency:
     runs-on: ubuntu-latest
@@ -183,7 +184,7 @@ jobs:
         id: load-cached-image-base
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-base
           key: ${{ env.CACHE_KEY_BASE }}
 
       - name: If no cached image found
@@ -191,7 +192,7 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_BASE"; exit -1
 
       - name: Load base image
-        run: docker load < /tmp/imgcache/img_base.rar
+        run: docker load < /tmp/imgcache-base/image.rar
 
       - name: Verify base image was loaded
         run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_BASE" || { echo "Image $CACHED_DOCKER_IMG_NAME_BASE was not found!"; docker image ls; exit 1; }
@@ -200,7 +201,7 @@ jobs:
         id: load-cached-image-node
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-agency
           key: ${{ env.CACHE_KEY_AGENCY }}
       - name: Git checkout
         uses: actions/checkout@v2
@@ -214,17 +215,16 @@ jobs:
                        -f vcxagency-node/Dockerfile \
                        -t "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                         .
-          mkdir -p /tmp/imgcache
-          docker save "$CACHED_DOCKER_IMG_NAME_AGENCY" > /tmp/imgcache/img_agency.rar
+          mkdir -p /tmp/imgcache-agency
+          docker save "$CACHED_DOCKER_IMG_NAME_AGENCY" > /tmp/imgcache-agency/image.rar
           docker image rm "$CACHED_DOCKER_IMG_NAME_AGENCY"
 
       - name: Load agency image from cache
         run: |
-          docker load < /tmp/imgcache/img_agency.rar
+          docker load < /tmp/imgcache-agency/image.rar
       - name: Verify agency image was loaded
         run: |
           docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
-
 
   test-unit-vcxagency:
     runs-on: ubuntu-latest
@@ -243,7 +243,7 @@ jobs:
         id: load-cached-image-node
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-agency
           key: ${{ env.CACHE_KEY_AGENCY }}
 
       - name: If no cached image found -> ERROR
@@ -251,7 +251,7 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_AGENCY"; exit -1
 
       - name: Load agency image from cache
-        run: docker load < /tmp/imgcache/img_agency.rar
+        run: docker load < /tmp/imgcache-agency/image.rar
 
       - name: Verify agency image was loaded
         run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
@@ -260,7 +260,7 @@ jobs:
         id: load-cached-image-redis
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-redis
           key: ${{ env.CACHE_KEY_REDIS }}
 
       - name: If no cached image found -> ERROR
@@ -268,7 +268,7 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_REDIS"; exit -1
 
       - name: Load Redis image from cache
-        run: docker load < /tmp/imgcache/image.rar
+        run: docker load < /tmp/imgcache-redis/image.rar
 
       - name: Verify Redis image was loaded
         run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_REDIS" || { echo "Image $CACHED_DOCKER_IMG_NAME_REDIS was not found!"; docker image ls; exit 1; }
@@ -276,7 +276,6 @@ jobs:
       - name: Run tests
         run: |
           set -x
-          docker image ls
           docker-compose -f ci/docker-compose.yml -f ci/docker-compose.pg.yml -f ci/docker-compose.redis.yml up -d
           sleep 5
           docker run --rm --name vcxagencynode \
@@ -297,7 +296,7 @@ jobs:
         id: load-cached-image-node
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-agency
           key: ${{ env.CACHE_KEY_AGENCY }}
 
       - name: If no cached image found -> ERROR
@@ -305,7 +304,7 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_AGENCY"; exit -1
 
       - name: Load agency image from cache
-        run: docker load < /tmp/imgcache/img_agency.rar
+        run: docker load < /tmp/imgcache-agency/image.rar
 
       - name: Verify image was loaded
         run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
@@ -331,7 +330,7 @@ jobs:
         id: load-cached-image-node
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-agency
           key: ${{ env.CACHE_KEY_AGENCY }}
 
       - name: If no cached image found -> ERROR
@@ -339,7 +338,7 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_AGENCY";exit -1
 
       - name: Load agency image from cache
-        run: docker load < /tmp/imgcache/img_agency.rar
+        run: docker load < /tmp/imgcache-agency/image.rar
 
       - name: Verify image was loaded
         run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
@@ -367,7 +366,7 @@ jobs:
         id: load-cached-image-node
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-agency
           key: ${{ env.CACHE_KEY_AGENCY }}
 
       - name: If no cached image found -> ERROR
@@ -375,7 +374,7 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_AGENCY";exit -1
 
       - name: Load agency image from cache
-        run: docker load < /tmp/imgcache/img_agency.rar
+        run: docker load < /tmp/imgcache-agency/image.rar
 
       - name: Verify image was loaded
         run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
@@ -384,7 +383,7 @@ jobs:
         id: load-cached-image-redis
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-redis
           key: ${{ env.CACHE_KEY_REDIS }}
 
       - name: If no cached image found -> ERROR
@@ -392,7 +391,7 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_REDIS"; exit -1
 
       - name: Load Redis image from cache
-        run: docker load < /tmp/imgcache/image.rar
+        run: docker load < /tmp/imgcache-redis/image.rar
 
       - name: Verify Redis image was loaded
         run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_REDIS" || { echo "Image $CACHED_DOCKER_IMG_NAME_REDIS was not found!"; docker image ls; exit 1; }
@@ -513,7 +512,7 @@ jobs:
         id: load-cached-image-node
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-agency
           key: ${{ env.CACHE_KEY_AGENCY }}
 
       - name: If no cached image found -> ERROR
@@ -521,7 +520,7 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_AGENCY"; exit -1
 
       - name: Load agency image
-        run: docker load < /tmp/imgcache/img_agency.rar
+        run: docker load < /tmp/imgcache-agency/image.rar
 
       - name: Verify images were loaded
         run: |
@@ -532,7 +531,7 @@ jobs:
         id: load-cached-image-redis
         uses: actions/cache@v2
         with:
-          path: /tmp/imgcache
+          path: /tmp/imgcache-redis
           key: ${{ env.CACHE_KEY_REDIS }}
 
       - name: If no cached image found -> ERROR
@@ -540,11 +539,10 @@ jobs:
         run: echo "ERROR == Expected to find image from cache $CACHE_KEY_REDIS"; exit -1
 
       - name: Load Redis image from cache
-        run: docker load < /tmp/imgcache/image.rar
+        run: docker load < /tmp/imgcache-redis/image.rar
 
       - name: Verify Redis image was loaded
         run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_REDIS" || { echo "Image $CACHED_DOCKER_IMG_NAME_REDIS was not found!"; docker image ls; exit 1; }
-
 
       - name: Docker Login
         uses: azure/docker-login@v1
