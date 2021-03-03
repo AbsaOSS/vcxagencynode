@@ -68,7 +68,7 @@ async function run () {
     expressApp.set('app-name', 'agency')
 
     logger.debug('Going to build http/https server.')
-    const enableTls = appConfig.ENABLE_TLS === 'true'
+    const enableTls = appConfig.SERVER_ENABLE_TLS === 'true'
     const tlsCertPath = appConfig.CERTIFICATE_PATH
     const tlsKeyPath = appConfig.CERTIFICATE_KEY_PATH
     const httpServer = createWebServer(expressApp, enableTls, tlsCertPath, tlsKeyPath, logger)
