@@ -44,7 +44,7 @@ function getStorageInfoPgsql (appConfig) {
     url: appConfig.PG_WALLET_URL,
     // 'tls', todo: add this when tls code is merged into pgsql plugin
     max_connections: appConfig.PG_WALLET_MAX_CONNECTIONS, /// Sets the maximum number of connections managed by the pool.
-    min_idle_count: appConfig.PG_WALLET_MIN_IDLE_COUNT, /// Sets the minimum idle connection count maintained by the pool.
+    min_idle_count: 0, // value of 0 currently enforced by MultiWalletSingleTableSharedPool pg wallet strategy
     connection_timeout: appConfig.PG_WALLET_CONNECTION_TIMEOUT, /// Sets the idle timeout used by the pool.
     wallet_scheme: 'MultiWalletSingleTableSharedPool' // strategy used by wallet plugin
     // 'database_name' : todo: add support into pgsql for this when using MultiWalletSingleTableSharedPool strategy

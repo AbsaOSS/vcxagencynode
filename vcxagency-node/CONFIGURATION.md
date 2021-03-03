@@ -36,8 +36,6 @@ Following options configure pgsql for storing wallets.
 - `PG_WALLET_ADMIN_PASSWORD_SECRET` - Password for username `<PG_WALLET_ADMIN_ACCOUNT>`.
 
 ### Wallet pgsql storage options
-- `PG_WALLET_MIN_IDLE_COUNT` - Sets the minimum idle connection count maintained by the pgsql connection pool. 
-   Example value `1`.
 - `PG_WALLET_MAX_CONNECTIONS` - Sets the maximum number of connections managed by the pool. Example value `90`.
 - `PG_WALLET_CONNECTION_TIMEOUT_MINS` - Sets the idle timeout used by the pool. Example value `30`.
 

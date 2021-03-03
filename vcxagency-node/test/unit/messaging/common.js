@@ -76,7 +76,6 @@ function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWallet
     PG_WALLET_ADMIN_ACCOUNT: 'postgres',
     PG_WALLET_ADMIN_PASSWORD_SECRET: 'mysecretpassword',
     PG_WALLET_URL: pgUrl,
-    PG_WALLET_MIN_IDLE_COUNT: process.env.PG_WALLET_MIN_IDLE_COUNT || 0,
     PG_WALLET_MAX_CONNECTIONS: process.env.PG_WALLET_MAX_CONNECTIONS || 90,
     PG_WALLET_CONNECTION_TIMEOUT_MINS: process.env.PG_WALLET_CONNECTION_TIMEOUT_MINS || 5
   }
