@@ -16,6 +16,9 @@
 
 'use strict'
 
-const indyErrorCodeWalletItemNotFound = '212'
+const indyErrorWalletItemNotFound = {
+  indyCode: 212,
+  indyName: 'WalletItemNotFound'
+}
 
-module.exports = { indyErrorCodeWalletItemNotFound }
+module.exports = { indyErrorWalletItemNotFound }

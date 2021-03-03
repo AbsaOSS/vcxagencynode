@@ -35,17 +35,18 @@ const sleep = require('sleep-promise')
 const FWA_KDF = 'ARGON2I_MOD'
 
 async function assureFwaWalletWasSetUp (serviceIndyWallets, agencyWalletName, agencyWalletKey, agencyDid, agencySeed) {
-  logger.info(`FWA Assuring its wallet '${agencyWalletName}' exists`)
-  await serviceIndyWallets.assureWallet(agencyWalletName, agencyWalletKey, FWA_KDF)
-
   logger.info(`Getting '${agencyWalletName}' wallet handle.`)
   const wh = await serviceIndyWallets.getWalletHandle(agencyWalletName, agencyWalletKey, FWA_KDF)
+  logger.info(`Checking if agency did ${agencyDid} exists in wallet`)
   const agencyDidWasSetUp = await indyDidExists(wh, agencyDid)
   if (!agencyDidWasSetUp) {
     logger.info(`Agency DID '${agencyDid}' not found in wallet. Creating.`)
     await indyCreateAndStoreMyDid(wh, agencyDid, agencySeed)
     logger.debug(`Forward agent create ${agencyDid}`)
+  } else {
+    logger.info(`Agency DID '${agencyDid}' was found in wallet.`)
   }
+
   const agencyVerkey = await indyKeyForLocalDid(wh, agencyDid)
   logger.info(`Agency DID '${agencyWalletName}' has assigned verkey ${agencyVerkey}`)
   return agencyVerkey
@@ -60,17 +61,19 @@ async function assureFwaWalletWasSetUp (serviceIndyWallets, agencyWalletName, ag
  * This is design trade off to have simple singleton.
  */
 async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed, waitTime = 1000, attempts = 10) {
-  let router, resolver, agencyVerkey
+  let router, resolver
 
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
-      agencyVerkey = await assureFwaWalletWasSetUp(serviceIndyWallets, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
+      logger.info(`FWA Assuring its wallet '${agencyWalletName}' exists`)
+      await serviceIndyWallets.assureWallet(agencyWalletName, agencyWalletKey, FWA_KDF)
       break
     } catch (err) {
-      console.warn(`Failed to build FWA agent: ${err}\nRemaining attempts: ${attempts - attempt - 1}`)
+      logger.warn(`Failed to assure FWA wallet due to error ${err.stack}. Remaining attempts: ${attempts - attempt - 1}`)
       await sleep(waitTime)
     }
   }
+  const agencyVerkey = await assureFwaWalletWasSetUp(serviceIndyWallets, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
 
   const whoami = `[ForwardAgent ${agencyDid}]`
 
