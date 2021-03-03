@@ -38,10 +38,11 @@ const { objectToBuffer } = require('../../utils')
 const express = require('express')
 const bodyParser = require('body-parser')
 const sleep = require('sleep-promise')
+const { getBaseAppConfig } = require('./common')
 const { longpollNotifications } = require('../../../src/service/notifications/longpoll')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
-const { wireUpApplication, cleanUpApplication } = require('../../../src/app')
+const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
 const { buildAgencyClientVirtual } = require('./common')
 
 const agencyWalletName = `vcxagency-node-${uuid.v4()}`
@@ -70,6 +71,7 @@ let bobWh
 
 const WALLET_KDF = 'RAW'
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379/0'
+const pgUrl = process.env.PG_WALLET_URL || 'localhost:5432'
 
 let sendToAgency
 
@@ -79,7 +81,14 @@ beforeAll(async () => {
     setupVcxLogging()
   }
   const tmpPgDb = await createTestPgDb()
-  app = await wireUpApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'client', redisUrl, agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
+  const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, pgUrl)
+  appConfig.PG_STORE_HOST = tmpPgDb.info.host
+  appConfig.PG_STORE_PORT = tmpPgDb.info.port
+  appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
+  appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
+  appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
+  app = await buildApplication(appConfig)
+
   serviceIndyWallets = app.serviceIndyWallets
   entityForwardAgent = app.entityForwardAgent
   serviceStorage = app.serviceStorage

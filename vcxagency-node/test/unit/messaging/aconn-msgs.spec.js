@@ -26,7 +26,8 @@ const { indyCreateWallet, indyCreateAndStoreMyDid, indyOpenWallet, indyGenerateW
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
-const { wireUpApplication, cleanUpApplication } = require('../../../src/app')
+const { getBaseAppConfig } = require('./common')
+const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
 const { buildAgencyClientVirtual } = require('./common')
@@ -54,13 +55,22 @@ const WALLET_KDF = 'RAW'
 let sendToAgency
 
 let tmpPgDb
+const pgUrl = process.env.PG_WALLET_URL || 'localhost:5432'
+
 beforeAll(async () => {
   jest.setTimeout(1000 * 120)
   if (process.env.ENABLE_VCX_LOGS) {
     setupVcxLogging()
   }
+  const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, pgUrl)
   tmpPgDb = await createTestPgDb()
-  application = await wireUpApplication({ appStorageConfig: tmpPgDb.info, agencyType: 'enterprise', agencyWalletName, agencyDid, agencySeed, agencyWalletKey })
+  appConfig.PG_STORE_HOST = tmpPgDb.info.host
+  appConfig.PG_STORE_PORT = tmpPgDb.info.port
+  appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
+  appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
+  appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
+  application = await buildApplication(appConfig)
+
   serviceIndyWallets = application.serviceIndyWallets
   entityForwardAgent = application.entityForwardAgent
   serviceStorage = application.serviceStorage

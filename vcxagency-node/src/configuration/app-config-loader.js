@@ -60,7 +60,6 @@ function buildAppConfigFromEnvVariables () {
     PG_WALLET_ADMIN_PASSWORD_SECRET: process.env.PG_WALLET_ADMIN_PASSWORD_SECRET,
 
     PG_WALLET_URL: process.env.PG_WALLET_URL,
-    PG_WALLET_MIN_IDLE_COUNT: process.env.PG_WALLET_MIN_IDLE_COUNT || '0',
     PG_WALLET_MAX_CONNECTIONS: process.env.PG_WALLET_MAX_CONNECTIONS || '90',
     PG_WALLET_CONNECTION_TIMEOUT_MINS: process.env.PG_WALLET_CONNECTION_TIMEOUT_MINS || '5',
 
@@ -69,7 +68,6 @@ function buildAppConfigFromEnvVariables () {
     AWS_S3_PATH_CERT_KEY: process.env.AWS_S3_PATH_CERT_KEY
   }
   appConfig.SERVER_MAX_REQUEST_SIZE_KB = parseInt(appConfig.SERVER_MAX_REQUEST_SIZE_KB)
-  appConfig.PG_WALLET_MIN_IDLE_COUNT = parseInt(appConfig.PG_WALLET_MIN_IDLE_COUNT)
   appConfig.PG_WALLET_MAX_CONNECTIONS = parseInt(appConfig.PG_WALLET_MAX_CONNECTIONS)
   appConfig.PG_WALLET_CONNECTION_TIMEOUT_MINS = parseInt(appConfig.PG_WALLET_CONNECTION_TIMEOUT_MINS)
   return appConfig

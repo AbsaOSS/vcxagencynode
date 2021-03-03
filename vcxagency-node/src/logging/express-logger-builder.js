@@ -19,17 +19,22 @@
 const winston = require('winston')
 const expressWinston = require('express-winston')
 const { jsonFormatter, tryAddRequestId } = require('./logger-common')
+const assert = require('assert')
 
 const prettyFormatterForExpress = winston.format.combine(
   winston.format.colorize({ all: true }),
   winston.format.printf(
     info => {
-      return `[${info.timestamp}] [express-logger] [${info.level}] [expressRequestId=${info.expressRequestId}]: ${info.message}`
+      return `[${info.timestamp}] [${info.filename}] [${info.level}] [expressRequestId=${info.expressRequestId}]: ${info.message}`
     }
   )
 )
 
-function createExpressWinstonLogger (formatter) {
+function createExpressWinstonLogger (ignoredRoutes) {
+  if (ignoredRoutes) {
+    assert(Array.isArray(ignoredRoutes))
+  }
+  const formatter = process.env.LOG_JSON_TO_CONSOLE === 'true' ? jsonFormatter : prettyFormatterForExpress
   return expressWinston.logger({
     transports: [
       new winston.transports.Console()
@@ -41,14 +46,15 @@ function createExpressWinstonLogger (formatter) {
       tryAddRequestId,
       formatter
     ),
-    meta: true, // whether request metadata shall be logged
-    msg: 'HTTP {{req.method}} {{req.url}}',
-    expressFormat: true, // Use the default Express/morgan request formatting. Enabling this will override any msg if true. Will only output colors with colorize set to true
-    colorize: false, // Color the text and status code, using the Express/morgan color palette (text: gray, status: default green, 3XX cyan, 4XX yellow, 5XX red).
-    ignoreRoute: function (req, res) { return false } // optional: allows to skip some log messages based on request and/or response
+    meta: true,
+    expressFormat: true,
+    colorize: false,
+    ignoreRoute: function (req, res) {
+      return (ignoredRoutes && ignoredRoutes.includes(req.url))
+    }
   })
 }
 
-const formatter = process.env.LOG_JSON_TO_CONSOLE === 'true' ? jsonFormatter : prettyFormatterForExpress
-
-module.exports = createExpressWinstonLogger(formatter)
+module.exports = {
+  createExpressWinstonLogger
+}
