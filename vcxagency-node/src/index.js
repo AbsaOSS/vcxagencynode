@@ -17,14 +17,12 @@
 'use strict'
 
 const express = require('express')
-const logger = require('./logging/logger-builder')(__filename)
-const { fetchCertsFromS3 } = require('./scripts/download-certs')
-const { validateFinalConfig } = require('./configuration/app-config')
 const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
-const { validateAppConfig } = require('./configuration/app-config')
-const { stringifyAndHideSensitive } = require('./configuration/app-config')
+const { validateFinalConfig, stringifyAndHideSensitive, validateAppConfig } = require('./configuration/app-config')
+const { fetchCertsFromS3 } = require('./scripts/download-certs')
 const { buildApplication } = require('./setup/app')
 const { setupExpressApp, createWebServer, reloadTrustedCerts } = require('./setup/server')
+const logger = require('./logging/logger-builder')(__filename)
 
 process.on('exit', code => {
   logger.warn(`Process exiting with code: ${code}`)
@@ -48,11 +46,6 @@ async function run () {
     const appConfigLoaded = buildAppConfigFromEnvVariables()
     logger.info(`Loaded application config: ${stringifyAndHideSensitive(appConfigLoaded)}`)
 
-    // Import order is important in this file - first we need to validate config, then set up logger
-    // if we require any other of our files before we load/validate appConfig, that file might happen to require
-    // logger, which relies on environment variables being loaded - which is side effect of calling buildAppConfigFromEnvVariables()
-    // This could be improved if logger-builder wouldn't rely on environment variables, but rather having this information
-    // passed in arguments
     logger.debug('Going to fetch certificates/keys to serve.')
     await fetchCertsFromS3(appConfigLoaded)
 
