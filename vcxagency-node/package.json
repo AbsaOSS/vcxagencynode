@@ -46,7 +46,7 @@
     "express-validation": "^3.0.6",
     "joi": "^17.3.0",
     "fs-extra": "^4.0.2",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "pg": "^8.0.3",
     "pgtools": "^0.3.0",
     "redis": "^3.0.2",
