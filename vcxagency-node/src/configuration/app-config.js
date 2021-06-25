@@ -42,6 +42,7 @@ const configValidation = Joi.object().keys({
   LOG_ENABLE_INDYSDK: Joi.string().valid('true', 'false'),
   LOG_JSON_TO_CONSOLE: Joi.string().valid('true', 'false'),
   SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
+  SERVER_HOSTNAME: Joi.string().default('0.0.0.0'),
   SERVER_MAX_REQUEST_SIZE_KB: Joi.number().integer().min(1).max(MB_AS_KB * 10).default(512),
   SERVER_ENABLE_TLS: Joi.string().valid('true', 'false').default('true'),
   CERTIFICATE_PATH: Joi.string(),
