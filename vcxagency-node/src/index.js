@@ -76,8 +76,9 @@ async function run () {
     await setupExpressApp(expressApp, application, appConfig)
 
     const port = appConfig.SERVER_PORT
+    const hostname = appConfig.SERVER_HOSTNAME
     logger.debug(`Going to listen on port ${port}`)
-    httpServer.listen(port, () => logger.info(`------------ Listening on port ${port} ------------`))
+    httpServer.listen(port, hostname, () => logger.info(`------------ Listening on ${hostname}:${port} ------------`))
   } catch (err) {
     logger.error(`Unhandled error. Application will be terminated. ${err.stack}`)
     process.exit(255)

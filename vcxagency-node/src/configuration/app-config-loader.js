@@ -35,6 +35,7 @@ function buildAppConfigFromEnvVariables () {
     LOG_JSON_TO_CONSOLE: process.env.LOG_JSON_TO_CONSOLE,
 
     SERVER_PORT: process.env.SERVER_PORT,
+    SERVER_HOSTNAME: process.env.SERVER_HOSTNAME,
     SERVER_MAX_REQUEST_SIZE_KB: process.env.SERVER_MAX_REQUEST_SIZE_KB || '300',
     SERVER_ENABLE_TLS: process.env.SERVER_ENABLE_TLS,
     CERTIFICATE_PATH: process.env.CERTIFICATE_PATH,
