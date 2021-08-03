@@ -357,7 +357,7 @@ jobs:
                      -e POSTGRES_PASSWORD=mysecretpassword \
                      postgres:12.1
           sleep 5
-          docker run --rm
+          docker run --rm \
                      --name vcxagencynode \
                      --network host \
                      "$CACHED_DOCKER_IMG_NAME_AGENCY" \
