@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "ffi-napi": "^3.1.0",
-    "indy-sdk": "^1.15.0",
+    "indy-sdk": "1.15.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
