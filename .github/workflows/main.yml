@@ -318,6 +318,51 @@ jobs:
                          "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "cd /home/node/easy-indysdk && yarn install && yarn run test:unit"
 
+  test-integration-indysdk-pgsql:
+    runs-on: ubuntu-latest
+    needs:
+      - build-image-vcxagency
+      - workflow-setup
+    env:
+      CACHE_KEY_AGENCY: ${{needs.workflow-setup.outputs.CACHE_KEY_AGENCY}}
+      CACHED_DOCKER_IMG_NAME_AGENCY: ${{needs.workflow-setup.outputs.CACHED_DOCKER_IMG_NAME_AGENCY}}
+    steps:
+      - name: Load agency image cache
+        id: load-cached-image-node
+        uses: actions/cache@v2
+        with:
+          path: /tmp/imgcache-agency
+          key: ${{ env.CACHE_KEY_AGENCY }}
+
+      - name: If no cached image found -> ERROR
+        if: steps.load-cached-image-node.outputs.cache-hit != 'true'
+        run: echo "ERROR == Expected to find image from cache $CACHE_KEY_AGENCY";exit -1
+
+      - name: Load agency image from cache
+        run: docker load < /tmp/imgcache-agency/image.rar
+
+      - name: Verify image was loaded
+        run: docker image ls --format "{{.Repository}}:{{.Tag}}" | grep "$CACHED_DOCKER_IMG_NAME_AGENCY" || { echo "Image $CACHED_DOCKER_IMG_NAME_AGENCY was not found!"; docker image ls; exit 1; }
+
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Run easy-indysdk pgsql integration test
+        run: |
+          set -x
+          docker run --rm -d \
+                     --name postgres \
+                     --network host \
+                     -e POSTGRES_USER=postgres \
+                     -e POSTGRES_PASSWORD=mysecretpassword \
+                     postgres:12.1
+          sleep 5
+          docker run --rm
+                     --name vcxagencynode \
+                     --network host \
+                     "$CACHED_DOCKER_IMG_NAME_AGENCY" \
+                     bash -c "cd /home/node/easy-indysdk && yarn install && yarn run test:integration"
+
   test-unit-vcxagency-client:
     runs-on: ubuntu-latest
     needs:
