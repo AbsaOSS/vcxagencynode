@@ -22,21 +22,13 @@
   "dependencies": {
     "axios": "^0.21.1",
     "easy-indysdk": "file:../easy-indysdk",
-    "vcxagency-client": "file:../vcxagency-client",
-    "query-string": "^6.8.2"
+    "vcxagency-client": "file:../vcxagency-client"
   },
   "devDependencies": {
     "@types/jest": "^25.2.2",
-    "@types/node-persist": "0.0.33",
     "artillery": "^1.6.1",
-    "command-line-args": "^5.1.1",
-    "command-line-usage": "^5.0.5",
-    "dotenv": "^7.0.0",
-    "elasticdump": "^6.16.0",
     "jest": "^26.0.1",
     "jest-cli": "^26.0.1",
-    "node-persist": "^3.0.5",
-    "sleep-promise": "^8.0.1",
     "standard": "^14.3.4",
     "winston": "^3.2.1"
   }
