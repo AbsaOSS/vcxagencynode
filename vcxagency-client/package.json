@@ -35,7 +35,6 @@
     "dotenv": "^7.0.0",
     "elasticdump": "^6.16.0",
     "jest": "^26.0.1",
-    "jest-cli": "^26.0.1",
     "node-persist": "^3.0.5",
     "sleep-promise": "^8.0.1",
     "standard": "^14.3.4",

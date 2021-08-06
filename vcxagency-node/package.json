@@ -25,7 +25,6 @@
     "@types/jest": "^25.2.2",
     "@types/node-persist": "^0.0.33",
     "jest": "^26.0.1",
-    "jest-cli": "^26.0.1",
     "mkdirp": "^0.5.1",
     "node-persist": "^3.0.5",
     "nodemon": "^2.0.12",

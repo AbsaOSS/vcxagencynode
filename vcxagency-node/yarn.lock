@@ -4139,7 +4139,7 @@ jest-changed-files@^26.6.2:
     execa "^4.0.0"
     throat "^5.0.0"
 
-jest-cli@^26.0.1, jest-cli@^26.6.3:
+jest-cli@^26.6.3:
   version "26.6.3"
   resolved "https://registry.yarnpkg.com/jest-cli/-/jest-cli-26.6.3.tgz#43117cfef24bc4cd691a174a8796a532e135e92a"
   integrity sha512-GF9noBSa9t08pSyl3CY4frMrqp+aQXFGFkf5hEPbh/pIUFYWMK6ZLTfbmadxJVcJrdRoChlWQsA2VkJcDFK8hg==
@@ -7135,7 +7135,7 @@ vary@~1.1.2:
   version "1.0.0"
   dependencies:
     axios "^0.21.1"
-    easy-indysdk "file:../../../../Library/Caches/Yarn/v6/npm-vcxagency-client-1.0.0-c6518814-1086-45ac-acf8-cce798f385e4-1628092087733/node_modules/easy-indysdk"
+    easy-indysdk "file:../../../../Library/Caches/Yarn/v6/npm-vcxagency-client-1.0.0-a4312d9c-a801-4c5b-93a8-4fb420378cbf-1628265417032/node_modules/easy-indysdk"
     query-string "^6.8.2"
 
 verror@1.10.0:
