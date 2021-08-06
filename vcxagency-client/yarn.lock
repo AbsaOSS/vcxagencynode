@@ -2718,7 +2718,7 @@ jest-changed-files@^26.1.0:
     execa "^4.0.0"
     throat "^5.0.0"
 
-jest-cli@^26.0.1, jest-cli@^26.1.0:
+jest-cli@^26.1.0:
   version "26.1.0"
   resolved "https://registry.yarnpkg.com/jest-cli/-/jest-cli-26.1.0.tgz#eb9ec8a18cf3b6aa556d9deaa9e24be12b43ad87"
   integrity sha512-Imumvjgi3rU7stq6SJ1JUEMaV5aAgJYXIs0jPqdUnF47N/Tk83EXfmtvNKQ+SnFVI6t6mDOvfM3aA9Sg6kQPSw==

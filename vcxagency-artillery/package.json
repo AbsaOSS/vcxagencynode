@@ -28,7 +28,6 @@
     "@types/jest": "^25.2.2",
     "artillery": "^1.6.1",
     "jest": "^26.0.1",
-    "jest-cli": "^26.0.1",
     "standard": "^14.3.4",
     "winston": "^3.2.1"
   }
