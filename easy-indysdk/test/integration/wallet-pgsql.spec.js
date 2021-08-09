@@ -20,13 +20,14 @@
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
+const { indySetDefaultLogger } = require('../../src')
 const { indyGenerateWalletKey } = require('../../src')
 const { indyOpenWallet } = require('../../src')
 const { indyCreateWallet } = require('../../src')
 const { indyStoreTheirDid } = require('../../src')
 const { indyKeyForLocalDid } = require('../../src')
 const { indyCloseWallet } = require('../../src')
-const { indyDeleteWallet } = require('../../src')
+// const { indyDeleteWallet } = require('../../src')
 const { indyLoadPostgresPlugin } = require('../../src')
 const { indyBuildPostgresCredentials } = require('../../src')
 const { indyBuildPostgresStorageConfig } = require('../../src')
@@ -40,6 +41,7 @@ const storageCredentials = indyBuildPostgresCredentials('postgres', 'mysecretpas
 
 describe('pgsql wallet', () => {
   it('should create wallet store their did and retrieve it', async () => {
+    indySetDefaultLogger('trace')
     await indyLoadPostgresPlugin(storageConfig, storageCredentials)
     const walletName = uuid.v4()
     const walletKey = await indyGenerateWalletKey()
@@ -56,42 +58,42 @@ describe('pgsql wallet', () => {
     await rimraf.sync(walletPath)
   })
 
-  async function createAndOpenWallet () {
-    const walletKey = await indyGenerateWalletKey()
-    const walletName = uuid.v4()
-    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
-    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
-    await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
-    return { wh, walletKey, walletName, storageConfig, storageCredentials }
-  }
-
-  it('should open 500 wallets without crashing', async () => {
-    const walletRecs = []
-    try {
-      await indyLoadPostgresPlugin(storageConfig, storageCredentials)
-      for (let i = 0; i < 100; i++) {
-        const promises = []
-        promises.push(createAndOpenWallet())
-        promises.push(createAndOpenWallet())
-        promises.push(createAndOpenWallet())
-        promises.push(createAndOpenWallet())
-        promises.push(createAndOpenWallet())
-        const [r1, r2, r3, r4, r5] = await Promise.all(promises)
-        walletRecs.push(r1)
-        walletRecs.push(r2)
-        walletRecs.push(r3)
-        walletRecs.push(r4)
-        walletRecs.push(r5)
-      }
-    } finally {
-      for (let i = 0; i < walletRecs.length; i++) {
-        try {
-          const walletRecord = walletRecs[i]
-          const { wh, walletKey, walletName, storageConfig, storageCredentials } = walletRecord
-          await indyCloseWallet(wh)
-          await indyDeleteWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
-        } catch (e) {}
-      }
-    }
-  })
+  // async function createAndOpenWallet () {
+  //   const walletKey = await indyGenerateWalletKey()
+  //   const walletName = uuid.v4()
+  //   await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
+  //   const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
+  //   await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
+  //   return { wh, walletKey, walletName, storageConfig, storageCredentials }
+  // }
+  //
+  // it('should open 500 wallets without crashing', async () => {
+  //   const walletRecs = []
+  //   try {
+  //     await indyLoadPostgresPlugin(storageConfig, storageCredentials)
+  //     for (let i = 0; i < 100; i++) {
+  //       const promises = []
+  //       promises.push(createAndOpenWallet())
+  //       promises.push(createAndOpenWallet())
+  //       promises.push(createAndOpenWallet())
+  //       promises.push(createAndOpenWallet())
+  //       promises.push(createAndOpenWallet())
+  //       const [r1, r2, r3, r4, r5] = await Promise.all(promises)
+  //       walletRecs.push(r1)
+  //       walletRecs.push(r2)
+  //       walletRecs.push(r3)
+  //       walletRecs.push(r4)
+  //       walletRecs.push(r5)
+  //     }
+  //   } finally {
+  //     for (let i = 0; i < walletRecs.length; i++) {
+  //       try {
+  //         const walletRecord = walletRecs[i]
+  //         const { wh, walletKey, walletName, storageConfig, storageCredentials } = walletRecord
+  //         await indyCloseWallet(wh)
+  //         await indyDeleteWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
+  //       } catch (e) {}
+  //     }
+  //   }
+  // })
 })

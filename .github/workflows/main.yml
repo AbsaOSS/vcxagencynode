@@ -361,7 +361,7 @@ jobs:
                      --name vcxagencynode \
                      --network host \
                      "$CACHED_DOCKER_IMG_NAME_AGENCY" \
-                     bash -c "cd /home/node/easy-indysdk && yarn install && yarn run test:integration"
+                     bash -c "cd /home/node/easy-indysdk && yarn install && RUST_LOG=trace yarn run test:integration"
 
   test-unit-vcxagency-client:
     runs-on: ubuntu-latest

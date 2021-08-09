@@ -3,9 +3,9 @@ FROM alpine:3.12 AS builder
 ARG UID=1001
 ARG GID=1001
 
-ARG INDYSDK_PATH=/home/indy/indy-sdk
-ARG INDYSDK_REPO=https://github.com/hyperledger/indy-sdk.git
-ARG INDYSDK_REVISION=v1.15.0
+ARG INDYSDK_PATH=/home/indy/vdr-tools
+ARG INDYSDK_REPO
+ARG INDYSDK_REVISION
 
 ENV LC_ALL="C.UTF-8"
 ENV LANG="C.UTF-8"
@@ -28,8 +28,7 @@ RUN apk update && apk upgrade && \
 USER indy
 WORKDIR /home/indy
 
-RUN git clone $INDYSDK_REPO && \
-    cd indy-sdk && git checkout $INDYSDK_REVISION
+RUN git clone $INDYSDK_REPO && cd $INDYSDK_PATH && git checkout $INDYSDK_REVISION
 
 RUN cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
 
