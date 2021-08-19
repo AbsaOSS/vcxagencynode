@@ -32,6 +32,7 @@ function stringifyAndHideSensitive (appConfig) {
       }
     } else return value
   }
+
   return JSON.stringify(appConfig, hideSecrets, 2)
 }
 
@@ -56,20 +57,30 @@ const configValidation = Joi.object().keys({
   REDIS_URL: Joi.string(),
   AGENCY_TYPE: Joi.string().valid('enterprise', 'client').required(),
 
+  WALLET_TYPE: Joi.string().valid('pgsql', 'mysql').required(),
+
   PG_STORE_HOST: Joi.string().required(),
   PG_STORE_PORT: Joi.number().integer().min(1025).max(65535).required(),
   PG_STORE_ACCOUNT: Joi.string().required(),
   PG_STORE_PASSWORD_SECRET: Joi.string().required(),
   PG_STORE_DATABASE: Joi.string().required(),
 
-  PG_WALLET_ACCOUNT: Joi.string().required(),
-  PG_WALLET_PASSWORD_SECRET: Joi.string().required(),
+  PG_WALLET_ACCOUNT: Joi.string(),
+  PG_WALLET_PASSWORD_SECRET: Joi.string(),
   PG_WALLET_ADMIN_ACCOUNT: Joi.string(),
   PG_WALLET_ADMIN_PASSWORD_SECRET: Joi.string(),
 
-  PG_WALLET_URL: Joi.string().required(),
+  PG_WALLET_URL: Joi.string(),
   PG_WALLET_MAX_CONNECTIONS: Joi.number().integer().min(50).max(999).default(90),
   PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100).default(30),
+
+  MYSQL_WALLET_HOST: Joi.string(),
+  MYSQL_WALLET_PORT: Joi.number().integer().default(3306),
+  MYSQL_WALLET_DBNAME: Joi.string().default('wallets_agency'),
+  MYSQL_WALLET_CONNECTION_LIMIT: Joi.number().integer().min(1).max(100).default(50),
+
+  MYSQL_WALLET_ACCOUNT: Joi.string(),
+  MYSQL_WALLET_PASSWORD_SECRET: Joi.string(),
 
   AWS_S3_PATH_CERT: Joi.string(),
   AWS_S3_BUCKET_CERT: Joi.string(),
@@ -87,7 +98,7 @@ function validateFinalConfig (appConfig) {
   function validateTls () {
     if (appConfig.AGENCY_TYPE === 'client') {
       if (!appConfig.REDIS_URL) {
-        throw new Error("Configuration for agency of type 'client' must have REDIS_URL specified.")
+        throw new Error('Configuration for agency of type \'client\' must have REDIS_URL specified.')
       }
     }
     if (appConfig.SERVER_ENABLE_TLS === 'true') {
@@ -96,6 +107,35 @@ function validateFinalConfig (appConfig) {
       }
       testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
       testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
+    }
+  }
+
+  if (appConfig.WALLET_TYPE === 'pgsql') {
+    if (appConfig.PG_WALLET_ACCOUNT) {
+      throw new Error('"PG_WALLET_ACCOUNT" is required')
+    }
+    if (appConfig.PG_WALLET_PASSWORD_SECRET) {
+      throw new Error('"PG_WALLET_PASSWORD_SECRET" is required')
+    }
+    if (appConfig.PG_WALLET_ADMIN_ACCOUNT) {
+      throw new Error('"PG_WALLET_ADMIN_ACCOUNT" is required')
+    }
+    if (appConfig.PG_WALLET_ADMIN_PASSWORD_SECRET) {
+      throw new Error('"PG_WALLET_ADMIN_PASSWORD_SECRET" is required')
+    }
+    if (appConfig.PG_WALLET_URL) {
+      throw new Error('"PG_WALLET_URL" is required')
+    }
+  }
+  if (appConfig.WALLET_TYPE === 'mysql') {
+    if (!appConfig.MYSQL_WALLET_HOST) {
+      throw new Error('"MYSQL_WALLET_HOST" is required')
+    }
+    if (!appConfig.MYSQL_WALLET_ACCOUNT) {
+      throw new Error('"MYSQL_WALLET_ACCOUNT" is required')
+    }
+    if (!appConfig.MYSQL_WALLET_PASSWORD_SECRET) {
+      throw new Error('"MYSQL_WALLET_PASSWORD_SECRET" is required')
     }
   }
 

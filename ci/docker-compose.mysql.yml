@@ -1,0 +1,12 @@
+version: '3.5'
+
+services:
+  mysql:
+    container_name: mysql
+    image: mysql:5.7.35
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-mysecretpassword}
+    networks:
+      - absadocker
+    ports:
+      - "3306:3306"

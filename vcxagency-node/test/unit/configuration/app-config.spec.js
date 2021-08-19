@@ -35,6 +35,15 @@ const BASE_CONFIG = {
   PG_STORE_PASSWORD_SECRET: 'mysecretpassword',
   PG_STORE_DATABASE: 'agency-storage',
 
+  WALLET_TYPE: 'mysql',
+
+  MYSQL_WALLET_HOST: 'localhost',
+  MYSQL_WALLET_PORT: 3306,
+  MYSQL_WALLET_DBNAME: 'foobar',
+  MYSQL_WALLET_CONNECTION_LIMIT: 50,
+  MYSQL_WALLET_ACCOUNT: 'user',
+  MYSQL_WALLET_PASSWORD_SECRET: 'password',
+
   PG_WALLET_ACCOUNT: 'postgres',
   PG_WALLET_PASSWORD_SECRET: 'mysecretpassword',
   PG_WALLET_ADMIN_ACCOUNT: 'postgres',
@@ -106,12 +115,12 @@ describe('app configuration', () => {
     await validateAppConfig(appConfig)
   })
 
-  it('should invalidate app config when PG_WALLET_PASSWORD_SECRET is omitted', async () => {
+  it('should invalidate app config using mysql WALLET_TYPE and omitted MYSQL_WALLET_ACCOUNT', async () => {
     const config = getValidEnterpriseAgencyConfig()
-    delete config.PG_WALLET_PASSWORD_SECRET
+    delete config.MYSQL_WALLET_ACCOUNT
     await expect(validateAppConfig(config))
       .rejects
-      .toThrow('"PG_WALLET_PASSWORD_SECRET\\" is required')
+      .toThrow('"MYSQL_WALLET_ACCOUNT" is required')
   })
 
   it('should invalidate client agency config if REDIS_URL is omitted', async () => {

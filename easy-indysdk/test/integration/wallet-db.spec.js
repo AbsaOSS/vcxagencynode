@@ -17,30 +17,36 @@
 'use strict'
 
 /* eslint-env jest */
+
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
-const { indyGenerateWalletKey } = require('../../src')
-const { indyOpenWallet } = require('../../src')
-const { indyCreateWallet } = require('../../src')
-const { indyStoreTheirDid } = require('../../src')
-const { indyKeyForLocalDid } = require('../../src')
-const { indyCloseWallet } = require('../../src')
-const { indyDeleteWallet } = require('../../src')
-const { indyLoadPostgresPlugin } = require('../../src')
-const { indyBuildPostgresCredentials } = require('../../src')
-const { indyBuildPostgresStorageConfig } = require('../../src')
+const { testsetupWalletStorage } = require('../utils')
+const {
+  indySetDefaultLogger,
+  indyDeleteWallet,
+  indyGenerateWalletKey,
+  indyOpenWallet,
+  indyCreateWallet,
+  indyStoreTheirDid,
+  indyKeyForLocalDid,
+  indyCloseWallet
+} = require('../../src')
+
+const storageType = process.env.STORAGE_TYPE || 'mysql'
+const storagePort = process.env.STORAGE_PORT || (storageType === 'mysql') ? 3306 : 5432
+const storageHost = process.env.STORAGE_HOST || 'localhost'
+let storageConfig
+let storageCredentials
 
 beforeAll(async () => {
-  jest.setTimeout(1000 * 40)
+  jest.setTimeout(1000 * 60)
+  indySetDefaultLogger('error');
+  ({ storageConfig, storageCredentials } = await testsetupWalletStorage(storageType, storageHost, storagePort))
 })
-const storageType = 'postgres_storage'
-const storageConfig = indyBuildPostgresStorageConfig('localhost:5432', 90, 30, 'MultiWalletSingleTableSharedPool')
-const storageCredentials = indyBuildPostgresCredentials('postgres', 'mysecretpassword', 'postgres', 'mysecretpassword')
 
 describe('pgsql wallet', () => {
   it('should create wallet store their did and retrieve it', async () => {
-    await indyLoadPostgresPlugin(storageConfig, storageCredentials)
     const walletName = uuid.v4()
     const walletKey = await indyGenerateWalletKey()
     await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
@@ -68,7 +74,6 @@ describe('pgsql wallet', () => {
   it('should open 500 wallets without crashing', async () => {
     const walletRecs = []
     try {
-      await indyLoadPostgresPlugin(storageConfig, storageCredentials)
       for (let i = 0; i < 100; i++) {
         const promises = []
         promises.push(createAndOpenWallet())

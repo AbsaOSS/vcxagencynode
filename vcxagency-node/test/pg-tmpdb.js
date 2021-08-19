@@ -30,12 +30,13 @@ async function dropDb (user, password, host, port, dbName) {
   await dropPgDbAsync({ user, password, host, port }, dbName)
 }
 
-async function createTestPgDb () {
+async function createTestPgDb (database) {
+  database = database || `agency-testdb-${uuid.v4()}`
   const user = 'postgres'
   const password = 'mysecretpassword'
   const host = 'localhost'
   const port = 5432
-  const database = `agency-testdb-${uuid.v4()}`
+
   await createDb(user, password, host, port, database)
   return {
     info: {

@@ -15,9 +15,12 @@ services:
     depends_on:
       - postgres
       - redis
+      - mysql
     environment:
       - LOG_JSON_TO_CONSOLE=false
       - LOG_LEVEL=info
+      - LOG_ENABLE_INDYSDK=true
+
       - SERVER_PORT=8080
       - SERVER_MAX_REQUEST_SIZE_KB=300
 
@@ -32,20 +35,23 @@ services:
       - AGENCY_TYPE=client
       - REDIS_URL=redis://redis.absadocker:6379/0
 
+      - WALLET_TYPE=mysql
+
+      - MYSQL_WALLET_HOST=mysql.absadocker
+      - MYSQL_WALLET_PORT=3306
+      - MYSQL_WALLET_ACCOUNT=root
+      - MYSQL_WALLET_PASSWORD_SECRET=mysecretpassword
+      - MYSQL_WALLET_DB_NAME=agency-ca
+
       - PG_STORE_HOST=postgres.absadocker
       - PG_STORE_PORT=5432
       - PG_STORE_ACCOUNT=postgres
       - PG_STORE_PASSWORD_SECRET=mysecretpassword
       - PG_STORE_DATABASE=storage-ea
 
-      - PG_WALLET_ACCOUNT=postgres
-      - PG_WALLET_PASSWORD_SECRET=mysecretpassword
-      - PG_WALLET_ADMIN_ACCOUNT=postgres
-      - PG_WALLET_ADMIN_PASSWORD_SECRET=mysecretpassword
-      - PG_WALLET_URL=postgres.absadocker:5432
-
       - SERVER_ENABLE_TLS=false
     networks:
       - absadocker
     ports:
       - "8080:8080"
+    command: ["sh", "-c", "sleep 5 && npm run serve"]

@@ -18,64 +18,40 @@
 
 /* eslint-env jest */
 const uuid = require('uuid')
-const rimraf = require('rimraf')
-const os = require('os')
-const { indyGenerateWalletKey } = require('../../src')
-const { indyOpenWallet } = require('../../src')
-const { indyCreateWallet } = require('../../src')
-const { indyStoreTheirDid, indyCreateAndStoreMyDid } = require('../../src')
-const { indyKeyForLocalDid } = require('../../src')
-const { indyCloseWallet } = require('../../src')
-const { indyDeleteWallet } = require('../../src')
-const { indyLoadPostgresPlugin } = require('../../src')
-const { indyBuildPostgresCredentials } = require('../../src')
-const { indyBuildPostgresStorageConfig } = require('../../src')
+const {
+  indyStoreTheirDid,
+  indyCreateAndStoreMyDid,
+  indyGenerateWalletKey,
+  indyOpenWallet,
+  indyCreateWallet,
+  indyCloseWallet,
+  indyDeleteWallet,
+  indySetDefaultLogger
+} = require('../../src')
 const { performance } = require('perf_hooks')
 const sleep = require('sleep-promise')
 const indy = require('indy-sdk')
+const { testsetupWalletStorage } = require('../utils')
 
-beforeAll(async () => {
-  jest.setTimeout(1000 * 1200)
-})
-
-// const pgStrategy = 'MultiWalletSingleTable'
-// const pgStrategy = 'DatabasePerWallet'
-// storageType = process.env.STORAGE_TYPE || 'default'
-const storageType = 'postgres_storage'
+const storageType = process.env.STORAGE_TYPE || 'mysql'
+const storagePort = process.env.STORAGE_PORT || (storageType === 'mysql') ? 3306 : 5432
+const storageHost = process.env.STORAGE_HOST || 'localhost'
 let storageConfig
 let storageCredentials
 
-const pgStrategy = 'MultiWalletSingleTableSharedPool'
-
 let testMode
-if (storageType === 'postgres_storage') {
-  testMode = `${storageType}-${pgStrategy}`
-  storageConfig = indyBuildPostgresStorageConfig('localhost:5432', 90, 30, pgStrategy)
-  storageCredentials = indyBuildPostgresCredentials('postgres', 'mysecretpassword', 'postgres', 'mysecretpassword')
-} else {
-  testMode = `${storageType}`
-  storageConfig = null
-  storageCredentials = null
-}
+
+beforeAll(async () => {
+  jest.setTimeout(1000 * 60)
+  indySetDefaultLogger('error');
+  ({
+    testMode,
+    storageConfig,
+    storageCredentials
+  } = await testsetupWalletStorage(storageType, storageHost, storagePort))
+})
 
 describe('pgsql wallet', () => {
-  it('should create wallet store their did and retrieve it', async () => {
-    await indyLoadPostgresPlugin(storageConfig, storageCredentials)
-    const walletName = uuid.v4()
-    const walletKey = await indyGenerateWalletKey()
-    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
-    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
-    await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
-
-    // Replace
-    const loadedVkey = await indyKeyForLocalDid(wh, '8wZcEriaNLNKtteJvx7f8i')
-    expect(loadedVkey).toBe('5L2HBnzbu6Auh2pkDRbFt5f4prvgE2LzknkuYLsKkacp')
-    await indyCloseWallet(wh)
-    const homedir = os.homedir()
-    const walletPath = `${homedir}/.indy_client/wallet/${walletName}`
-    await rimraf.sync(walletPath)
-  })
-
   async function createAndOpenWallet () {
     const walletKey = await indyGenerateWalletKey()
     const walletName = uuid.v4()
@@ -86,10 +62,6 @@ describe('pgsql wallet', () => {
   }
 
   it('should create many DIDs in single wallet', async () => {
-    if (storageType === 'postgres_storage') {
-      await indyLoadPostgresPlugin(storageConfig, storageCredentials)
-    }
-
     const walletRecord = await createAndOpenWallet()
     try {
       // measure writes
@@ -129,9 +101,6 @@ describe('pgsql wallet', () => {
   })
 
   it('should open 300 wallets without crashing', async () => {
-    if (storageType === 'postgres_storage') {
-      await indyLoadPostgresPlugin(storageConfig, storageCredentials)
-    }
     const N = 1
     const PAR = 1
     const walletRecs = []
@@ -161,8 +130,8 @@ describe('pgsql wallet', () => {
 
       // measure writes
       const N_IO = 1
-      const PAR_IO = 1000
-      await indy.setRuntimeConfig({ crypto_thread_pool_size: 8 })
+      const PAR_IO = 3000
+      await indy.setRuntimeConfig({ crypto_thread_pool_size: 1 })
       {
         const tStart = performance.now()
         const timeStart = new Date().getTime()
@@ -175,7 +144,6 @@ describe('pgsql wallet', () => {
             const targetIndex = Math.floor(Math.random() * walletRecs.length)
             const { wh } = walletRecs[targetIndex]
             promises.push(indyCreateAndStoreMyDid(wh))
-            // promises.push(sleep(0))
           }
           await Promise.all(promises)
         }

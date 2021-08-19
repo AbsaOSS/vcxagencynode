@@ -27,15 +27,38 @@ const { createServiceNewMessagesUnavailable } = require('../service/notification
 const { waitUntilConnectsToPostgres } = require('../service/storage/pgstorage-entities')
 const { buildRedisClients } = require('../service/storage/redis-client-builder')
 const logger = require('../logging/logger-builder')(__filename)
-const assert = require('assert')
+const { indyBuildGetSchemaRequest } = require('../../../easy-indysdk')
 const { indyLoadPostgresPlugin } = require('easy-indysdk')
 const { indySetDefaultLogger } = require('easy-indysdk')
+const sleep = require('sleep-promise')
+const { assureMysqlDatabase } = require('easy-indysdk')
+const { indyBuildMysqlStorageCredentials } = require('../../../easy-indysdk')
+const { indyBuildMysqlStorageConfig } = require('../../../easy-indysdk')
 
 function _getStorageInfoDefault () { // eslint-disable-line
   return {
     storageType: 'default',
     storageConfig: null,
     storageCredentials: null
+  }
+}
+
+function getStorageInfoMysql (appConfig) {
+  const walletStorageConfig = indyBuildMysqlStorageConfig(
+    appConfig.MYSQL_WALLET_HOST,
+    appConfig.MYSQL_WALLET_HOST,
+    appConfig.MYSQL_WALLET_PORT,
+    appConfig.MYSQL_WALLET_DBNAME,
+    appConfig.MYSQL_WALLET_CONNECTION_LIMIT
+  )
+  const walletStorageCredentials = indyBuildMysqlStorageCredentials(
+    appConfig.MYSQL_WALLET_ACCOUNT,
+    appConfig.MYSQL_WALLET_PASSWORD_SECRET
+  )
+  return {
+    walletStorageType: 'mysql',
+    walletStorageConfig,
+    walletStorageCredentials
   }
 }
 
@@ -80,17 +103,26 @@ async function buildApplication (appConfig) {
     logger.info('Enabling indy logs.')
     indySetDefaultLogger('trace')
   }
-  const { walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoPgsql(appConfig)
-  logger.info(`Initializing postgres plugin with config: ${JSON.stringify(walletStorageConfig)}`)
-  await indyLoadPostgresPlugin(walletStorageConfig, walletStorageCredentials)
+
+  await indyBuildGetSchemaRequest()
+  logger.info('indyBuildGetSchemaRequest was called')
+  await sleep(3000)
+
+  let walletStorageType, walletStorageConfig, walletStorageCredentials
+  if (appConfig.WALLET_TYPE === 'mysql') {
+    const walletDbName = appConfig.MYSQL_WALLET_DBNAME
+    await assureMysqlDatabase(walletDbName, appConfig.MYSQL_WALLET_HOST, appConfig.MYSQL_WALLET_PORT, appConfig.MYSQL_WALLET_ACCOUNT, appConfig.MYSQL_WALLET_PASSWORD_SECRET);
+    ({ walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoMysql(appConfig))
+  } else if (appConfig.WALLET_TYPE === 'pgsql') {
+    ({ walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoPgsql(appConfig))
+    logger.info(`Initializing postgres plugin with config: ${JSON.stringify(walletStorageConfig)}`)
+    await indyLoadPostgresPlugin(walletStorageConfig, walletStorageCredentials)
+  } else {
+    throw Error(`Unknown storage type ${appConfig.WALLET_TYPE}`)
+  }
 
   const redisUrl = appConfig.REDIS_URL
   const agencyType = appConfig.AGENCY_TYPE
-
-  if (walletStorageType !== 'default') {
-    assert(walletStorageConfig, 'Not using default wallet type and missing walletStorageConfig.')
-    assert(walletStorageCredentials, 'Not using default wallet type and missing walletStorageCredentials.')
-  }
 
   let serviceNewMessages
   if (agencyType === 'enterprise') {

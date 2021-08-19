@@ -41,8 +41,11 @@ async function indyLoadPostgresPlugin (storageConfig, storageCredentials) {
     init_storagetype: ['void', ['string', 'string']],
     postgresstorage_init: ['void', []]
   })
+  console.log('postgresstorage_init calling')
   await myffi.postgresstorage_init()
+  console.log('postgresstorage_init called')
   await myffi.init_storagetype(JSON.stringify(storageConfig), JSON.stringify(storageCredentials))
+  console.log('init_storagetype called')
 }
 
 /**
@@ -66,6 +69,23 @@ function indyBuildPostgresStorageConfig (url, maxConnections, connectionTimeout,
     max_connections: maxConnections,
     connection_timeout: connectionTimeout,
     wallet_scheme: walletScheme
+  }
+}
+
+function indyBuildMysqlStorageCredentials (user, pass) {
+  return {
+    user,
+    pass
+  }
+}
+
+function indyBuildMysqlStorageConfig (readHost, writeHost, port, dbName, defaultConnectionLimit) {
+  return {
+    read_host: readHost,
+    write_host: writeHost,
+    port,
+    db_name: dbName,
+    default_connection_limit: defaultConnectionLimit
   }
 }
 
@@ -177,5 +197,7 @@ module.exports = {
   indyKeyForLocalDid,
   indyLoadPostgresPlugin,
   indyBuildPostgresCredentials,
-  indyBuildPostgresStorageConfig
+  indyBuildPostgresStorageConfig,
+  indyBuildMysqlStorageCredentials,
+  indyBuildMysqlStorageConfig
 }

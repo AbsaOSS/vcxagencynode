@@ -22,6 +22,7 @@ const { indyCreateWallet, indyCreateAndStoreMyDid, indyOpenWallet, indyGenerateW
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
+const { createMysqlDatabase } = require('easy-indysdk')
 const { getBaseAppConfig } = require('./common')
 const { createTestPgDb } = require('../../pg-tmpdb')
 const { setupVcxLogging } = require('../../utils')
@@ -46,36 +47,42 @@ let bobVerkey
 let bobWh
 
 const WALLET_KDF = 'RAW'
-
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379/0'
 let agencyVerkey
 let sendToAgency
-let tmpPgDb
-
-const pgUrl = process.env.PG_WALLET_URL || 'localhost:5432'
 
 beforeAll(async () => {
-  jest.setTimeout(1000 * 120)
-  if (process.env.ENABLE_VCX_LOGS) {
-    setupVcxLogging()
-  }
-  tmpPgDb = await createTestPgDb()
-  const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, pgUrl)
-  appConfig.PG_STORE_HOST = tmpPgDb.info.host
-  appConfig.PG_STORE_PORT = tmpPgDb.info.port
-  appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
-  appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
-  appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
-  app = await buildApplication(appConfig)
+  try {
+    jest.setTimeout(1000 * 120)
+    if (process.env.ENABLE_VCX_LOGS) {
+      setupVcxLogging()
+    }
+    const dbName = `agency_test_${uuid.v4()}`.replace(/-/gi, '_')
+    const tmpPgDb = await createTestPgDb(dbName)
+    await createMysqlDatabase(dbName, 'localhost', 3306, 'root', 'mysecretpassword')
 
-  const entityForwardAgent = app.entityForwardAgent
-  const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
-  sendToAgency = agencyClient.sendToAgency
-  const agencyInfo = await agencyClient.getAgencyInfo()
-  agencyVerkey = agencyInfo.verkey
+    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, dbName)
+    appConfig.PG_STORE_HOST = tmpPgDb.info.host
+    appConfig.PG_STORE_PORT = tmpPgDb.info.port
+    appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
+    appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
+    appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
+    app = await buildApplication(appConfig)
+
+    const entityForwardAgent = app.entityForwardAgent
+    const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
+    sendToAgency = agencyClient.sendToAgency
+    const agencyInfo = await agencyClient.getAgencyInfo()
+    agencyVerkey = agencyInfo.verkey
+  } catch (err) {
+    console.error(err.stack)
+    throw err
+  }
 })
 
 afterAll(async () => {
-  cleanUpApplication(app)
+  await cleanUpApplication(app)
+//   await tmpPgDb.dropDb()
 })
 
 beforeEach(async () => {

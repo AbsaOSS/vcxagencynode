@@ -17,7 +17,14 @@
 'use strict'
 
 /* eslint-env jest */
-const { indyCreateWallet, indyCreateAndStoreMyDid, indyOpenWallet, indyGenerateWalletKey } = require('easy-indysdk')
+
+const {
+  indyCreateWallet,
+  indyCreateAndStoreMyDid,
+  indyOpenWallet,
+  indyGenerateWalletKey,
+  createMysqlDatabase
+} = require('easy-indysdk')
 const {
   vcxFlowUpdateMsgsFromAgent,
   vcxFlowGetMsgsFromAgent,
@@ -61,37 +68,42 @@ let bobWh
 const WALLET_KDF = 'RAW'
 let sendToAgency
 
-let tmpPgDb
-const pgUrl = process.env.PG_WALLET_URL || 'localhost:5432'
-
 beforeAll(async () => {
-  jest.setTimeout(1000 * 120)
-  if (process.env.ENABLE_VCX_LOGS) {
-    setupVcxLogging()
+  try {
+    jest.setTimeout(1000 * 120)
+    if (process.env.ENABLE_VCX_LOGS) {
+      setupVcxLogging()
+    }
+    const dbName = `agency_test_${uuid.v4()}`.replace(/-/gi, '_')
+    const tmpPgDb = await createTestPgDb(dbName)
+    await createMysqlDatabase(dbName, 'localhost', 3306, 'root', 'mysecretpassword')
+
+    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, dbName)
+    appConfig.PG_STORE_HOST = tmpPgDb.info.host
+    appConfig.PG_STORE_PORT = tmpPgDb.info.port
+    appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
+    appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
+    appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
+    app = await buildApplication(appConfig)
+
+    serviceIndyWallets = app.serviceIndyWallets
+    entityForwardAgent = app.entityForwardAgent
+    serviceStorage = app.serviceStorage
+    resolver = app.resolver
+    router = app.router
+
+    const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
+    sendToAgency = agencyClient.sendToAgency
+    const agencyInfo = await agencyClient.getAgencyInfo()
+    agencyVerkey = agencyInfo.verkey
+  } catch (err) {
+    console.error(err.stack)
+    throw err
   }
-  tmpPgDb = await createTestPgDb()
-  const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, pgUrl)
-  appConfig.PG_STORE_HOST = tmpPgDb.info.host
-  appConfig.PG_STORE_PORT = tmpPgDb.info.port
-  appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
-  appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
-  appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
-  app = await buildApplication(appConfig)
-
-  serviceIndyWallets = app.serviceIndyWallets
-  entityForwardAgent = app.entityForwardAgent
-  serviceStorage = app.serviceStorage
-  resolver = app.resolver
-  router = app.router
-
-  const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
-  sendToAgency = agencyClient.sendToAgency
-  const agencyInfo = await agencyClient.getAgencyInfo()
-  agencyVerkey = agencyInfo.verkey
 })
 
 afterAll(async () => {
-  cleanUpApplication(app)
+  await cleanUpApplication(app)
 //   await tmpPgDb.dropDb()
 })
 
@@ -305,8 +317,6 @@ describe('onboarding', () => {
     const { msgsByConns } = msgReply
     expect(Array.isArray(msgsByConns)).toBeTruthy()
     expect(msgsByConns.length).toBe(3)
-
-    console.log(JSON.stringify(msgsByConns))
 
     const msgsByConn1 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn1UserPwDid)
     expect(msgsByConn1).toBeDefined()
