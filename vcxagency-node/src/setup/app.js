@@ -28,7 +28,6 @@ const { waitUntilConnectsToPostgres } = require('../service/storage/pgstorage-en
 const { buildRedisClients } = require('../service/storage/redis-client-builder')
 const logger = require('../logging/logger-builder')(__filename)
 const { indyBuildGetSchemaRequest } = require('../../../easy-indysdk')
-const { indyLoadPostgresPlugin } = require('easy-indysdk')
 const { indySetDefaultLogger } = require('easy-indysdk')
 const sleep = require('sleep-promise')
 const { assureMysqlDatabase } = require('easy-indysdk')
@@ -62,30 +61,6 @@ function getStorageInfoMysql (appConfig) {
   }
 }
 
-function getStorageInfoPgsql (appConfig) {
-  const walletStorageConfig = {
-    url: appConfig.PG_WALLET_URL,
-    // 'tls', todo: add this when tls code is merged into pgsql plugin
-    max_connections: appConfig.PG_WALLET_MAX_CONNECTIONS, /// Sets the maximum number of connections managed by the pool.
-    min_idle_count: 0, // value of 0 currently enforced by MultiWalletSingleTableSharedPool pg wallet strategy
-    connection_timeout: appConfig.PG_WALLET_CONNECTION_TIMEOUT, /// Sets the idle timeout used by the pool.
-    wallet_scheme: 'MultiWalletSingleTableSharedPool' // strategy used by wallet plugin
-    // 'database_name' : todo: add support into pgsql for this when using MultiWalletSingleTableSharedPool strategy
-  }
-
-  const walletStorageCredentials = {
-    account: appConfig.PG_WALLET_ACCOUNT,
-    password: appConfig.PG_WALLET_PASSWORD_SECRET,
-    admin_account: appConfig.PG_WALLET_ADMIN_ACCOUNT,
-    admin_password: appConfig.PG_WALLET_ADMIN_PASSWORD_SECRET
-  }
-  return {
-    walletStorageType: 'postgres_storage',
-    walletStorageConfig,
-    walletStorageCredentials
-  }
-}
-
 async function buildApplication (appConfig) {
   const agencyWalletName = appConfig.AGENCY_WALLET_NAME
   const agencyDid = appConfig.AGENCY_DID
@@ -113,12 +88,8 @@ async function buildApplication (appConfig) {
     const walletDbName = appConfig.MYSQL_WALLET_DBNAME
     await assureMysqlDatabase(walletDbName, appConfig.MYSQL_WALLET_HOST, appConfig.MYSQL_WALLET_PORT, appConfig.MYSQL_WALLET_ACCOUNT, appConfig.MYSQL_WALLET_PASSWORD_SECRET);
     ({ walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoMysql(appConfig))
-  } else if (appConfig.WALLET_TYPE === 'pgsql') {
-    ({ walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoPgsql(appConfig))
-    logger.info(`Initializing postgres plugin with config: ${JSON.stringify(walletStorageConfig)}`)
-    await indyLoadPostgresPlugin(walletStorageConfig, walletStorageCredentials)
   } else {
-    throw Error(`Unknown storage type ${appConfig.WALLET_TYPE}`)
+    throw Error(`Unsupported storage type ${appConfig.WALLET_TYPE}`)
   }
 
   const redisUrl = appConfig.REDIS_URL

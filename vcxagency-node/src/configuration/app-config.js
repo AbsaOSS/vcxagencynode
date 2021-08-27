@@ -111,21 +111,7 @@ function validateFinalConfig (appConfig) {
   }
 
   if (appConfig.WALLET_TYPE === 'pgsql') {
-    if (appConfig.PG_WALLET_ACCOUNT) {
-      throw new Error('"PG_WALLET_ACCOUNT" is required')
-    }
-    if (appConfig.PG_WALLET_PASSWORD_SECRET) {
-      throw new Error('"PG_WALLET_PASSWORD_SECRET" is required')
-    }
-    if (appConfig.PG_WALLET_ADMIN_ACCOUNT) {
-      throw new Error('"PG_WALLET_ADMIN_ACCOUNT" is required')
-    }
-    if (appConfig.PG_WALLET_ADMIN_PASSWORD_SECRET) {
-      throw new Error('"PG_WALLET_ADMIN_PASSWORD_SECRET" is required')
-    }
-    if (appConfig.PG_WALLET_URL) {
-      throw new Error('"PG_WALLET_URL" is required')
-    }
+    throw new Error('WALLET_TYPE "pgsql" is not supported anymore')
   }
   if (appConfig.WALLET_TYPE === 'mysql') {
     if (!appConfig.MYSQL_WALLET_HOST) {
