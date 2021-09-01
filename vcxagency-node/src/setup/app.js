@@ -29,7 +29,7 @@ const { buildRedisClients } = require('../service/storage/redis-client-builder')
 const logger = require('../logging/logger-builder')(__filename)
 const assert = require('assert')
 const { indyLoadPostgresPlugin } = require('easy-indysdk')
-const { indySetLogger } = require('easy-indysdk')
+const { indySetDefaultLogger } = require('easy-indysdk')
 
 function _getStorageInfoDefault () { // eslint-disable-line
   return {
@@ -77,7 +77,8 @@ async function buildApplication (appConfig) {
     database: appConfig.PG_STORE_DATABASE
   }
   if (appConfig.LOG_ENABLE_INDYSDK === 'true') {
-    indySetLogger(logger)
+    logger.info('Enabling indy logs.')
+    indySetDefaultLogger('trace')
   }
   const { walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoPgsql(appConfig)
   logger.info(`Initializing postgres plugin with config: ${JSON.stringify(walletStorageConfig)}`)

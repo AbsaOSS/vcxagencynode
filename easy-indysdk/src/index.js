@@ -36,4 +36,8 @@ function indySetLogger (winstonLogger) {
   })
 }
 
-module.exports = { ...crypto, ...wallet, indySetLogger }
+function indySetDefaultLogger (pattern) {
+  indy.setDefaultLogger(pattern)
+}
+
+module.exports = { ...crypto, ...wallet, indySetLogger, indySetDefaultLogger }
