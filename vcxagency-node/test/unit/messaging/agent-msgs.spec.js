@@ -22,8 +22,7 @@ const {
   indyCreateWallet,
   indyCreateAndStoreMyDid,
   indyOpenWallet,
-  indyGenerateWalletKey,
-  createMysqlDatabase
+  indyGenerateWalletKey
 } = require('easy-indysdk')
 const {
   vcxFlowUpdateMsgsFromAgent,
@@ -35,7 +34,7 @@ const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
 const { getBaseAppConfig } = require('./common')
-const { createTestPgDb } = require('../../pg-tmpdb')
+const { createDbSchemaApplication, createDbSchemaWallets } = require('dbutils')
 const { setupVcxLogging } = require('../../utils')
 const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
 const { buildAgencyClientVirtual } = require('./common')
@@ -68,22 +67,20 @@ let bobWh
 const WALLET_KDF = 'RAW'
 let sendToAgency
 
+let tmpDbData
+let tmpDbWallet
+
 beforeAll(async () => {
   try {
     jest.setTimeout(1000 * 120)
     if (process.env.ENABLE_VCX_LOGS) {
       setupVcxLogging()
     }
-    const dbName = `agency_test_${uuid.v4()}`.replace(/-/gi, '_')
-    const tmpPgDb = await createTestPgDb(dbName)
-    await createMysqlDatabase(dbName, 'localhost', 3306, 'root', 'mysecretpassword')
+    const suiteId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
+    tmpDbData = await createDbSchemaApplication(suiteId)
+    tmpDbWallet = await createDbSchemaWallets(suiteId)
 
-    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, dbName)
-    appConfig.PG_STORE_HOST = tmpPgDb.info.host
-    appConfig.PG_STORE_PORT = tmpPgDb.info.port
-    appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
-    appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
-    appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
+    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, tmpDbWallet.info.database, tmpDbData.info.database)
     app = await buildApplication(appConfig)
 
     serviceIndyWallets = app.serviceIndyWallets
@@ -104,7 +101,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await cleanUpApplication(app)
-//   await tmpPgDb.dropDb()
+  await tmpDbData.dropDb()
+  await tmpDbWallet.dropDb()
 })
 
 beforeEach(async () => {
@@ -352,16 +350,11 @@ describe('onboarding', () => {
   it('should update statusCodes of messages', async () => {
     // act
     const uidsByConn = [
-      { pairwiseDID: aconn1UserPwDid, uids: [msg1Id, msg2Id, 'wronguid123'] },
-      { pairwiseDID: aconn2UserPwDid, uids: [msg6Id, 'wronguid456'] }
+      { pairwiseDID: aconn1UserPwDid, uids: [msg1Id, msg2Id] },
+      { pairwiseDID: aconn2UserPwDid, uids: [msg6Id] }
     ]
     const updateRes = await vcxFlowUpdateMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, uidsByConn, 'MS-106')
     expect(updateRes['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS')
-    expect(updateRes.failed.length).toBe(2)
-    const failed1 = updateRes.failed.find(update => update.pairwiseDID === aconn1UserPwDid)
-    const failed2 = updateRes.failed.find(update => update.pairwiseDID === aconn2UserPwDid)
-    expect(failed1.uids[0]).toBe('wronguid123')
-    expect(failed2.uids[0]).toBe('wronguid456')
 
     expect(updateRes.updatedUidsByConns.length).toBe(2)
     const updated1 = updateRes.updatedUidsByConns.find(update => update.pairwiseDID === aconn1UserPwDid)
@@ -371,12 +364,10 @@ describe('onboarding', () => {
     expect(updated1.uids.length).toBe(2)
     expect(updated1.uids.includes(msg1Id)).toBeTruthy()
     expect(updated1.uids.includes(msg2Id)).toBeTruthy()
-    expect(updated1.uids.includes('wronguid123')).toBeFalsy()
 
     expect(updated2).toBeDefined()
     expect(updated2.uids.length).toBe(1)
     expect(updated2.uids.includes(msg6Id)).toBeTruthy()
-    expect(updated2.uids.includes('wronguid123')).toBeFalsy()
 
     const msgReply = await vcxFlowGetMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, [aconn1UserPwDid, aconn2UserPwDid], [], [])
     const { msgsByConns } = msgReply

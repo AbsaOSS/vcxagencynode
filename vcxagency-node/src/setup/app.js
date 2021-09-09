@@ -16,43 +16,31 @@
 
 'use strict'
 
-const { createPgStorageEntities } = require('../service/storage/pgstorage-entities')
+const { createDataStorage } = require('../service/storage/storage')
 const { createRouter } = require('../service/delivery/router')
 const { createResolver } = require('../service/delivery/resolver')
 const { buildForwardAgent } = require('../service/entities/fwa/entity-fwa')
 const { createServiceIndyWallets } = require('../service/state/service-indy-wallets')
-const { assureDb } = require('../service/storage/pgdb')
 const { createServiceNewMessages } = require('../service/notifications/service-new-messages')
 const { createServiceNewMessagesUnavailable } = require('../service/notifications/service-new-messages-unavailable')
-const { waitUntilConnectsToPostgres } = require('../service/storage/pgstorage-entities')
+const { waitUntilConnectsToMysql } = require('../service/storage/storage')
 const { buildRedisClients } = require('../service/storage/redis-client-builder')
 const logger = require('../logging/logger-builder')(__filename)
-const { indyBuildGetSchemaRequest } = require('../../../easy-indysdk')
 const { indySetDefaultLogger } = require('easy-indysdk')
-const sleep = require('sleep-promise')
-const { assureMysqlDatabase } = require('easy-indysdk')
 const { indyBuildMysqlStorageCredentials } = require('../../../easy-indysdk')
 const { indyBuildMysqlStorageConfig } = require('../../../easy-indysdk')
 
-function _getStorageInfoDefault () { // eslint-disable-line
-  return {
-    storageType: 'default',
-    storageConfig: null,
-    storageCredentials: null
-  }
-}
-
 function getStorageInfoMysql (appConfig) {
   const walletStorageConfig = indyBuildMysqlStorageConfig(
-    appConfig.MYSQL_WALLET_HOST,
-    appConfig.MYSQL_WALLET_HOST,
-    appConfig.MYSQL_WALLET_PORT,
-    appConfig.MYSQL_WALLET_DBNAME,
-    appConfig.MYSQL_WALLET_CONNECTION_LIMIT
+    appConfig.MYSQL_HOST,
+    appConfig.MYSQL_HOST,
+    appConfig.MYSQL_PORT,
+    appConfig.MYSQL_DATABASE_WALLET,
+    appConfig.MYSQL_DATABASE_WALLET_CONNECTION_LIMIT
   )
   const walletStorageCredentials = indyBuildMysqlStorageCredentials(
-    appConfig.MYSQL_WALLET_ACCOUNT,
-    appConfig.MYSQL_WALLET_PASSWORD_SECRET
+    appConfig.MYSQL_ACCOUNT,
+    appConfig.MYSQL_PASSWORD_SECRET
   )
   return {
     walletStorageType: 'mysql',
@@ -68,29 +56,17 @@ async function buildApplication (appConfig) {
   const agencyWalletKey = appConfig.AGENCY_WALLET_KEY_SECRET
 
   const appStorageConfig = {
-    host: appConfig.PG_STORE_HOST,
-    port: appConfig.PG_STORE_PORT,
-    user: appConfig.PG_STORE_ACCOUNT,
-    password: appConfig.PG_STORE_PASSWORD_SECRET,
-    database: appConfig.PG_STORE_DATABASE
+    host: appConfig.MYSQL_HOST,
+    port: appConfig.MYSQL_PORT,
+    user: appConfig.MYSQL_ACCOUNT,
+    password: appConfig.MYSQL_PASSWORD_SECRET,
+    database: appConfig.MYSQL_DATABASE_APPLICATION
   }
   if (appConfig.LOG_ENABLE_INDYSDK === 'true') {
     logger.info('Enabling indy logs.')
     indySetDefaultLogger('trace')
   }
-
-  await indyBuildGetSchemaRequest()
-  logger.info('indyBuildGetSchemaRequest was called')
-  await sleep(3000)
-
-  let walletStorageType, walletStorageConfig, walletStorageCredentials
-  if (appConfig.WALLET_TYPE === 'mysql') {
-    const walletDbName = appConfig.MYSQL_WALLET_DBNAME
-    await assureMysqlDatabase(walletDbName, appConfig.MYSQL_WALLET_HOST, appConfig.MYSQL_WALLET_PORT, appConfig.MYSQL_WALLET_ACCOUNT, appConfig.MYSQL_WALLET_PASSWORD_SECRET);
-    ({ walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoMysql(appConfig))
-  } else {
-    throw Error(`Unsupported storage type ${appConfig.WALLET_TYPE}`)
-  }
+  const { walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoMysql(appConfig)
 
   const redisUrl = appConfig.REDIS_URL
   const agencyType = appConfig.AGENCY_TYPE
@@ -110,9 +86,8 @@ async function buildApplication (appConfig) {
 
   const serviceIndyWallets = await createServiceIndyWallets(walletStorageType, walletStorageConfig, walletStorageCredentials)
   const { user, password, host, port, database } = appStorageConfig
-  await waitUntilConnectsToPostgres(appStorageConfig, 5, 2000)
-  await assureDb(user, password, host, port, database)
-  const serviceStorage = await createPgStorageEntities(appStorageConfig)
+  await waitUntilConnectsToMysql(user, password, host, port, database, 5, 2000)
+  const serviceStorage = await createDataStorage(appStorageConfig)
   const entityForwardAgent = await buildForwardAgent(serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
   const resolver = createResolver(serviceIndyWallets, serviceStorage, serviceNewMessages, entityForwardAgent)
   const router = createRouter(resolver)

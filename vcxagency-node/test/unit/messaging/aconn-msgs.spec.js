@@ -26,10 +26,10 @@ const { indyCreateWallet, indyCreateAndStoreMyDid, indyOpenWallet, indyGenerateW
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
-const { createMysqlDatabase } = require('easy-indysdk')
+const { createDbSchemaWallets } = require('dbutils')
 const { getBaseAppConfig } = require('./common')
 const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
-const { createTestPgDb } = require('../../pg-tmpdb')
+const { createDbSchemaApplication } = require('dbutils')
 const { setupVcxLogging } = require('../../utils')
 const { buildAgencyClientVirtual } = require('./common')
 
@@ -55,22 +55,20 @@ let agencyUserWh
 const WALLET_KDF = 'RAW'
 let sendToAgency
 
+let tmpDbData
+let tmpDbWallet
+
 beforeAll(async () => {
   try {
     jest.setTimeout(1000 * 120)
     if (process.env.ENABLE_VCX_LOGS) {
       setupVcxLogging()
     }
-    const dbName = `agency_test_${uuid.v4()}`.replace(/-/gi, '_')
-    const tmpPgDb = await createTestPgDb(dbName)
-    await createMysqlDatabase(dbName, 'localhost', 3306, 'root', 'mysecretpassword')
+    const suiteId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
+    tmpDbData = await createDbSchemaApplication(suiteId)
+    tmpDbWallet = await createDbSchemaWallets(suiteId)
 
-    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, dbName)
-    appConfig.PG_STORE_HOST = tmpPgDb.info.host
-    appConfig.PG_STORE_PORT = tmpPgDb.info.port
-    appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
-    appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
-    appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
+    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, tmpDbWallet.info.database, tmpDbData.info.database)
     app = await buildApplication(appConfig)
 
     serviceIndyWallets = app.serviceIndyWallets
@@ -91,7 +89,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await cleanUpApplication(app)
-//   await tmpPgDb.dropDb()
+  await tmpDbData.dropDb()
+  await tmpDbWallet.dropDb()
 })
 
 beforeEach(async () => {

@@ -34,7 +34,7 @@ const {
   parseAuthcrypted
 } = require('vcxagency-client')
 const { pack } = require('easy-indysdk')
-const { storedMessageToResponseFormat } = require('../../storage/store-util')
+const { storedMessageToResponseFormat } = require('../../storage/storage-utils')
 const { createAgentConnectionData } = require('../agent-connection/agent-connection')
 const { createAgentWallet } = require('./agent-internal')
 const logger = require('../../../logging/logger-builder')(__filename)

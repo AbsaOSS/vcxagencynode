@@ -57,30 +57,13 @@ const configValidation = Joi.object().keys({
   REDIS_URL: Joi.string(),
   AGENCY_TYPE: Joi.string().valid('enterprise', 'client').required(),
 
-  WALLET_TYPE: Joi.string().valid('pgsql', 'mysql').required(),
-
-  PG_STORE_HOST: Joi.string().required(),
-  PG_STORE_PORT: Joi.number().integer().min(1025).max(65535).required(),
-  PG_STORE_ACCOUNT: Joi.string().required(),
-  PG_STORE_PASSWORD_SECRET: Joi.string().required(),
-  PG_STORE_DATABASE: Joi.string().required(),
-
-  PG_WALLET_ACCOUNT: Joi.string(),
-  PG_WALLET_PASSWORD_SECRET: Joi.string(),
-  PG_WALLET_ADMIN_ACCOUNT: Joi.string(),
-  PG_WALLET_ADMIN_PASSWORD_SECRET: Joi.string(),
-
-  PG_WALLET_URL: Joi.string(),
-  PG_WALLET_MAX_CONNECTIONS: Joi.number().integer().min(50).max(999).default(90),
-  PG_WALLET_CONNECTION_TIMEOUT_MINS: Joi.number().integer().min(1).max(100).default(30),
-
-  MYSQL_WALLET_HOST: Joi.string(),
-  MYSQL_WALLET_PORT: Joi.number().integer().default(3306),
-  MYSQL_WALLET_DBNAME: Joi.string().default('wallets_agency'),
-  MYSQL_WALLET_CONNECTION_LIMIT: Joi.number().integer().min(1).max(100).default(50),
-
-  MYSQL_WALLET_ACCOUNT: Joi.string(),
-  MYSQL_WALLET_PASSWORD_SECRET: Joi.string(),
+  MYSQL_HOST: Joi.string().required(),
+  MYSQL_PORT: Joi.number().integer().min(1025).max(65535).default(3306).required(),
+  MYSQL_ACCOUNT: Joi.string().required(),
+  MYSQL_PASSWORD_SECRET: Joi.string().required(),
+  MYSQL_DATABASE_APPLICATION: Joi.string().required(),
+  MYSQL_DATABASE_WALLET: Joi.string().required(),
+  MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: Joi.number().integer().min(1).max(100).default(50),
 
   AWS_S3_PATH_CERT: Joi.string(),
   AWS_S3_BUCKET_CERT: Joi.string(),

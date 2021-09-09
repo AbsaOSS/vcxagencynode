@@ -17,8 +17,8 @@
 'use strict'
 
 /* eslint-env jest */
-const { createTestPgDb } = require('../../pg-tmpdb')
-const { createPgStorageEntities } = require('../../../src/service/storage/pgstorage-entities')
+const { createDbSchemaApplication } = require('dbutils')
+const { createDataStorage } = require('../../../src/service/storage/storage')
 const { performance } = require('perf_hooks')
 const { Client } = require('pg')
 const logger = require('../../tools/logger')(__filename)
@@ -36,8 +36,8 @@ const importPath = process.env.IMPORT_PATH || '/tmp/agencydata/agency-messages.c
 let storage
 let pgClient
 beforeAll(async () => {
-  const { info } = await createTestPgDb()
-  storage = await createPgStorageEntities(info)
+  const { info } = await createDbSchemaApplication()
+  storage = await createDataStorage(info)
   logger.info(`Using pgsql storage: ${JSON.stringify(info)}`)
   pgClient = new Client(info)
   await pgClient.connect()

@@ -19,7 +19,6 @@
 const indy = require('indy-sdk')
 const crypto = require('./crypto')
 const wallet = require('./wallet')
-const dbutils = require('./dbutils')
 
 function indySetLogger (winstonLogger) {
   indy.setLogger(function (level, target, message, modulePath, file, line) {
@@ -45,4 +44,4 @@ function indyBuildGetSchemaRequest () {
   indy.buildGetSchemaRequest('Tzmf8z4UrFec6RGMEnH3F5', 'QosCTowZAZxYU5RSeMh9UJ:2:acmetestprod:1.0')
 }
 
-module.exports = { ...crypto, ...wallet, ...dbutils, indySetLogger, indySetDefaultLogger, indyBuildGetSchemaRequest }
+module.exports = { ...crypto, ...wallet, indySetLogger, indySetDefaultLogger, indyBuildGetSchemaRequest }

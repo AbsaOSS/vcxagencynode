@@ -17,60 +17,7 @@
 'use strict'
 
 const indy = require('indy-sdk')
-const os = require('os')
 const { indyErrorCodeWalletItemNotFound } = require('./indy-errors')
-
-const extension = { darwin: '.dylib', linux: '.so', win32: '.dll' }
-const libPath = { darwin: '/usr/local/lib/', linux: '/usr/lib/', win32: 'c:\\windows\\system32\\' }
-
-function getLibraryPath (libraryName) {
-  const platform = os.platform()
-  const postfix = extension[platform.toLowerCase()] || extension.linux
-  const libDir = libPath[platform.toLowerCase()] || libPath.linux
-  return `${libDir}${libraryName}${postfix}`
-}
-
-async function indyLoadPostgresPlugin (storageConfig, storageCredentials) {
-  // occurrence of require('ffi') any file a jest test might require is causing following failures:
-  // Maximum call stack size exceeded
-  // For more info: https://github.com/facebook/jest/issues/3552
-  // So we are requiring ffi only when really needed. This avoids failures when running unit tests using easy-indysdk
-  // which are not using indy postgres plugin.
-  const ffi = require('ffi-napi')
-  const myffi = ffi.Library(getLibraryPath('libindystrgpostgres'), {
-    init_storagetype: ['void', ['string', 'string']],
-    postgresstorage_init: ['void', []]
-  })
-  console.log('postgresstorage_init calling')
-  await myffi.postgresstorage_init()
-  console.log('postgresstorage_init called')
-  await myffi.init_storagetype(JSON.stringify(storageConfig), JSON.stringify(storageCredentials))
-  console.log('init_storagetype called')
-}
-
-/**
- * Creates JSON structure required to initialize pgsql plugin via function indyLoadPostgresPlugin
- */
-function indyBuildPostgresCredentials (account, password, adminAccount, adminPassword) {
-  return {
-    account: account,
-    password: password,
-    admin_account: adminAccount,
-    admin_password: adminPassword
-  }
-}
-
-/**
- * Creates JSON structure required to initialize pgsql plugin via function indyLoadPostgresPlugin
- */
-function indyBuildPostgresStorageConfig (url, maxConnections, connectionTimeout, walletScheme) {
-  return {
-    url: url,
-    max_connections: maxConnections,
-    connection_timeout: connectionTimeout,
-    wallet_scheme: walletScheme
-  }
-}
 
 function indyBuildMysqlStorageCredentials (user, pass) {
   return {
@@ -195,9 +142,6 @@ module.exports = {
   indyListPairwise,
   indyListMyDidsWithMeta,
   indyKeyForLocalDid,
-  indyLoadPostgresPlugin,
-  indyBuildPostgresCredentials,
-  indyBuildPostgresStorageConfig,
   indyBuildMysqlStorageCredentials,
   indyBuildMysqlStorageConfig
 }

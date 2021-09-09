@@ -61,7 +61,7 @@ async function buildAgencyClientVirtual (entityForwardAgent) {
   }
 }
 
-function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, walletsDbName) {
+function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, walletsDbName, applicationDbName) {
   return {
     AGENCY_WALLET_NAME: agencyWalletName,
     AGENCY_DID: agencyDid,
@@ -74,14 +74,14 @@ function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWallet
     REDIS_URL: redisUrl,
     AGENCY_TYPE: redisUrl ? 'client' : 'enterprise',
 
-    WALLET_TYPE: 'mysql',
+    MYSQL_HOST: 'localhost',
+    MYSQL_PORT: 3306,
+    MYSQL_ACCOUNT: 'root',
+    MYSQL_PASSWORD_SECRET: 'mysecretpassword',
+    MYSQL_DATABASE_APPLICATION: applicationDbName,
+    MYSQL_DATABASE_WALLET: walletsDbName,
+    MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: 50
 
-    MYSQL_WALLET_HOST: 'localhost',
-    MYSQL_WALLET_PORT: 3306,
-    MYSQL_WALLET_DBNAME: walletsDbName,
-    MYSQL_WALLET_CONNECTION_LIMIT: 50,
-    MYSQL_WALLET_ACCOUNT: 'root',
-    MYSQL_WALLET_PASSWORD_SECRET: 'mysecretpassword'
   }
 }
 

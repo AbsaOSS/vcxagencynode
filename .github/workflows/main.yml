@@ -371,7 +371,6 @@ jobs:
         run: |
           set -x
           docker-compose -f ci/docker-compose.yml \
-                         -f ci/docker-compose.pg.yml \
                          -f ci/docker-compose.mysql.yml \
                          -f ci/docker-compose.redis.yml \
                          up -d
@@ -549,13 +548,11 @@ jobs:
           docker-compose -f ./ci/docker-compose.yml \
                          -f ./ci/docker-compose.agency-ca.yml \
                          -f ./ci/docker-compose.mysql.yml \
-                         -f ./ci/docker-compose.pg.yml \
                          -f ./ci/docker-compose.redis.yml up -d
           sleep 10
           docker-compose -f ./ci/docker-compose.yml \
                          -f ./ci/docker-compose.agency-ca.yml \
                          -f ./ci/docker-compose.mysql.yml \
-                         -f ./ci/docker-compose.pg.yml \
                          -f ./ci/docker-compose.redis.yml logs
 
       - name: E2E Test client agency
@@ -572,7 +569,6 @@ jobs:
           export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
           docker-compose -f ./ci/docker-compose.yml \
                          -f ./ci/docker-compose.agency-ca.yml \
-                         -f ./ci/docker-compose.pg.yml \
                          -f ./ci/docker-compose.mysql.yml \
                          -f ./ci/docker-compose.redis.yml \
                          down
@@ -584,12 +580,10 @@ jobs:
           docker-compose -f ./ci/docker-compose.yml \
                          -f ./ci/docker-compose.agency-ea.yml \
                          -f ./ci/docker-compose.mysql.yml \
-                         -f ./ci/docker-compose.pg.yml \
                           up -d
           sleep 10
           docker-compose -f ./ci/docker-compose.yml \
                          -f ./ci/docker-compose.agency-ea.yml \
-                         -f ./ci/docker-compose.pg.yml \
                          -f ./ci/docker-compose.mysql.yml \
                          logs
 
