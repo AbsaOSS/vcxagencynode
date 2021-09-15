@@ -12,9 +12,6 @@ services:
     image: ${AGENCY_IMAGE:-vcxagency:latest}
     container_name: agency
     logging: *service-logging
-    depends_on:
-      - postgres
-      - mysql
     environment:
       - LOG_JSON_TO_CONSOLE=false
       - LOG_LEVEL=info
