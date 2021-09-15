@@ -541,19 +541,13 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v2
 
-      - name: Run client agency services
+      - name: Run databases
         run: |
           set -x
           export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
           docker-compose -f ./ci/docker-compose.yml \
-                         -f ./ci/docker-compose.agency-ca.yml \
                          -f ./ci/docker-compose.mysql.yml \
                          -f ./ci/docker-compose.redis.yml up -d
-          sleep 10
-          docker-compose -f ./ci/docker-compose.yml \
-                         -f ./ci/docker-compose.agency-ca.yml \
-                         -f ./ci/docker-compose.mysql.yml \
-                         -f ./ci/docker-compose.redis.yml logs
 
       - name: Create Wallet DB schema, run migrations
         run: |
@@ -580,6 +574,16 @@ jobs:
                           -e MYSQL_PORT=3306 \
                          "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "cd /home/node/dbutils && yarn install && yarn run schema-data:migrate"
+
+      - name: Run client agency services
+        run: |
+          set -x
+          export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
+          docker-compose -f ./ci/docker-compose.yml \
+                         -f ./ci/docker-compose.agency-ca.yml up -d
+          sleep 10
+          docker-compose -f ./ci/docker-compose.yml \
+                         -f ./ci/docker-compose.agency-ca.yml logs
 
       - name: E2E Test client agency
         run: |
