@@ -30,19 +30,14 @@ services:
       - AGENCY_WALLET_KEY_SECRET=98765432109876543210
 
       - AGENCY_TYPE=enterprise
-      - WALLET_TYPE=mysql
 
-      - MYSQL_WALLET_HOST=mysql.absadocker
-      - MYSQL_WALLET_PORT=3306
-      - MYSQL_WALLET_ACCOUNT=root
-      - MYSQL_WALLET_PASSWORD_SECRET=mysecretpassword
-      - MYSQL_WALLET_DB_NAME=agency-ea
-
-      - PG_STORE_HOST=postgres.absadocker
-      - PG_STORE_PORT=5432
-      - PG_STORE_ACCOUNT=postgres
-      - PG_STORE_PASSWORD_SECRET=mysecretpassword
-      - PG_STORE_DATABASE=storage-ea
+      - MYSQL_HOST=mysql.absadocker
+      - MYSQL_PORT=3306
+      - MYSQL_ACCOUNT=root
+      - MYSQL_PASSWORD_SECRET=mysecretpassword
+      - MYSQL_DATABASE_APPLICATION=agency_application
+      - MYSQL_DATABASE_WALLET=ea_agency_wallets
+      - MYSQL_DATABASE_WALLET_CONNECTION_LIMIT=50
 
       - SERVER_ENABLE_TLS=false
     networks:

@@ -555,6 +555,32 @@ jobs:
                          -f ./ci/docker-compose.mysql.yml \
                          -f ./ci/docker-compose.redis.yml logs
 
+      - name: Create Wallet DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode \
+                         --network host \
+                          -e MYSQL_DATABASE=ca_agency_wallets \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=mysql.absadocker \
+                          -e MYSQL_PORT=3306 \
+                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema-wallet:migrate"
+
+      - name: Create Application DB schema, run migrations
+        run: |
+          set -x
+          docker run --rm --name vcxagencynode \
+                         --network host \
+                          -e MYSQL_DATABASE=agency_application \
+                          -e MYSQL_USER=root \
+                          -e MYSQL_PASSWORD=mysecretpassword \
+                          -e MYSQL_HOST=mysql.absadocker \
+                          -e MYSQL_PORT=3306 \
+                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
+                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema-data:migrate"
+
       - name: E2E Test client agency
         run: |
           set -x
@@ -573,27 +599,27 @@ jobs:
                          -f ./ci/docker-compose.redis.yml \
                          down
 
-      - name: Run enterprise agency services
-        run: |
-          set -x
-          export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
-          docker-compose -f ./ci/docker-compose.yml \
-                         -f ./ci/docker-compose.agency-ea.yml \
-                         -f ./ci/docker-compose.mysql.yml \
-                          up -d
-          sleep 10
-          docker-compose -f ./ci/docker-compose.yml \
-                         -f ./ci/docker-compose.agency-ea.yml \
-                         -f ./ci/docker-compose.mysql.yml \
-                         logs
-
-      - name: E2E Test enterprise agency
-        run: |
-          set -x
-          docker run --rm --name vcxagencynode \
-                         --network host \
-                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
-                         bash -c "cd /home/node/vcxagency-client && yarn install && yarn run test:e2e:ea"
+#      - name: Run enterprise agency services
+#        run: |
+#          set -x
+#          export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
+#          docker-compose -f ./ci/docker-compose.yml \
+#                         -f ./ci/docker-compose.agency-ea.yml \
+#                         -f ./ci/docker-compose.mysql.yml \
+#                          up -d
+#          sleep 10
+#          docker-compose -f ./ci/docker-compose.yml \
+#                         -f ./ci/docker-compose.agency-ea.yml \
+#                         -f ./ci/docker-compose.mysql.yml \
+#                         logs
+#
+#      - name: E2E Test enterprise agency
+#        run: |
+#          set -x
+#          docker run --rm --name vcxagencynode \
+#                         --network host \
+#                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
+#                         bash -c "cd /home/node/vcxagency-client && yarn install && yarn run test:e2e:ea"
 
   lint-vcxagency-node:
     runs-on: ubuntu-latest
