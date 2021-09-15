@@ -4,6 +4,11 @@ FROM ${AGENCY_BASE_IMAGE}
 RUN npm install -g yarn
 
 USER node
+
+WORKDIR /home/node/dbutils
+COPY ./dbutils ./
+RUN yarn install --production
+
 WORKDIR /home/node/easy-indysdk
 COPY ./easy-indysdk ./
 RUN yarn install --production
