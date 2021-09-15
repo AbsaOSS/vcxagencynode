@@ -563,7 +563,7 @@ jobs:
                           -e MYSQL_DATABASE=ca_agency_wallets \
                           -e MYSQL_USER=root \
                           -e MYSQL_PASSWORD=mysecretpassword \
-                          -e MYSQL_HOST=mysql.absadocker \
+                          -e MYSQL_HOST=localhost \
                           -e MYSQL_PORT=3306 \
                          "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "cd /home/node/dbutils && yarn install && yarn run schema-wallet:migrate"
@@ -576,7 +576,7 @@ jobs:
                           -e MYSQL_DATABASE=agency_application \
                           -e MYSQL_USER=root \
                           -e MYSQL_PASSWORD=mysecretpassword \
-                          -e MYSQL_HOST=mysql.absadocker \
+                          -e MYSQL_HOST=localhost \
                           -e MYSQL_PORT=3306 \
                          "$CACHED_DOCKER_IMG_NAME_AGENCY" \
                          bash -c "cd /home/node/dbutils && yarn install && yarn run schema-data:migrate"
