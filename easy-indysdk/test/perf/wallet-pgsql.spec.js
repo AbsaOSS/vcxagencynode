@@ -31,7 +31,7 @@ const { performance } = require('perf_hooks')
 const sleep = require('sleep-promise')
 const indy = require('indy-sdk')
 const { indyBuildMysqlStorageConfig, indyBuildMysqlStorageCredentials } = require('../../src')
-const { createDbSchemaWallets, createDbSchemaApplication } = require('../../../dbutils')
+const { createDbSchemaWallets } = require('../../../dbutils')
 
 let walletStorageConfig
 let walletStorageCredentials
@@ -60,13 +60,13 @@ function getStorageInfoMysql (dbSchemaWallet) {
 
 beforeAll(() => {
   jest.setTimeout(1000 * 60)
-  indySetDefaultLogger('error');
+  indySetDefaultLogger('error')
 })
 
 beforeEach(async () => {
   const testId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
   tmpDbWallet = await createDbSchemaWallets(testId);
-  ({walletStorageConfig, walletStorageCredentials} = getStorageInfoMysql(tmpDbWallet.info.database));
+  ({ walletStorageConfig, walletStorageCredentials } = getStorageInfoMysql(tmpDbWallet.info.database))
 })
 
 afterEach(async () => {

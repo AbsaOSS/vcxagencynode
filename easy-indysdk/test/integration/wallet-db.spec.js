@@ -21,7 +21,7 @@
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
-const { createDbSchemaWallets, createDbSchemaApplication } = require('dbutils')
+const { createDbSchemaWallets } = require('dbutils')
 const {
   indySetDefaultLogger,
   indyDeleteWallet,
@@ -39,7 +39,6 @@ let walletStorageConfig
 let walletStorageCredentials
 const storageType = 'mysql'
 
-let tmpDbData
 let tmpDbWallet
 
 function getStorageInfoMysql (dbSchemaWallet) {
@@ -63,12 +62,11 @@ function getStorageInfoMysql (dbSchemaWallet) {
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60)
-  indySetDefaultLogger('error');
+  indySetDefaultLogger('error')
 
   const suiteId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
-  tmpDbData = await createDbSchemaApplication(suiteId)
   tmpDbWallet = await createDbSchemaWallets(suiteId);
-  ({walletStorageConfig: walletStorageConfig, walletStorageCredentials} = getStorageInfoMysql(tmpDbWallet.info.database));
+  ({ walletStorageConfig, walletStorageCredentials } = getStorageInfoMysql(tmpDbWallet.info.database))
 })
 
 describe('pgsql wallet', () => {
