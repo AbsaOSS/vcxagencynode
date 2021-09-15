@@ -21,7 +21,7 @@
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
-const { testsetupWalletStorage } = require('../utils')
+const { createDbSchemaWallets, createDbSchemaApplication } = require('dbutils')
 const {
   indySetDefaultLogger,
   indyDeleteWallet,
@@ -30,27 +30,53 @@ const {
   indyCreateWallet,
   indyStoreTheirDid,
   indyKeyForLocalDid,
-  indyCloseWallet
+  indyCloseWallet,
+  indyBuildMysqlStorageConfig,
+  indyBuildMysqlStorageCredentials
 } = require('../../src')
 
-const storageType = process.env.STORAGE_TYPE || 'mysql'
-const storagePort = process.env.STORAGE_PORT || (storageType === 'mysql') ? 3306 : 5432
-const storageHost = process.env.STORAGE_HOST || 'localhost'
-let storageConfig
-let storageCredentials
+let walletStorageConfig
+let walletStorageCredentials
+const storageType = 'mysql'
+
+let tmpDbData
+let tmpDbWallet
+
+function getStorageInfoMysql (dbSchemaWallet) {
+  const walletStorageConfig = indyBuildMysqlStorageConfig(
+    'localhost',
+    'localhost',
+    3306,
+    dbSchemaWallet,
+    50
+  )
+  const walletStorageCredentials = indyBuildMysqlStorageCredentials(
+    'root',
+    'mysecretpassword'
+  )
+  return {
+    walletStorageType: 'mysql',
+    walletStorageConfig,
+    walletStorageCredentials
+  }
+}
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 60)
   indySetDefaultLogger('error');
-  ({ storageConfig, storageCredentials } = await testsetupWalletStorage(storageType, storageHost, storagePort))
+
+  const suiteId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
+  tmpDbData = await createDbSchemaApplication(suiteId)
+  tmpDbWallet = await createDbSchemaWallets(suiteId);
+  ({walletStorageConfig: walletStorageConfig, walletStorageCredentials} = getStorageInfoMysql(tmpDbWallet.info.database));
 })
 
 describe('pgsql wallet', () => {
   it('should create wallet store their did and retrieve it', async () => {
     const walletName = uuid.v4()
     const walletKey = await indyGenerateWalletKey()
-    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
-    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
+    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, walletStorageConfig, walletStorageCredentials)
+    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, walletStorageConfig, walletStorageCredentials)
     await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
 
     // Replace
@@ -65,10 +91,10 @@ describe('pgsql wallet', () => {
   async function createAndOpenWallet () {
     const walletKey = await indyGenerateWalletKey()
     const walletName = uuid.v4()
-    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
-    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
+    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, walletStorageConfig, walletStorageCredentials)
+    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, walletStorageConfig, walletStorageCredentials)
     await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
-    return { wh, walletKey, walletName, storageConfig, storageCredentials }
+    return { wh, walletKey, walletName, storageConfig: walletStorageConfig, storageCredentials: walletStorageCredentials }
   }
 
   it('should open 500 wallets without crashing', async () => {

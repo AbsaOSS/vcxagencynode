@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/jest": "^25.2.2",
+    "dbutils": "file:../dbutils",
     "jest": "^26.0.1",
     "sleep-promise": "^8.0.0",
     "standard": "^14.3.4",
