@@ -15,8 +15,6 @@ services:
     environment:
       - LOG_JSON_TO_CONSOLE=false
       - LOG_LEVEL=info
-      - LOG_ENABLE_INDYSDK=true
-
       - SERVER_PORT=8080
       - SERVER_MAX_REQUEST_SIZE_KB=300
 

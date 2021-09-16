@@ -28,6 +28,7 @@ services:
 
       - AGENCY_TYPE=enterprise
 
+
       - MYSQL_HOST=mysql.absadocker
       - MYSQL_PORT=3306
       - MYSQL_ACCOUNT=root
