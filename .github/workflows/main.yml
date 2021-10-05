@@ -552,7 +552,7 @@ jobs:
       - name: Create Wallet DB schema, run migrations
         run: |
           set -x
-          docker run --rm --name vcxagencynode \
+          docker run --rm --name vcxagencynode_migrations_wallet \
                          --network host \
                           -e MYSQL_DATABASE=ca_agency_wallets \
                           -e MYSQL_USER=root \
@@ -565,7 +565,7 @@ jobs:
       - name: Create Application DB schema, run migrations
         run: |
           set -x
-          docker run --rm --name vcxagencynode \
+          docker run --rm --name vcxagencynode_migrations_data \
                          --network host \
                           -e MYSQL_DATABASE=agency_application \
                           -e MYSQL_USER=root \
@@ -614,7 +614,7 @@ jobs:
       - name: Create Wallet DB schema, run migrations
         run: |
           set -x
-          docker run --rm --name vcxagencynode \
+          docker run --rm --name vcxagencynode_migrations_wallet \
                          --network host \
                           -e MYSQL_DATABASE=ea_agency_wallets \
                           -e MYSQL_USER=root \
@@ -627,7 +627,7 @@ jobs:
       - name: Create Application DB schema, run migrations
         run: |
           set -x
-          docker run --rm --name vcxagencynode \
+          docker run --rm --name vcxagencynode_migrations_data \
                          --network host \
                           -e MYSQL_DATABASE=agency_application \
                           -e MYSQL_USER=root \
