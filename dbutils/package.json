@@ -4,16 +4,14 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "dev:schema:wallet:drop": "MYSQL_DATABASE=agency_wallets node scripts/drop-schema.js",
-    "dev:schema:app:drop": "MYSQL_DATABASE=agency_application node scripts/drop-schema.js",
-    "dev:schema:all:drop": "npm run dev:schema:wallet:drop && npm run dev:schema:data:drop",
-
-    "dev:schema:migrate": "npm run dev:schema:wallet:migrate && npm run dev:schema:app:migrate",
-    "dev:schema:wallet:migrate": "MYSQL_DATABASE=agency_wallets MYSQL_USER=root MYSQL_PASSWORD=mysecretpassword MYSQL_HOST=localhost MYSQL_PORT=3306 npm run schema-wallet:migrate",
-    "dev:schema:app:migrate": "MYSQL_DATABASE=agency_application MYSQL_USER=root MYSQL_PASSWORD=mysecretpassword MYSQL_HOST=localhost MYSQL_PORT=3306 npm run schema-data:migrate",
-
-    "schema-wallet:migrate": "node scripts/assure-schema.js && db-migrate --migrations-dir migrations_scheme_wallets up",
-    "schema-data:migrate": "node scripts/assure-schema.js && db-migrate --migrations-dir migrations_scheme_application up",
+    "dev:schema:drop:wallet": "MYSQL_DATABASE=agency_wallets node scripts/drop-schema.js",
+    "dev:schema:drop:app": "MYSQL_DATABASE=agency_application node scripts/drop-schema.js",
+    "dev:schema:drop:all": "npm run dev:schema:drop:wallet && npm run dev:schema:drop:app",
+    "dev:schema:migrate:all": "npm run dev:schema:migrate:wallet && npm run dev:schema:migrate:app",
+    "dev:schema:migrate:wallet": "MYSQL_DATABASE=agency_wallets MYSQL_USER=root MYSQL_PASSWORD=mysecretpassword MYSQL_HOST=localhost MYSQL_PORT=3306 npm run schema:migrate:wallet",
+    "dev:schema:migrate:app": "MYSQL_DATABASE=agency_application MYSQL_USER=root MYSQL_PASSWORD=mysecretpassword MYSQL_HOST=localhost MYSQL_PORT=3306 npm run schema:migrate:app",
+    "schema:migrate:wallet": "node scripts/assure-schema.js && db-migrate --migrations-dir migrations_scheme_wallets up",
+    "schema:migrate:app": "node scripts/assure-schema.js && db-migrate --migrations-dir migrations_scheme_application up",
 
     "migrate:script": "node src/migration.js",
 

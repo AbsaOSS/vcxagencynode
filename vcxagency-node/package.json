@@ -14,7 +14,7 @@
     "lint": "standard",
     "lint:fix": "standard --fix",
     "serve": "NODE_ENV=production node src/index.js",
-    "dev:schema:migrate": "cd ../dbutils && npm run dev:schema:migrate",
+    "dev:schema:migrate:all": "cd ../dbutils && npm run dev:schema:migrate:all",
     "dev:ea": "APP_CONFIG=localhost-ea NODE_ENV=development nodemon src/index.js",
     "dev:ea:mysql": "APP_CONFIG=localhost-ea-mysql NODE_ENV=development nodemon src/index.js",
     "dev:ca": "APP_CONFIG=localhost-ca NODE_ENV=development nodemon src/index.js",
