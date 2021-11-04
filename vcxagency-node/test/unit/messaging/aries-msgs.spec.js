@@ -107,11 +107,6 @@ beforeAll(async () => {
   }
 })
 
-afterAll(async () => {
-  await cleanUpApplication(app)
-//   await tmpPgDb.dropDb()
-})
-
 beforeEach(async () => {
   aliceWalletKey = await indyGenerateWalletKey()
   aliceWalletName = `unit-test-${uuid.v4()}`
@@ -136,7 +131,9 @@ afterEach(async () => {
 })
 
 afterAll(async () => {
-  cleanUpApplication(app)
+  await cleanUpApplication(app)
+  await tmpDbData.dropDb()
+  await tmpDbWallet.dropDb()
 })
 
 async function setWebhookUrlForAgent (agentDid, webhookUrl) {

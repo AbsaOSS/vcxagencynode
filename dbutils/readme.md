@@ -1,21 +1,25 @@
+# Run migrations
+You have to make sure to setup environment variables `MYSQL_DATABASE`, `MYSQL_USER`,
+`MYSQL_PASSWORD`, `MYSQL_HOST`, `MYSQL_PORT` before running following commands
+```
+npm run schema:migrate:wallet
+```
+```
+npm run schema:migrate:app
+```
+
+# Run migrations in dev environment
+- Assuming you are running mysql on port `localhost:3306`
+```
+npm run dev:schema:migrate:all
+```
+
 # Create new migration
+- New application schema migration
 ```
-db-migrate create <migration_name> --sql-file --migrations-dir <migration_dir>
+db-migrate create <migration_name> --sql-file --migrations-dir migrations_scheme_application
 ```
-
-# Run missing migrations
+- New wallet schema migration
 ```
-npm run schema:migrate
-```
-
-# Setup DB for local development
-```angular2html
-DB_NAME=wallets_agency schema:wallet:setupAll
-DB_NAME=agency_store schema:data:setupAll
-```
-
-# Create new migration
-```
-db-migrate create add_foobar_table --sql-file --migrations-dir migrations_scheme_application
-db-migrate create add_barbaz_index --sql-file --migrations-dir migrations_scheme_wallets
+db-migrate create <migration_name> --sql-file --migrations-dir migrations_scheme_wallets
 ```

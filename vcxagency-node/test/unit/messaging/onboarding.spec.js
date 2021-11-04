@@ -50,6 +50,9 @@ const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379/0'
 let agencyVerkey
 let sendToAgency
 
+let tmpDbData
+let tmpDbWallet
+
 beforeAll(async () => {
   try {
     jest.setTimeout(1000 * 120)
@@ -57,8 +60,8 @@ beforeAll(async () => {
       setupVcxLogging()
     }
     const suiteId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
-    const tmpDbData = await createDbSchemaApplication(suiteId)
-    const tmpDbWallet = await createDbSchemaWallets(suiteId)
+    tmpDbData = await createDbSchemaApplication(suiteId)
+    tmpDbWallet = await createDbSchemaWallets(suiteId)
 
     const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, tmpDbWallet.info.database, tmpDbData.info.database)
     app = await buildApplication(appConfig)
@@ -72,11 +75,6 @@ beforeAll(async () => {
     console.error(err.stack)
     throw err
   }
-})
-
-afterAll(async () => {
-  await cleanUpApplication(app)
-//   await tmpPgDb.dropDb()
 })
 
 beforeEach(async () => {
@@ -105,6 +103,12 @@ afterEach(async () => {
   const attackerWalletPath = `${homedir}/.indy_client/wallet/${bobWalletName}`
   await rimraf.sync(clientWalletPath)
   await rimraf.sync(attackerWalletPath)
+})
+
+afterAll(async () => {
+  await cleanUpApplication(app)
+  await tmpDbData.dropDb()
+  await tmpDbWallet.dropDb()
 })
 
 describe('onboarding', () => {
