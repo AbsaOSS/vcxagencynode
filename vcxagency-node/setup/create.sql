@@ -1,6 +1,6 @@
-CREATE DATABASE wallets_agency;
+CREATE DATABASE agency_wallets;
 
-USE wallets_agency;
+USE agency_wallets;
 
 CREATE TABLE `items` (
   `wallet_id` int NOT NULL,
