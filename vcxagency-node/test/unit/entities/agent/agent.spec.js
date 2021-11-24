@@ -22,8 +22,8 @@ const { indyCreateAndStoreMyDid } = require('easy-indysdk')
 const uuid = require('uuid')
 const os = require('os')
 const rimraf = require('rimraf')
-const { createTestPgDb } = require('../../../pg-tmpdb')
-const { createPgStorageEntities } = require('../../../../src/service/storage/pgstorage-entities')
+const { createDbSchemaApplication } = require('dbutils')
+const { createDataStorage } = require('../../../../src/service/storage/storage')
 const { indyGenerateWalletKey } = require('easy-indysdk')
 const { buildAgentAO, createAgentData } = require('../../../../src/service/entities/agent/agent')
 const { createServiceIndyWallets } = require('../../../../src/service/state/service-indy-wallets')
@@ -41,8 +41,8 @@ let clientWh
 beforeAll(async () => {
   jest.setTimeout(1000 * 10)
   serviceIndyWallets = await createServiceIndyWallets(undefined)
-  const { info } = await createTestPgDb()
-  serviceStorage = await createPgStorageEntities(info)
+  const { info } = await createDbSchemaApplication()
+  serviceStorage = await createDataStorage(info)
 })
 
 afterAll(async () => {

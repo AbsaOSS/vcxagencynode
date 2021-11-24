@@ -4,20 +4,24 @@ FROM ${AGENCY_BASE_IMAGE}
 RUN npm install -g yarn
 
 USER node
+
+WORKDIR /home/node/dbutils
+COPY ./dbutils ./
+RUN yarn install --production
+
 WORKDIR /home/node/easy-indysdk
 COPY ./easy-indysdk ./
+RUN yarn install --production
 
 WORKDIR /home/node/vcxagency-client
 COPY ./vcxagency-client ./
 
 WORKDIR /home/node/vcxagency-node
 COPY ./vcxagency-node ./
+RUN yarn install --production
 
 USER root
 RUN chown -R node:node /home/node
-
-USER node
-RUN yarn install --production
 
 LABEL org.label-schema.schema-version="1.1.0"
 LABEL org.label-schema.name="vcxagency-node"

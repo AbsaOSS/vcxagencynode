@@ -18,15 +18,16 @@
     "test:perf": "jest --runInBand  ./test/perf"
   },
   "dependencies": {
-    "ffi-napi": "^3.1.0",
     "indy-sdk": "1.15.0",
+    "mysql": "^2.18.1",
     "winston": "^3.2.1"
   },
   "devDependencies": {
-    "@types/ffi": "0.0.19",
     "@types/jest": "^25.2.2",
+    "dbutils": "file:../dbutils",
     "jest": "^26.0.1",
     "sleep-promise": "^8.0.0",
-    "standard": "^14.3.4"
+    "standard": "^14.3.4",
+    "uuid": "^8.3.2"
   }
 }

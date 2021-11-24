@@ -23,7 +23,7 @@ const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
 const { getBaseAppConfig } = require('./common')
-const { createTestPgDb } = require('../../pg-tmpdb')
+const { createDbSchemaApplication, createDbSchemaWallets } = require('dbutils')
 const { setupVcxLogging } = require('../../utils')
 const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
 const { buildAgencyClientVirtual } = require('./common')
@@ -46,36 +46,35 @@ let bobVerkey
 let bobWh
 
 const WALLET_KDF = 'RAW'
-
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379/0'
 let agencyVerkey
 let sendToAgency
-let tmpPgDb
 
-const pgUrl = process.env.PG_WALLET_URL || 'localhost:5432'
+let tmpDbData
+let tmpDbWallet
 
 beforeAll(async () => {
-  jest.setTimeout(1000 * 120)
-  if (process.env.ENABLE_VCX_LOGS) {
-    setupVcxLogging()
+  try {
+    jest.setTimeout(1000 * 120)
+    if (process.env.ENABLE_VCX_LOGS) {
+      setupVcxLogging()
+    }
+    const suiteId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
+    tmpDbData = await createDbSchemaApplication(suiteId)
+    tmpDbWallet = await createDbSchemaWallets(suiteId)
+
+    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, tmpDbWallet.info.database, tmpDbData.info.database)
+    app = await buildApplication(appConfig)
+
+    const entityForwardAgent = app.entityForwardAgent
+    const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
+    sendToAgency = agencyClient.sendToAgency
+    const agencyInfo = await agencyClient.getAgencyInfo()
+    agencyVerkey = agencyInfo.verkey
+  } catch (err) {
+    console.error(err.stack)
+    throw err
   }
-  tmpPgDb = await createTestPgDb()
-  const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, pgUrl)
-  appConfig.PG_STORE_HOST = tmpPgDb.info.host
-  appConfig.PG_STORE_PORT = tmpPgDb.info.port
-  appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
-  appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
-  appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
-  app = await buildApplication(appConfig)
-
-  const entityForwardAgent = app.entityForwardAgent
-  const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
-  sendToAgency = agencyClient.sendToAgency
-  const agencyInfo = await agencyClient.getAgencyInfo()
-  agencyVerkey = agencyInfo.verkey
-})
-
-afterAll(async () => {
-  cleanUpApplication(app)
 })
 
 beforeEach(async () => {
@@ -104,6 +103,12 @@ afterEach(async () => {
   const attackerWalletPath = `${homedir}/.indy_client/wallet/${bobWalletName}`
   await rimraf.sync(clientWalletPath)
   await rimraf.sync(attackerWalletPath)
+})
+
+afterAll(async () => {
+  await cleanUpApplication(app)
+  await tmpDbData.dropDb()
+  await tmpDbWallet.dropDb()
 })
 
 describe('onboarding', () => {

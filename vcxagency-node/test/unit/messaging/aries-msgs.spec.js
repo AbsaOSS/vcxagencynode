@@ -38,9 +38,10 @@ const { objectToBuffer } = require('../../utils')
 const express = require('express')
 const bodyParser = require('body-parser')
 const sleep = require('sleep-promise')
+const { createDbSchemaWallets } = require('dbutils')
 const { getBaseAppConfig } = require('./common')
 const { longpollNotifications } = require('../../../src/service/notifications/longpoll')
-const { createTestPgDb } = require('../../pg-tmpdb')
+const { createDbSchemaApplication } = require('dbutils')
 const { setupVcxLogging } = require('../../utils')
 const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
 const { buildAgencyClientVirtual } = require('./common')
@@ -69,37 +70,41 @@ let bobWalletName
 let bobWalletKey
 let bobWh
 
-const WALLET_KDF = 'RAW'
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379/0'
-const pgUrl = process.env.PG_WALLET_URL || 'localhost:5432'
-
+const WALLET_KDF = 'RAW'
 let sendToAgency
 
+let tmpDbData
+let tmpDbWallet
+
 beforeAll(async () => {
-  jest.setTimeout(1000 * 120)
-  if (process.env.ENABLE_VCX_LOGS) {
-    setupVcxLogging()
+  try {
+    jest.setTimeout(1000 * 120)
+    if (process.env.ENABLE_VCX_LOGS) {
+      setupVcxLogging()
+    }
+    const suiteId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
+    tmpDbData = await createDbSchemaApplication(suiteId)
+    tmpDbWallet = await createDbSchemaWallets(suiteId)
+
+    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, tmpDbWallet.info.database, tmpDbData.info.database)
+    app = await buildApplication(appConfig)
+
+    serviceIndyWallets = app.serviceIndyWallets
+    entityForwardAgent = app.entityForwardAgent
+    serviceStorage = app.serviceStorage
+    resolver = app.resolver
+    router = app.router
+    serviceNewMessages = app.serviceNewMessages
+
+    const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
+    sendToAgency = agencyClient.sendToAgency
+    const agencyInfo = await agencyClient.getAgencyInfo()
+    agencyVerkey = agencyInfo.verkey
+  } catch (err) {
+    console.error(err.stack)
+    throw err
   }
-  const tmpPgDb = await createTestPgDb()
-  const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, pgUrl)
-  appConfig.PG_STORE_HOST = tmpPgDb.info.host
-  appConfig.PG_STORE_PORT = tmpPgDb.info.port
-  appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
-  appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
-  appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
-  app = await buildApplication(appConfig)
-
-  serviceIndyWallets = app.serviceIndyWallets
-  entityForwardAgent = app.entityForwardAgent
-  serviceStorage = app.serviceStorage
-  resolver = app.resolver
-  router = app.router
-  serviceNewMessages = app.serviceNewMessages
-
-  const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
-  sendToAgency = agencyClient.sendToAgency
-  const agencyInfo = await agencyClient.getAgencyInfo()
-  agencyVerkey = agencyInfo.verkey
 })
 
 beforeEach(async () => {
@@ -126,7 +131,9 @@ afterEach(async () => {
 })
 
 afterAll(async () => {
-  cleanUpApplication(app)
+  await cleanUpApplication(app)
+  await tmpDbData.dropDb()
+  await tmpDbWallet.dropDb()
 })
 
 async function setWebhookUrlForAgent (agentDid, webhookUrl) {
@@ -137,7 +144,10 @@ async function setWebhookUrlForAgent (agentDid, webhookUrl) {
 describe('onboarding', () => {
   it('Bob should send aries message, Alice should download it', async () => {
     // arrange
-    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const {
+      agentDid: aliceAgentDid,
+      agentVerkey: aliceAgentVerkey
+    } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
     const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
     const aliceToBobAconnDid = aliceAconnCreated.withPairwiseDID
@@ -178,7 +188,10 @@ describe('onboarding', () => {
       testServer = appNotifications.listen(TEST_SERVER_PORT)
 
       // set up alice's agent and agent'connection to receive message Bob
-      const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+      const {
+        agentDid: aliceAgentDid,
+        agentVerkey: aliceAgentVerkey
+      } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
       const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
       const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
       const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
@@ -219,7 +232,10 @@ describe('onboarding', () => {
       testServer = appNotifications.listen(TEST_SERVER_PORT)
 
       // set up alice's agent and agent'connection to receive message Bob
-      const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+      const {
+        agentDid: aliceAgentDid,
+        agentVerkey: aliceAgentVerkey
+      } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
       const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
       const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
       const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
@@ -246,7 +262,10 @@ describe('onboarding', () => {
   })
 
   it('should be informed after timeout that no new messages are available', async () => {
-    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const {
+      agentDid: aliceAgentDid,
+      agentVerkey: aliceAgentVerkey
+    } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
     await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
 
@@ -259,7 +278,10 @@ describe('onboarding', () => {
   })
 
   it('should be informed after about new message within 1 second of arrival', async () => {
-    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const {
+      agentDid: aliceAgentDid,
+      agentVerkey: aliceAgentVerkey
+    } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
     const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
     const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
@@ -291,7 +313,10 @@ describe('onboarding', () => {
 
   it('should be informed immediately if messages has arrived since last poll', async () => {
     // set up alice's agent and agent'connection to receive message Bob
-    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const {
+      agentDid: aliceAgentDid,
+      agentVerkey: aliceAgentVerkey
+    } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
     const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
     const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
@@ -309,7 +334,10 @@ describe('onboarding', () => {
 
   it('subsequent poll should hang if no new message has arrived', async () => {
     // set up alice's agent and agent'connection to receive message Bob
-    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const {
+      agentDid: aliceAgentDid,
+      agentVerkey: aliceAgentVerkey
+    } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
     const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
     const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey
@@ -335,7 +363,10 @@ describe('onboarding', () => {
 
   it('subsequent poll should recieve information about received message if update callback was not called', async () => {
     // set up alice's agent and agent'connection to receive message Bob
-    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const {
+      agentDid: aliceAgentDid,
+      agentVerkey: aliceAgentVerkey
+    } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     const { did: aliceToBobDid, vkey: aliceToBobVkey } = await indyCreateAndStoreMyDid(aliceWh)
     const aliceAconnCreated = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceToBobDid, aliceToBobVkey)
     const aliceToBobAconnVkey = aliceAconnCreated.withPairwiseDIDVerKey

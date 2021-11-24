@@ -18,8 +18,8 @@
 
 /* eslint-env jest */
 const uuid = require('uuid')
-const { createTestPgDb } = require('../../pg-tmpdb')
-const { createPgStorageEntities } = require('../../../src/service/storage/pgstorage-entities')
+const { createDbSchemaApplication } = require('dbutils')
+const { createDataStorage } = require('../../../src/service/storage/storage')
 
 const A1 = uuid.v4()
 const A1Conn1 = uuid.v4()
@@ -40,8 +40,8 @@ describe('storage', () => {
   beforeAll(async () => {
     jest.setTimeout(1000 * 5)
     // arrange
-    const { info } = await createTestPgDb()
-    storage = await createPgStorageEntities(info)
+    const { info } = await createDbSchemaApplication()
+    storage = await createDataStorage(info)
 
     await storage.linkAgentToItsConnection(A1, A1Conn1, A1Conn1Pw)
     await storage.linkAgentToItsConnection(A1, A1Conn2, A1Conn2Pw)

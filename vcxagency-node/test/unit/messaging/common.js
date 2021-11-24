@@ -61,23 +61,27 @@ async function buildAgencyClientVirtual (entityForwardAgent) {
   }
 }
 
-function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, pgUrl) {
+function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, walletsDbName, applicationDbName) {
   return {
     AGENCY_WALLET_NAME: agencyWalletName,
     AGENCY_DID: agencyDid,
     AGENCY_SEED_SECRET: agencySeed,
     AGENCY_WALLET_KEY_SECRET: agencyWalletKey,
 
+    LOG_ENABLE_INDYSDK: true,
+    LOG_LEVEL: 'trace',
+
     REDIS_URL: redisUrl,
     AGENCY_TYPE: redisUrl ? 'client' : 'enterprise',
 
-    PG_WALLET_ACCOUNT: 'postgres',
-    PG_WALLET_PASSWORD_SECRET: 'mysecretpassword',
-    PG_WALLET_ADMIN_ACCOUNT: 'postgres',
-    PG_WALLET_ADMIN_PASSWORD_SECRET: 'mysecretpassword',
-    PG_WALLET_URL: pgUrl,
-    PG_WALLET_MAX_CONNECTIONS: process.env.PG_WALLET_MAX_CONNECTIONS || 90,
-    PG_WALLET_CONNECTION_TIMEOUT_MINS: process.env.PG_WALLET_CONNECTION_TIMEOUT_MINS || 5
+    MYSQL_HOST: 'localhost',
+    MYSQL_PORT: 3306,
+    MYSQL_ACCOUNT: 'root',
+    MYSQL_PASSWORD_SECRET: 'mysecretpassword',
+    MYSQL_DATABASE_APPLICATION: applicationDbName,
+    MYSQL_DATABASE_WALLET: walletsDbName,
+    MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: 50
+
   }
 }
 

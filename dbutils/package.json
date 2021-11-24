@@ -1,0 +1,32 @@
+{
+  "name": "dbutils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "dev:schema:drop:wallet": "MYSQL_DATABASE=agency_wallets node scripts/drop-schema.js",
+    "dev:schema:drop:app": "MYSQL_DATABASE=agency_application node scripts/drop-schema.js",
+    "dev:schema:drop:all": "npm run dev:schema:drop:wallet && npm run dev:schema:drop:app",
+    "dev:schema:migrate:all": "npm run dev:schema:migrate:wallet && npm run dev:schema:migrate:app",
+    "dev:schema:migrate:wallet": "MYSQL_DATABASE=agency_wallets MYSQL_USER=root MYSQL_PASSWORD=mysecretpassword MYSQL_HOST=localhost MYSQL_PORT=3306 npm run schema:migrate:wallet",
+    "dev:schema:migrate:app": "MYSQL_DATABASE=agency_application MYSQL_USER=root MYSQL_PASSWORD=mysecretpassword MYSQL_HOST=localhost MYSQL_PORT=3306 npm run schema:migrate:app",
+    "schema:migrate:wallet": "node scripts/assure-schema.js && db-migrate --migrations-dir migrations_scheme_wallets up",
+    "schema:migrate:app": "node scripts/assure-schema.js && db-migrate --migrations-dir migrations_scheme_application up",
+
+    "migrate:script": "node src/migration.js",
+
+    "test": "jest --runInBand ./test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "db-migrate": "^0.11.12",
+    "db-migrate-mysql": "^2.1.2",
+    "jest": "^27.1.1",
+    "mysql": "^2.18.1",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "sleep-promise": "^8.0.1"
+  }
+}

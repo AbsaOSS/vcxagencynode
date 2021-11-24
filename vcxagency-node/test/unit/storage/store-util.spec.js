@@ -17,7 +17,7 @@
 'use strict'
 
 /* eslint-env jest */
-const { storedMessageToResponseFormat, buildStoredMessage } = require('../../../src/service/storage/store-util')
+const { storedMessageToResponseFormat, buildStoredMessage } = require('../../../src/service/storage/storage-utils')
 
 describe('message formats', () => {
   it('should should build stored message', async () => {

@@ -2,9 +2,8 @@
 
 SCRIPT_DIR_PATH=$(dirname "$0")
 
-INDYSDK_REPO="https://github.com/Patrik-Stas/indy-sdk"
-INDYSDK_REVISION="cc15191a75b"
-
+INDYSDK_REPO="https://gitlab.com/evernym/verity/vdr-tools.git"
+INDYSDK_REVISION="7df4c69b"
 DOCKER_TAG="$1"
 
 docker build --build-arg "INDYSDK_REPO=$INDYSDK_REPO" \

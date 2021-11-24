@@ -27,7 +27,7 @@ const { objectToBuffer } = require('../../util')
 const { createAgentConnectionWallet } = require('./agent-connection-internal')
 const logger = require('../../../logging/logger-builder')(__filename)
 const uuid = require('uuid')
-const { storedMessageToResponseFormat } = require('../../storage/store-util')
+const { storedMessageToResponseFormat } = require('../../storage/storage-utils')
 const { sendNotification } = require('../../notifications/webhook')
 const { entityType } = require('../entities-common')
 

@@ -26,9 +26,10 @@ const { indyCreateWallet, indyCreateAndStoreMyDid, indyOpenWallet, indyGenerateW
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
+const { createDbSchemaWallets } = require('dbutils')
 const { getBaseAppConfig } = require('./common')
 const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
-const { createTestPgDb } = require('../../pg-tmpdb')
+const { createDbSchemaApplication } = require('dbutils')
 const { setupVcxLogging } = require('../../utils')
 const { buildAgencyClientVirtual } = require('./common')
 
@@ -37,7 +38,7 @@ const agencyDid = 'VsKV7grR1BUE29mG2Fm2kX'
 const agencySeed = '0000000000000000000000000Forward'
 const agencyWalletKey = '@key'
 
-let application
+let app
 let serviceIndyWallets // eslint-disable-line
 let entityForwardAgent // eslint-disable-line
 let serviceStorage // eslint-disable-line
@@ -54,38 +55,42 @@ let agencyUserWh
 const WALLET_KDF = 'RAW'
 let sendToAgency
 
-let tmpPgDb
-const pgUrl = process.env.PG_WALLET_URL || 'localhost:5432'
+let tmpDbData
+let tmpDbWallet
 
 beforeAll(async () => {
-  jest.setTimeout(1000 * 120)
-  if (process.env.ENABLE_VCX_LOGS) {
-    setupVcxLogging()
+  try {
+    jest.setTimeout(1000 * 120)
+    if (process.env.ENABLE_VCX_LOGS) {
+      setupVcxLogging()
+    }
+    const suiteId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
+    tmpDbData = await createDbSchemaApplication(suiteId)
+    tmpDbWallet = await createDbSchemaWallets(suiteId)
+
+    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, tmpDbWallet.info.database, tmpDbData.info.database)
+    app = await buildApplication(appConfig)
+
+    serviceIndyWallets = app.serviceIndyWallets
+    entityForwardAgent = app.entityForwardAgent
+    serviceStorage = app.serviceStorage
+    resolver = app.resolver
+    router = app.router
+
+    const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
+    sendToAgency = agencyClient.sendToAgency
+    const agencyInfo = await agencyClient.getAgencyInfo()
+    agencyVerkey = agencyInfo.verkey
+  } catch (err) {
+    console.error(err.stack)
+    throw err
   }
-  const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, pgUrl)
-  tmpPgDb = await createTestPgDb()
-  appConfig.PG_STORE_HOST = tmpPgDb.info.host
-  appConfig.PG_STORE_PORT = tmpPgDb.info.port
-  appConfig.PG_STORE_ACCOUNT = tmpPgDb.info.user
-  appConfig.PG_STORE_PASSWORD_SECRET = tmpPgDb.info.password
-  appConfig.PG_STORE_DATABASE = tmpPgDb.info.database
-  application = await buildApplication(appConfig)
-
-  serviceIndyWallets = application.serviceIndyWallets
-  entityForwardAgent = application.entityForwardAgent
-  serviceStorage = application.serviceStorage
-  resolver = application.resolver
-  router = application.router
-
-  const agencyClient = await buildAgencyClientVirtual(entityForwardAgent)
-  sendToAgency = agencyClient.sendToAgency
-  const agencyInfo = await agencyClient.getAgencyInfo()
-  agencyVerkey = agencyInfo.verkey
 })
 
 afterAll(async () => {
-  cleanUpApplication(application)
-//   await tmpPgDb.dropDb()
+  await cleanUpApplication(app)
+  await tmpDbData.dropDb()
+  await tmpDbWallet.dropDb()
 })
 
 beforeEach(async () => {
@@ -99,7 +104,10 @@ beforeEach(async () => {
     agencyUserVerkey = vkey
   }
 
-  const { agentDid: aDid1, agentVerkey: aVerkey1 } = await vcxFlowFullOnboarding(agencyUserWh, sendToAgency, agencyDid, agencyVerkey, agencyUserDid, agencyUserVerkey)
+  const {
+    agentDid: aDid1,
+    agentVerkey: aVerkey1
+  } = await vcxFlowFullOnboarding(agencyUserWh, sendToAgency, agencyDid, agencyVerkey, agencyUserDid, agencyUserVerkey)
   agent1Did = aDid1
   agent1Verkey = aVerkey1
   const { did: userPairwiseDid, vkey: userPairwiseVerkey } = await indyCreateAndStoreMyDid(agencyUserWh)

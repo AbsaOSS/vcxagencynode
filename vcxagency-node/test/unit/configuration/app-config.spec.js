@@ -29,20 +29,13 @@ const BASE_CONFIG = {
   AGENCY_SEED_SECRET: '0000000000000000000000000Forward',
   AGENCY_WALLET_KEY_SECRET: '01234567890123456789',
 
-  PG_STORE_HOST: 'localhost',
-  PG_STORE_PORT: '5432',
-  PG_STORE_ACCOUNT: 'postgres',
-  PG_STORE_PASSWORD_SECRET: 'mysecretpassword',
-  PG_STORE_DATABASE: 'agency-storage',
-
-  PG_WALLET_ACCOUNT: 'postgres',
-  PG_WALLET_PASSWORD_SECRET: 'mysecretpassword',
-  PG_WALLET_ADMIN_ACCOUNT: 'postgres',
-  PG_WALLET_ADMIN_PASSWORD_SECRET: 'mysecretpassword',
-
-  PG_WALLET_URL: 'localhost:5432',
-  PG_WALLET_MAX_CONNECTIONS: '90',
-  PG_WALLET_CONNECTION_TIMEOUT_MINS: '30'
+  MYSQL_HOST: 'localhost',
+  MYSQL_PORT: 3306,
+  MYSQL_ACCOUNT: 'root',
+  MYSQL_PASSWORD_SECRET: 'mysecretpassword',
+  MYSQL_DATABASE_APPLICATION: 'agency_application',
+  MYSQL_DATABASE_WALLET: 'agency_wallets',
+  MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: 50
 }
 
 function getValidEnterpriseAgencyConfig () {
@@ -99,25 +92,58 @@ describe('app configuration', () => {
     await validateAppConfig(appConfig)
   })
 
-  it('should validate app config when PG_WALLET_ADMIN_* info is omitted', async () => {
+  it('should validate app config when MYSQL_HOST info is omitted', async () => {
     const appConfig = getValidClientAgencyConfig()
-    delete appConfig.PG_WALLET_ADMIN_ACCOUNT
-    delete appConfig.PG_WALLET_ADMIN_PASSWORD_SECRET
-    await validateAppConfig(appConfig)
+    delete appConfig.MYSQL_HOST
+    await expect(validateAppConfig(appConfig))
+      .rejects
+      .toThrow(/.*\\"MYSQL_HOST\\" is required.*/)
   })
 
-  it('should invalidate app config when PG_WALLET_PASSWORD_SECRET is omitted', async () => {
-    const config = getValidEnterpriseAgencyConfig()
-    delete config.PG_WALLET_PASSWORD_SECRET
-    await expect(validateAppConfig(config))
+  it('should validate app config when MYSQL_PORT info is omitted', async () => {
+    const appConfig = getValidClientAgencyConfig()
+    delete appConfig.MYSQL_PORT
+    await expect(validateAppConfig(appConfig))
       .rejects
-      .toThrow('"PG_WALLET_PASSWORD_SECRET\\" is required')
+      .toThrow(/.*\\"MYSQL_PORT\\" is required.*/)
+  })
+
+  it('should validate app config when MYSQL_ACCOUNT info is omitted', async () => {
+    const appConfig = getValidClientAgencyConfig()
+    delete appConfig.MYSQL_ACCOUNT
+    await expect(validateAppConfig(appConfig))
+      .rejects
+      .toThrow(/.*\\"MYSQL_ACCOUNT\\" is required.*/)
+  })
+
+  it('should validate app config when MYSQL_PASSWORD_SECRET info is omitted', async () => {
+    const appConfig = getValidClientAgencyConfig()
+    delete appConfig.MYSQL_PASSWORD_SECRET
+    await expect(validateAppConfig(appConfig))
+      .rejects
+      .toThrow(/.*\\"MYSQL_PASSWORD_SECRET\\" is required.*/)
+  })
+
+  it('should validate app config when MYSQL_DATABASE_APPLICATION info is omitted', async () => {
+    const appConfig = getValidClientAgencyConfig()
+    delete appConfig.MYSQL_DATABASE_APPLICATION
+    await expect(validateAppConfig(appConfig))
+      .rejects
+      .toThrow(/.*\\"MYSQL_DATABASE_APPLICATION\\" is required.*/)
+  })
+
+  it('should validate app config when MYSQL_DATABASE_WALLET info is omitted', async () => {
+    const appConfig = getValidClientAgencyConfig()
+    delete appConfig.MYSQL_DATABASE_WALLET
+    await expect(validateAppConfig(appConfig))
+      .rejects
+      .toThrow(/.*\\"MYSQL_DATABASE_WALLET\\" is required.*/)
   })
 
   it('should invalidate client agency config if REDIS_URL is omitted', async () => {
-    const config = getValidClientAgencyConfig()
-    delete config.REDIS_URL
-    await expect(validateAppConfig(config))
+    const appConfig = getValidClientAgencyConfig()
+    delete appConfig.REDIS_URL
+    await expect(validateAppConfig(appConfig))
       .rejects
       .toThrow("Configuration for agency of type 'client' must have REDIS_URL specified.")
   })

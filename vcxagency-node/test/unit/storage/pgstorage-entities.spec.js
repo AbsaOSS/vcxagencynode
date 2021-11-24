@@ -18,8 +18,9 @@
 
 /* eslint-env jest */
 const uuid = require('uuid')
-const { createTestPgDb } = require('../../pg-tmpdb')
-const { createPgStorageEntities } = require('../../../src/service/storage/pgstorage-entities')
+const { canConnectToDb } = require('dbutils')
+const { createDbSchemaApplication } = require('dbutils')
+const { createDataStorage } = require('../../../src/service/storage/storage')
 // const util = require('util')
 // const pgtools = require('pgtools')
 
@@ -29,13 +30,13 @@ beforeAll(async () => {
 
 let tmpPgDb
 beforeEach(async () => {
-  tmpPgDb = await createTestPgDb()
+  tmpPgDb = await createDbSchemaApplication()
 })
 
 afterEach(async () => {
   // Following fails because connection is still open from storage object
   // any idea how to close it without adding methods to its api?
-  // await tmpPgDb.dropDb()
+  await tmpPgDb.dropDb()
 })
 
 // async function dropDb (user, password, host, port, dbName) {
@@ -45,7 +46,7 @@ afterEach(async () => {
 
 describe('storage', () => {
   it('should save and load entity record', async () => {
-    const pgStorage = await createPgStorageEntities(tmpPgDb.info)
+    const pgStorage = await createDataStorage(tmpPgDb.info)
     const entityDid = uuid.v4()
     const entityVerkey = uuid.v4()
     await pgStorage.saveEntityRecord(entityDid, entityVerkey, { foo: 'foo1' })
@@ -53,5 +54,10 @@ describe('storage', () => {
     const entityByDid = await pgStorage.loadEntityRecordByDidOrVerkey(entityDid)
     expect(entityByDid.foo).toBe('foo1')
     pgStorage.cleanUp()
+  })
+
+  it('should connect to a db', async () => {
+    const canConnect = await canConnectToDb(tmpPgDb.info.user, tmpPgDb.info.password, tmpPgDb.info.host, tmpPgDb.info.port)
+    expect(canConnect).toBeTruthy()
   })
 })

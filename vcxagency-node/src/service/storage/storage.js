@@ -16,29 +16,17 @@
 
 'use strict'
 
-const { Pool, Client } = require('pg')
+const mysql = require('mysql')
 const logger = require('../../logging/logger-builder')(__filename)
-const { buildStoredMessage } = require('./store-util')
+const { buildStoredMessage } = require('./storage-utils')
 const sleep = require('sleep-promise')
+const util = require('util')
+const { canConnectToDbSchema } = require('dbutils')
 
-function _canConnectToPostgres ({ user, password, host, port }) {
-  const client = new Client({ host, port, user, password })
-  return new Promise((resolve, reject) => {
-    client.connect(err => {
-      if (err) {
-        resolve(false)
-      } else {
-        client.end()
-        resolve(true)
-      }
-    })
-  })
-}
-
-async function waitUntilConnectsToPostgres (appStorageConfig, attemptsThreshold = 10, timeoutMs = 10000) {
+async function waitUntilConnectsToMysql (user, password, host, port, schema, attemptsThreshold = 10, timeoutMs = 10000) {
   let attempts = 0
   while (true) {
-    if (await _canConnectToPostgres(appStorageConfig)) {
+    if (await canConnectToDbSchema(user, password, host, port, schema)) {
       return
     }
     attempts += 1
@@ -57,87 +45,36 @@ async function waitUntilConnectsToPostgres (appStorageConfig, attemptsThreshold 
  * - agents: information about agent entities (ie. webhook_url)
  * - agent_connections: links together tuple (agentDid, agentConnectionDid, userPwDid)
  */
-async function createPgStorageEntities (appStorageConfig) {
+async function createDataStorage (appStorageConfig) {
   const { user, password, host, port, database } = appStorageConfig
-  const pgConfig = {
-    user,
-    password,
+  const pool = mysql.createPool({
+    connectionLimit: 50,
     host,
     port,
+    user,
+    password,
     database
-  }
-  const pgPool = new Pool(pgConfig)
+  })
 
-  async function runDbQuery (query) {
-    try {
-      await pgPool.query(query)
-    } catch (err) {
-      logger.error(`Error running query ${query}: Error ${JSON.stringify(err)}`)
-    }
-  }
-
-  // entity_verkey, entity_did are indexed per unique() constraint
-  const createEntityRecordTable = `CREATE TABLE IF NOT EXISTS entities (
-         id SERIAL  PRIMARY KEY,
-         entity_did VARCHAR (50),
-         entity_verkey  VARCHAR (50), 
-         entity_record json NOT NULL,
-         UNIQUE(entity_did),
-         UNIQUE(entity_verkey)
-        );
-    `
-
-  const createMessagesTable = `CREATE TABLE IF NOT EXISTS messages (
-         id SERIAL PRIMARY KEY,
-         agent_did VARCHAR (50),
-         agent_connection_did VARCHAR (50),
-         uid VARCHAR (50),
-         status_code VARCHAR (50),
-         payload bytea
-        );
-    `
-
-  const createAgentsTable = `CREATE TABLE IF NOT EXISTS agents (
-         agent_did VARCHAR (50) PRIMARY KEY,
-         webhook_url VARCHAR (512),
-         has_new_message BOOL
-        );
-    `
-
-  const createAgentConnectionsTable = `CREATE TABLE IF NOT EXISTS agent_connections (
-         agent_connection_did VARCHAR (50) PRIMARY KEY,
-         user_pw_did VARCHAR (50),
-         agent_did VARCHAR (50)
-        );
-    `
-
-  const msgsAgentIndex = 'CREATE INDEX IF NOT EXISTS messages_agent_did ON messages (agent_did);'
-  const msgsAgentAgetConnectionIndex = 'CREATE INDEX IF NOT EXISTS messages_agent_did_agent_conn_did ON messages (agent_did, agent_connection_did);'
-
-  await runDbQuery(createEntityRecordTable)
-  await runDbQuery(createMessagesTable)
-  await runDbQuery(createAgentsTable)
-  await runDbQuery(createAgentConnectionsTable)
-  await runDbQuery(msgsAgentIndex)
-  await runDbQuery(msgsAgentAgetConnectionIndex)
+  const queryDb = util.promisify(pool.query).bind(pool)
 
   // ---- ---- ---- ---- ---- ----  Agent webhooks
   async function createAgentRecord (agentDid) {
     const values = [agentDid, null, null]
-    const insertQuery = 'INSERT INTO agents (agent_did, webhook_url, has_new_message) VALUES($1, $2, $3)'
-    await pgPool.query(insertQuery, values)
+    const insertQuery = 'INSERT INTO agents (agent_did, webhook_url, has_new_message) VALUES(?, ?, ?)'
+    await queryDb(insertQuery, values)
   }
 
   async function setAgentWebhook (agentDid, webhookUrl) {
-    const values = [agentDid, webhookUrl]
-    const insertQuery = 'INSERT INTO agents (agent_did, webhook_url) VALUES($1, $2) ON CONFLICT (agent_did) DO UPDATE SET webhook_url = $2'
-    await pgPool.query(insertQuery, values)
+    const values = [agentDid, webhookUrl, webhookUrl]
+    const insertQuery = 'INSERT INTO agents (agent_did, webhook_url) VALUES(?, ?) ON DUPLICATE KEY UPDATE webhook_url = ?'
+    await queryDb(insertQuery, values)
   }
 
   async function getAgentWebhook (agentDid) {
-    const insertQuery = 'SELECT * from agents WHERE agent_did = $1'
+    const insertQuery = 'SELECT * from agents WHERE agent_did = ?'
     const values = [agentDid]
-    const { rows } = await pgPool.query(insertQuery, values)
+    const rows = await queryDb(insertQuery, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
     }
@@ -152,9 +89,9 @@ async function createPgStorageEntities (appStorageConfig) {
    * @param {string} agentDid - DID of the agent.
    */
   async function getHasNewMessage (agentDid) {
-    const insertQuery = 'SELECT has_new_message FROM agents WHERE agent_did = $1'
+    const insertQuery = 'SELECT has_new_message FROM agents WHERE agent_did = ?'
     const values = [agentDid]
-    const { rows } = await pgPool.query(insertQuery, values)
+    const rows = await queryDb(insertQuery, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
     }
@@ -173,9 +110,9 @@ async function createPgStorageEntities (appStorageConfig) {
     if (!agentDid) {
       throw Error('AgentDid or AgentConnDid was not specified.')
     }
-    const values = [agentDid, hasNewMessages]
-    const updateStatusQuery = 'UPDATE agents SET has_new_message = $2 WHERE agent_did = $1'
-    await pgPool.query(updateStatusQuery, values)
+    const values = [hasNewMessages, agentDid]
+    const updateStatusQuery = 'UPDATE agents SET has_new_message = ? WHERE agent_did = ?'
+    await queryDb(updateStatusQuery, values)
   }
 
   // ---- ---- ---- ---- ---- ----  Messages read/write
@@ -184,9 +121,9 @@ async function createPgStorageEntities (appStorageConfig) {
    * Stores message received by agentConnection
    */
   async function storeMessage (agentDid, agentConnectionDid, uid, statusCode, dataObject) {
-    const insertQuery = 'INSERT INTO messages (agent_did, agent_connection_did, uid, status_code, payload) VALUES($1, $2, $3, $4, $5) RETURNING *;'
+    const insertQuery = 'INSERT INTO messages (agent_did, agent_connection_did, uid, status_code, payload) VALUES(?, ?, ?, ?, ?);'
     const values = [agentDid, agentConnectionDid, uid, statusCode, Buffer.from(JSON.stringify(dataObject))]
-    await pgPool.query(insertQuery, values)
+    await queryDb(insertQuery, values)
   }
 
   function assureValidFilter (filter) {
@@ -209,21 +146,21 @@ async function createPgStorageEntities (appStorageConfig) {
     filterAgentConnDids = assureValidFilter(filterAgentConnDids)
     filterUids = assureValidFilter(filterUids)
     filterStatusCodes = assureValidFilter(filterStatusCodes)
-    let insertQuery = 'SELECT * from messages WHERE agent_did = $1'
+    let insertQuery = 'SELECT * from messages WHERE agent_did = ?'
     const values = [agentDid]
     if (filterAgentConnDids.length > 0) {
       values.push(filterAgentConnDids)
-      insertQuery += ` AND agent_connection_did = ANY($${values.length})`
+      insertQuery += ' AND agent_connection_did IN(?)'
     }
     if (filterUids.length > 0) {
       values.push(filterUids)
-      insertQuery += ` AND uid = ANY($${values.length})`
+      insertQuery += ' AND uid IN(?)'
     }
     if (filterStatusCodes.length > 0) {
       values.push(filterStatusCodes)
-      insertQuery += ` AND status_code = ANY($${values.length})`
+      insertQuery += ' AND status_code IN(?)'
     }
-    const { rows } = await pgPool.query(insertQuery, values)
+    const rows = await queryDb(insertQuery, values)
     return rows.map(row => buildStoredMessage(row.agent_did, row.agent_connection_did, row.uid, row.status_code, JSON.parse(row.payload.toString())))
   }
 
@@ -238,16 +175,19 @@ async function createPgStorageEntities (appStorageConfig) {
     if (!agentDid || !agentConnDid) {
       throw Error('AgentDid or AgentConnDid was not specified.')
     }
+    if (uids.length === 0) {
+      return { failedUids: [], updatedUids: [] }
+    }
     // todo: before we run actual update, we should port: see dummy's check_if_message_status_can_be_updated
     // see: https://github.com/hyperledger/indy-sdk/blob/d3057f1e21f01768104ca129de63a15d1b5e302e/vcx/dummy-cloud-agent/src/actors/agent_connection.rs
     // But Dummy Cloud Agency throws error if a single message in the set cannot be updated which seems like
     // a strange behaviour. Rather the uid should rather be just included in failedUids portion of response?
     // dummy cloud agency always return empty array for failed uids
     const values = [newStatusCode, agentDid, uids]
-    const updateStatusQuery = 'UPDATE messages SET status_code = $1 WHERE agent_did = $2 AND uid = ANY($3) RETURNING uid;'
-    const updateRes = await pgPool.query(updateStatusQuery, values)
-    const updatedUids = updateRes.rows.map(row => row.uid)
-    const failedUids = uids.filter(uid => updatedUids.includes(uid) === false)
+    const updateStatusQuery = 'UPDATE messages SET status_code = ? WHERE agent_did = ? AND uid IN(?)'
+    await queryDb(updateStatusQuery, values)
+    const updatedUids = uids // difficult to find out which UIDs were successfully updated with mysql,
+    const failedUids = [] // unless we update one by one. With pgsql doable with RETURNING clause.
     return { failedUids, updatedUids }
   }
 
@@ -262,7 +202,10 @@ async function createPgStorageEntities (appStorageConfig) {
     const updated = []
     for (const uidsByConn of uidsByAgentConnDids) {
       const { agentConnDid, uids } = uidsByConn
-      const { failedUids, updatedUids } = await updateStatusCodeAgentConnection(agentDid, agentConnDid, uids, statusCode)
+      const {
+        failedUids,
+        updatedUids
+      } = await updateStatusCodeAgentConnection(agentDid, agentConnDid, uids, statusCode)
       if (failedUids.length > 0) {
         failed.push({ agentConnDid, uids: failedUids })
       }
@@ -282,13 +225,13 @@ async function createPgStorageEntities (appStorageConfig) {
    * Undefined if DID/Verkey is not matching any entity's DID/Verkey.
    */
   async function loadEntityRecordByDidOrVerkey (entityDidOrVerkey) {
-    const insertQuery = 'SELECT * from entities WHERE entity_did = $1 OR entity_verkey = $1'
-    const values = [entityDidOrVerkey]
-    const { rows } = await pgPool.query(insertQuery, values)
+    const insertQuery = 'SELECT * from entities WHERE entity_did = ? OR entity_verkey = ?'
+    const values = [entityDidOrVerkey, entityDidOrVerkey]
+    const rows = await queryDb(insertQuery, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
     }
-    return rows[0].entity_record
+    return JSON.parse(rows[0].entity_record)
   }
 
   /**
@@ -298,13 +241,13 @@ async function createPgStorageEntities (appStorageConfig) {
    * Undefined if DID is not matching any entity's DID.
    */
   async function loadEntityRecordByDid (entityDid) {
-    const insertQuery = 'SELECT * from entities WHERE entity_did = $1'
+    const insertQuery = 'SELECT * from entities WHERE entity_did = ?'
     const values = [entityDid]
-    const { rows } = await pgPool.query(insertQuery, values)
+    const rows = await queryDb(insertQuery, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
     }
-    return rows[0].entity_record
+    return JSON.parse(rows[0].entity_record)
   }
 
   /**
@@ -315,9 +258,10 @@ async function createPgStorageEntities (appStorageConfig) {
    * reader to properly interpret an entity record.
    */
   async function saveEntityRecord (entityDid, entityVerkey, entityRecord) {
-    const insertQuery = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES($1, $2, $3) RETURNING *;'
-    const values = [entityDid, entityVerkey, entityRecord]
-    await pgPool.query(insertQuery, values)
+    // const insertQuery = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES(?, ?, ?) RETURNING *;'
+    const insertQuery = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES(?, ?, ?);'
+    const values = [entityDid, entityVerkey, JSON.stringify(entityRecord)]
+    await queryDb(insertQuery, values)
   }
 
   // ---- ---- ---- ---- ---- ----  Agent 2 AgentConn links
@@ -329,9 +273,9 @@ async function createPgStorageEntities (appStorageConfig) {
    * @param {object} userPwDid - The "entity record", can have arbitrary structure
    */
   async function linkAgentToItsConnection (agentDid, agentConnDid, userPwDid) {
-    const insertQuery = 'INSERT INTO agent_connections (agent_connection_did, user_pw_did, agent_did) VALUES($1, $2, $3)'
+    const insertQuery = 'INSERT INTO agent_connections (agent_connection_did, user_pw_did, agent_did) VALUES(?, ?, ?)'
     const values = [agentConnDid, userPwDid, agentDid]
-    await pgPool.query(insertQuery, values)
+    await queryDb(insertQuery, values)
   }
 
   /**
@@ -339,9 +283,9 @@ async function createPgStorageEntities (appStorageConfig) {
    * @param {string} agentDid - DID of an Agent owning connection
    */
   async function getAgentLinks (agentDid) {
-    const insertQuery = 'SELECT * from agent_connections WHERE agent_did = $1'
+    const insertQuery = 'SELECT * from agent_connections WHERE agent_did = ?'
     const values = [agentDid]
-    const { rows } = await pgPool.query(insertQuery, values)
+    const rows = await queryDb(insertQuery, values)
     return rows.map(row => {
       return { agentConnDid: row.agent_connection_did, userPwDid: row.user_pw_did }
     }
@@ -451,7 +395,7 @@ async function createPgStorageEntities (appStorageConfig) {
   }
 
   function cleanUp () {
-    pgPool.end()
+    pool.end()
   }
 
   return {
@@ -487,6 +431,6 @@ async function createPgStorageEntities (appStorageConfig) {
 }
 
 module.exports = {
-  createPgStorageEntities,
-  waitUntilConnectsToPostgres
+  createDataStorage,
+  waitUntilConnectsToMysql
 }

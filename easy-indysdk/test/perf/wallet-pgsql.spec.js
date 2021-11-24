@@ -18,82 +18,76 @@
 
 /* eslint-env jest */
 const uuid = require('uuid')
-const rimraf = require('rimraf')
-const os = require('os')
-const { indyGenerateWalletKey } = require('../../src')
-const { indyOpenWallet } = require('../../src')
-const { indyCreateWallet } = require('../../src')
-const { indyStoreTheirDid, indyCreateAndStoreMyDid } = require('../../src')
-const { indyKeyForLocalDid } = require('../../src')
-const { indyCloseWallet } = require('../../src')
-const { indyDeleteWallet } = require('../../src')
-const { indyLoadPostgresPlugin } = require('../../src')
-const { indyBuildPostgresCredentials } = require('../../src')
-const { indyBuildPostgresStorageConfig } = require('../../src')
+const {
+  indyStoreTheirDid,
+  indyCreateAndStoreMyDid,
+  indyGenerateWalletKey,
+  indyOpenWallet,
+  indyCreateWallet,
+  indyCloseWallet,
+  indySetDefaultLogger
+} = require('../../src')
 const { performance } = require('perf_hooks')
 const sleep = require('sleep-promise')
 const indy = require('indy-sdk')
+const { indyBuildMysqlStorageConfig, indyBuildMysqlStorageCredentials } = require('../../src')
+const { createDbSchemaWallets } = require('../../../dbutils')
 
-beforeAll(async () => {
-  jest.setTimeout(1000 * 1200)
-})
+let walletStorageConfig
+let walletStorageCredentials
 
-// const pgStrategy = 'MultiWalletSingleTable'
-// const pgStrategy = 'DatabasePerWallet'
-// storageType = process.env.STORAGE_TYPE || 'default'
-const storageType = 'postgres_storage'
-let storageConfig
-let storageCredentials
+const storageType = 'mysql'
+let tmpDbWallet
 
-const pgStrategy = 'MultiWalletSingleTableSharedPool'
-
-let testMode
-if (storageType === 'postgres_storage') {
-  testMode = `${storageType}-${pgStrategy}`
-  storageConfig = indyBuildPostgresStorageConfig('localhost:5432', 90, 30, pgStrategy)
-  storageCredentials = indyBuildPostgresCredentials('postgres', 'mysecretpassword', 'postgres', 'mysecretpassword')
-} else {
-  testMode = `${storageType}`
-  storageConfig = null
-  storageCredentials = null
+function getStorageInfoMysql (dbSchemaWallet) {
+  const walletStorageConfig = indyBuildMysqlStorageConfig(
+    'localhost',
+    'localhost',
+    3306,
+    dbSchemaWallet,
+    20
+  )
+  const walletStorageCredentials = indyBuildMysqlStorageCredentials(
+    'root',
+    'mysecretpassword'
+  )
+  return {
+    walletStorageType: 'mysql',
+    walletStorageConfig,
+    walletStorageCredentials
+  }
 }
 
+beforeAll(() => {
+  jest.setTimeout(1000 * 60)
+  indySetDefaultLogger('error')
+})
+
+beforeEach(async () => {
+  const testId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)
+  tmpDbWallet = await createDbSchemaWallets(testId);
+  ({ walletStorageConfig, walletStorageCredentials } = getStorageInfoMysql(tmpDbWallet.info.database))
+})
+
+afterEach(async () => {
+  await tmpDbWallet.dropDb()
+})
+
 describe('pgsql wallet', () => {
-  it('should create wallet store their did and retrieve it', async () => {
-    await indyLoadPostgresPlugin(storageConfig, storageCredentials)
-    const walletName = uuid.v4()
-    const walletKey = await indyGenerateWalletKey()
-    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
-    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
-    await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
-
-    // Replace
-    const loadedVkey = await indyKeyForLocalDid(wh, '8wZcEriaNLNKtteJvx7f8i')
-    expect(loadedVkey).toBe('5L2HBnzbu6Auh2pkDRbFt5f4prvgE2LzknkuYLsKkacp')
-    await indyCloseWallet(wh)
-    const homedir = os.homedir()
-    const walletPath = `${homedir}/.indy_client/wallet/${walletName}`
-    await rimraf.sync(walletPath)
-  })
-
   async function createAndOpenWallet () {
     const walletKey = await indyGenerateWalletKey()
     const walletName = uuid.v4()
-    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
-    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, storageConfig, storageCredentials)
+    await indyCreateWallet(walletName, walletKey, 'RAW', storageType, walletStorageConfig, walletStorageCredentials)
+    const wh = await indyOpenWallet(walletName, walletKey, 'RAW', storageType, walletStorageConfig, walletStorageCredentials)
     await indyStoreTheirDid(wh, '8wZcEriaNLNKtteJvx7f8i', '~NcYxiDXkpYi6ov5FcYDi1e')
-    return { wh, walletKey, walletName, storageConfig, storageCredentials }
+    return { wh, walletKey, walletName, storageConfig: walletStorageConfig, storageCredentials: walletStorageCredentials }
   }
 
-  it('should create many DIDs in single wallet', async () => {
-    if (storageType === 'postgres_storage') {
-      await indyLoadPostgresPlugin(storageConfig, storageCredentials)
-    }
-
+  it('should measure IO, parallel within single wallet', async () => {
     const walletRecord = await createAndOpenWallet()
     try {
       // measure writes
-      const PAR_IO = 3000
+      const PAR_IO = 100
       await indy.setRuntimeConfig(JSON.stringify({ crypto_thread_pool_size: 8 }))
       await sleep(1000)
       {
@@ -116,22 +110,14 @@ describe('pgsql wallet', () => {
         const duration = (tFinish - tStart)
         const totalOps = PAR_IO
         const perOP = duration / totalOps
-        console.log(`TYPE:${testMode} -- DID Creates count ${totalOps} operations; took overally: ${duration}ms / ${perOP} per op. StartTime ${timeStart} TimeEnd ${timeFinish}`)
+        console.log(`DID Creates count ${totalOps} operations; took overally: ${duration}ms / ${perOP} per op. StartTime ${timeStart} TimeEnd ${timeFinish}`)
       }
     } finally {
-      const { wh, walletKey, walletName, storageConfig, storageCredentials } = walletRecord
-      console.log(`Closing wallet starting at ${new Date().getTime()}`)
-      await indyCloseWallet(wh)
-      console.log(`Deleting wallet starting at ${new Date().getTime()}`)
-      await indyDeleteWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
-      console.log(`Deleted wallet at ${new Date().getTime()}`)
+      await indyCloseWallet(walletRecord.wh)
     }
   })
 
-  it('should open 300 wallets without crashing', async () => {
-    if (storageType === 'postgres_storage') {
-      await indyLoadPostgresPlugin(storageConfig, storageCredentials)
-    }
+  it('should measure IO, parallel across various wallets', async () => {
     const N = 1
     const PAR = 1
     const walletRecs = []
@@ -156,13 +142,13 @@ describe('pgsql wallet', () => {
         const duration = (tFinish - tStart)
         const totalOps = N * PAR
         const perOP = duration / totalOps
-        console.log(`TYPE:${testMode} -- Opening ${totalOps} wallets; ${N}round of ${PAR} operations; took overally: ${duration}ms / ${perOP} per op`)
+        console.log(`Opening ${totalOps} wallets; ${N}round of ${PAR} operations; took overally: ${duration}ms / ${perOP} per op`)
       }
 
       // measure writes
       const N_IO = 1
-      const PAR_IO = 1000
-      await indy.setRuntimeConfig({ crypto_thread_pool_size: 8 })
+      const PAR_IO = 3000
+      await indy.setRuntimeConfig({ crypto_thread_pool_size: 4 })
       {
         const tStart = performance.now()
         const timeStart = new Date().getTime()
@@ -175,7 +161,6 @@ describe('pgsql wallet', () => {
             const targetIndex = Math.floor(Math.random() * walletRecs.length)
             const { wh } = walletRecs[targetIndex]
             promises.push(indyCreateAndStoreMyDid(wh))
-            // promises.push(sleep(0))
           }
           await Promise.all(promises)
         }
@@ -185,18 +170,13 @@ describe('pgsql wallet', () => {
         const duration = (tFinish - tStart)
         const totalOps = N_IO * PAR_IO
         const perOP = duration / totalOps
-        console.log(`TYPE:${testMode} -- DID Creates count ${totalOps}; ${N_IO} round of ${PAR_IO} operations; took overally: ${duration}ms / ${perOP} per op. StartTime ${timeStart} TimeEnd ${timeFinish}`)
+        console.log(`DID Creates count ${totalOps}; ${N_IO} round of ${PAR_IO} operations; took overally: ${duration}ms / ${perOP} per op. StartTime ${timeStart} TimeEnd ${timeFinish}`)
       }
     } finally {
       for (let i = 0; i < walletRecs.length; i++) {
         try {
           const walletRecord = walletRecs[i]
-          const { wh, walletKey, walletName, storageConfig, storageCredentials } = walletRecord
-          console.log(`Closing wallet starting at ${new Date().getTime()}`)
-          await indyCloseWallet(wh)
-          console.log(`Deleting wallet starting at ${new Date().getTime()}`)
-          await indyDeleteWallet(walletName, storageType, storageConfig, walletKey, 'RAW', storageCredentials)
-          console.log(`Deleted wallet at ${new Date().getTime()}`)
+          await indyCloseWallet(walletRecord.wh)
         } catch (e) {}
       }
     }
