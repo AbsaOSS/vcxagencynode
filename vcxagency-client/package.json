@@ -1,7 +1,7 @@
 {
   "name": "vcxagency-client",
   "author": "ABSA Group Limited",
-  "version": "0.3.1",
+  "version": "1.0.0",
   "licenses": [
     {
       "type": "Apache-2.0",
