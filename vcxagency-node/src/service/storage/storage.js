@@ -31,9 +31,9 @@ async function waitUntilConnectsToMysql (user, password, host, port, schema, att
     }
     attempts += 1
     if (attempts > attemptsThreshold) {
-      throw Error(`Couldn't connect to postgres after ${attemptsThreshold} attempts.`)
+      throw Error(`Couldn't connect to mysql after ${attemptsThreshold} attempts.`)
     }
-    logger.warn(`Couldn't connect to postgres, will try again after ${timeoutMs}ms.`)
+    logger.warn(`Couldn't connect to mysql, will try again after ${timeoutMs}ms.`)
     await sleep(timeoutMs)
   }
 }
