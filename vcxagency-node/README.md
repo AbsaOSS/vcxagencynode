@@ -65,14 +65,9 @@ serves like fast grey-box integration tests without networking in `./test/unit/e
 in the tests they are passed to agency through memory, instead of being sent over network.
 
 ## Integration testing over network
-- First startup the agency as described in instructions `How to run it`. Now you can use [VCX Tester](../vcxagency-tester)
-which is using LibVCX library to perform operations against the agency. In terms of this project, this can be
-considered almost as E2E test. It can be run against any VCX Agency implementation.
-
 - While LibVCX library itself serves as client of the agency, [NodeJS VCX Client](../vcxagency-client)
 gives ability to perform more granular operations against agency - mostly for testing, development, experiments.
 Its tests can be used against any VCX Agency implementation.
-
 
 # Dev
 - The agency exposes HTTP APIs to communicate with LibVCX client configured to use protocol V3 (in LibVCX versions

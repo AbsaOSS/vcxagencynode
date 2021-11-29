@@ -1,6 +1,6 @@
 cd "$(dirname $0)" || exit
 
-TARGET_PROJECTS=("easy-indysdk" "vcxagency-client" "vcxagency-node" "vcxagency-artillery" "vcxagency-tester")
+TARGET_PROJECTS=("easy-indysdk" "vcxagency-client" "vcxagency-node" "vcxagency-artillery")
 
 for project in "${TARGET_PROJECTS[@]}";
 do
