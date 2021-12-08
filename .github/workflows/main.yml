@@ -546,42 +546,18 @@ jobs:
           docker-compose -f ./ci/docker-compose.yml \
                          -f ./ci/docker-compose.mysql.yml \
                          -f ./ci/docker-compose.redis.yml up -d
+          sleep 10
+          docker-compose -f ./ci/docker-compose.yml \
+                         -f ./ci/docker-compose.mysql.yml \
+                         -f ./ci/docker-compose.redis.yml logs
 
-      - name: Create Wallet DB schema, run migrations
-        run: |
-          set -x
-          docker run --rm --name vcxagencynode_migrations_wallet \
-                         --network host \
-                          -e MYSQL_DATABASE=ca_agency_wallets \
-                          -e MYSQL_USER=root \
-                          -e MYSQL_PASSWORD=mysecretpassword \
-                          -e MYSQL_HOST=localhost \
-                          -e MYSQL_PORT=3306 \
-                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
-                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:wallet"
-
-      - name: Create Application DB schema, run migrations
-        run: |
-          set -x
-          docker run --rm --name vcxagencynode_migrations_data \
-                         --network host \
-                          -e MYSQL_DATABASE=agency_application \
-                          -e MYSQL_USER=root \
-                          -e MYSQL_PASSWORD=mysecretpassword \
-                          -e MYSQL_HOST=localhost \
-                          -e MYSQL_PORT=3306 \
-                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
-                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:app"
-
-      - name: Run client agency services
+      - name: Run migrations and start agency
         run: |
           set -x
           export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
-          docker-compose -f ./ci/docker-compose.yml \
-                         -f ./ci/docker-compose.agency-ca.yml up -d
+          docker-compose -f ./ci/docker-compose.yml -f ./ci/docker-compose.agency-ca.yml up -d
           sleep 10
-          docker-compose -f ./ci/docker-compose.yml \
-                         -f ./ci/docker-compose.agency-ca.yml logs
+          docker-compose -f ./ci/docker-compose.yml -f ./ci/docker-compose.agency-ca.yml logs
 
       - name: E2E Test client agency
         run: |
@@ -608,42 +584,18 @@ jobs:
           docker-compose -f ./ci/docker-compose.yml \
                          -f ./ci/docker-compose.mysql.yml \
                          -f ./ci/docker-compose.redis.yml up -d
+          sleep 10
+          docker-compose -f ./ci/docker-compose.yml \
+                         -f ./ci/docker-compose.mysql.yml \
+                         -f ./ci/docker-compose.redis.yml logs
 
-      - name: Create Wallet DB schema, run migrations
-        run: |
-          set -x
-          docker run --rm --name vcxagencynode_migrations_wallet \
-                         --network host \
-                          -e MYSQL_DATABASE=ea_agency_wallets \
-                          -e MYSQL_USER=root \
-                          -e MYSQL_PASSWORD=mysecretpassword \
-                          -e MYSQL_HOST=localhost \
-                          -e MYSQL_PORT=3306 \
-                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
-                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:wallet"
-
-      - name: Create Application DB schema, run migrations
-        run: |
-          set -x
-          docker run --rm --name vcxagencynode_migrations_data \
-                         --network host \
-                          -e MYSQL_DATABASE=agency_application \
-                          -e MYSQL_USER=root \
-                          -e MYSQL_PASSWORD=mysecretpassword \
-                          -e MYSQL_HOST=localhost \
-                          -e MYSQL_PORT=3306 \
-                         "$CACHED_DOCKER_IMG_NAME_AGENCY" \
-                         bash -c "cd /home/node/dbutils && yarn install && yarn run schema:migrate:app"
-
-      - name: Run client agency services
+      - name: Run migrations and start agency
         run: |
           set -x
           export AGENCY_IMAGE="$CACHED_DOCKER_IMG_NAME_AGENCY"
-          docker-compose -f ./ci/docker-compose.yml \
-                         -f ./ci/docker-compose.agency-ea.yml up -d
+          docker-compose -f ./ci/docker-compose.yml -f ./ci/docker-compose.agency-ea.yml up -d
           sleep 10
-          docker-compose -f ./ci/docker-compose.yml \
-                         -f ./ci/docker-compose.agency-ea.yml logs
+          docker-compose -f ./ci/docker-compose.yml -f ./ci/docker-compose.agency-ea.yml logs
 
       - name: E2E Test enterprise agency
         run: |
