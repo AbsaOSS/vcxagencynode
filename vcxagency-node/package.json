@@ -14,7 +14,7 @@
     "lint": "standard",
     "lint:fix": "standard --fix",
     "serve": "NODE_ENV=production node src/index.js",
-    "dev:schema:migrate:all": "cd ../dbutils && npm run dev:schema:migrate:all",
+    "dev:schema:migrate:all": "echo vcxagencynode_MYSQL_HOST=$MYSQL_HOST && cd ../dbutils && npm run dev:schema:migrate:all",
     "dev:ea": "npm run dev:schema:migrate:all && APP_CONFIG=localhost-ea NODE_ENV=development nodemon src/index.js",
     "dev:ca": "npm run dev:schema:migrate:all && APP_CONFIG=localhost-ca NODE_ENV=development nodemon src/index.js",
     "tls": "APP_CONFIG=localhost-tls NODE_ENV=dev nodemon src/index.js",
