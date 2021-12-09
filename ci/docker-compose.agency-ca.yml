@@ -42,4 +42,4 @@ services:
       - absadocker
     ports:
       - "8080:8080"
-    command: ["sh", "-c", "env && echo \"Starting docker; MYSQL_HOST=$$MYSQL_HOST\" && npm run dev:schema:migrate:all && npm run serve"]
+    command: ["sh", "-c", "npm run dev:schema:migrate:all && npm run serve"]
