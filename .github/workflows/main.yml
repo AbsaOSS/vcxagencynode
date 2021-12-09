@@ -104,12 +104,13 @@ jobs:
           REBUILD_SEED_AGENCY="1"
 
           export CODE_AGENCY_HASH=${{ hashFiles('vcxagency-node') }}
+          export CODE_DBUTILS_HASH=${{ hashFiles('dbutils') }}
           export CODE_CLIENT_HASH=${{ hashFiles('vcxagency-client') }}
           export CODE_EASYSDK_HASH=${{ hashFiles('easy-indysdk') }}
 
           echo "::set-output name=CACHE_KEY_REDIS::$REBUILD_SEED_REDIS-${{ hashFiles('ci/redis') }}"
           echo "::set-output name=CACHE_KEY_BASE::$REBUILD_SEED_BASE-${{ hashFiles('vcxagency-base') }}"
-          echo "::set-output name=CACHE_KEY_AGENCY::$REBUILD_SEED_AGENCY-$(echo $CACHE_KEY_BASE-$CODE_AGENCY_HASH-$CODE_CLIENT_HASH-$CODE_EASYSDK_HASH)"
+          echo "::set-output name=CACHE_KEY_AGENCY::$REBUILD_SEED_AGENCY-$(echo $CACHE_KEY_BASE-$CODE_AGENCY_HASH-${CODE_DBUTILS_HASH}-$CODE_CLIENT_HASH-$CODE_EASYSDK_HASH)"
 
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_BASE::vcxagency-base:cached"
           echo "::set-output name=CACHED_DOCKER_IMG_NAME_AGENCY::vcxagency-node:cached"
