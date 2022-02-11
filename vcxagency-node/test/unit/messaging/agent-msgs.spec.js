@@ -34,7 +34,7 @@ const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
 const { getBaseAppConfig } = require('./common')
-const { createDbSchemaApplication, createDbSchemaWallets } = require('dbutils')
+const { createDbSchemaApplication, createDbSchemaWallets, pruneMsgs } = require('dbutils')
 const { setupVcxLogging } = require('../../utils')
 const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
 const { buildAgencyClientVirtual } = require('./common')
@@ -369,24 +369,41 @@ describe('onboarding', () => {
     expect(updated2.uids.length).toBe(1)
     expect(updated2.uids.includes(msg6Id)).toBeTruthy()
 
-    const msgReply = await vcxFlowGetMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, [aconn1UserPwDid, aconn2UserPwDid], [], [])
-    const { msgsByConns } = msgReply
+    let msgReply = await vcxFlowGetMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, [aconn1UserPwDid, aconn2UserPwDid], [], [])
+    let { msgsByConns } = msgReply
     expect(Array.isArray(msgsByConns)).toBeTruthy()
     expect(msgsByConns.length).toBe(2)
 
-    const msgsByConn1 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn1UserPwDid)
+    let msgsByConn1 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn1UserPwDid)
     expect(msgsByConn1).toBeDefined()
     expect(msgsByConn1.msgs.length).toBe(3)
     assertMsgsByConHasMessageWithStatus(msgsByConn1, msg1Id, 'MS-106')
     assertMsgsByConHasMessageWithStatus(msgsByConn1, msg2Id, 'MS-106')
     assertMsgsByConHasMessageWithStatus(msgsByConn1, msg3Id, 'MS-104')
 
-    const msgsByConn2 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn2UserPwDid)
+    let msgsByConn2 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn2UserPwDid)
     expect(msgsByConn2).toBeDefined()
     expect(msgsByConn2.msgs.length).toBe(3)
     assertMsgsByConHasMessageWithStatus(msgsByConn2, msg4Id, 'MS-103')
     assertMsgsByConHasMessageWithStatus(msgsByConn2, msg5Id, 'MS-103')
     assertMsgsByConHasMessageWithStatus(msgsByConn2, msg6Id, 'MS-106')
+
+    await pruneMsgs(tmpDbData.info.database)
+    msgReply = await vcxFlowGetMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, [aconn1UserPwDid, aconn2UserPwDid], [], []);
+    ({ msgsByConns } = msgReply)
+    expect(Array.isArray(msgsByConns)).toBeTruthy()
+    expect(msgsByConns.length).toBe(2)
+
+    msgsByConn1 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn1UserPwDid)
+    expect(msgsByConn1).toBeDefined()
+    expect(msgsByConn1.msgs.length).toBe(1)
+    assertMsgsByConHasMessageWithStatus(msgsByConn1, msg3Id, 'MS-104')
+
+    msgsByConn2 = msgsByConns.find(msgsByConn => msgsByConn.pairwiseDID === aconn2UserPwDid)
+    expect(msgsByConn2).toBeDefined()
+    expect(msgsByConn2.msgs.length).toBe(2)
+    assertMsgsByConHasMessageWithStatus(msgsByConn2, msg4Id, 'MS-103')
+    assertMsgsByConHasMessageWithStatus(msgsByConn2, msg5Id, 'MS-103')
   })
 
   it('should not update any message statusCode of no uids are specified in update request', async () => {
