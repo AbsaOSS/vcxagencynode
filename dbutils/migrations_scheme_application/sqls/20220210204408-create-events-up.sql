@@ -5,8 +5,8 @@ END;
 
 
 CREATE EVENT msgs_cleanup
-    ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 10 MINUTE
+    ON SCHEDULE EVERY 10 MINUTE
     ON COMPLETION PRESERVE
-    COMMENT 'Periodically clean up reviewed messages'
+    COMMENT 'Cleanup processed messages (in states MS-105 or MS-106)'
     DO
         CALL prune_msgs();
