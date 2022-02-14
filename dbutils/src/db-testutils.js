@@ -18,15 +18,16 @@
 
 const uuid = require('uuid')
 const { migrateSchemaData, migrateSchemaWallet } = require('./migration')
-const { dropMysqlDatabase, createMysqlDatabase } = require('./db-schemas')
+const { dropMysqlDatabase, createMysqlDatabase, runSingleCmd } = require('./db-schemas')
+
+const user = 'root'
+const password = 'mysecretpassword'
+const host = 'localhost'
+const port = 3306
 
 async function createDbSchemaApplication (dbNameId) {
   const dbId = dbNameId || uuid.v4().split('-').join("")
   const database = `agencytest_data_${dbId}`
-  const user = 'root'
-  const password = 'mysecretpassword'
-  const host = 'localhost'
-  const port = 3306
 
   await createMysqlDatabase(user, password, host, port, database)
   await migrateSchemaData(user, password, host, port, database)
@@ -45,10 +46,6 @@ async function createDbSchemaApplication (dbNameId) {
 async function createDbSchemaWallets (dbNameId) {
   const dbId = dbNameId || uuid.v4().split('-').join("")
   const database = `agencytest_wallet_${dbId}`
-  const user = 'root'
-  const password = 'mysecretpassword'
-  const host = 'localhost'
-  const port = 3306
 
   await createMysqlDatabase(user, password, host, port, database)
   await migrateSchemaWallet(user, password, host, port, database)
@@ -64,7 +61,13 @@ async function createDbSchemaWallets (dbNameId) {
   }
 }
 
+async function pruneMsgs (dbName) {
+  const cmd = 'CALL prune_msgs()'
+  await runSingleCmd(user, password, host, port, cmd, dbName)
+}
+
 module.exports = {
   createDbSchemaApplication,
-  createDbSchemaWallets
+  createDbSchemaWallets,
+  pruneMsgs
 }

@@ -20,12 +20,13 @@ async function _runSingleCmd(dbConfig, cmd) {
   }
 }
 
-async function runSingleCmd(user, password, host, port, cmd) {
+async function runSingleCmd(user, password, host, port, cmd, database) {
   const dbConfig = {
     host,
     port,
     user,
     password,
+    database,
     multipleStatements: false
   }
   await _runSingleCmd(dbConfig, cmd)
@@ -110,4 +111,5 @@ module.exports = {
   createMysqlDatabase,
   assureMysqlDatabase,
   enableConsoleLogging,
+  runSingleCmd
 }
