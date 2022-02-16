@@ -19,6 +19,7 @@
 const {
   MSGTYPE_ARIES_FWD,
   MSGTYPE_GET_MSGS,
+  MSGTYPE_MSGS,
   tryParseAuthcrypted,
   buildMsgVcxV2Msgs
 } = require('vcxagency-client')
@@ -136,8 +137,18 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
       }
       logger.info(`${whoami} Handling message ${JSON.stringify(msgObject)}`)
       const resObject = await _handleAuthorizedAgentConnectionMsg(msgObject)
-      logger.debug(`${whoami} Sending response: ${JSON.stringify(resObject)}`)
+      _logResponseObject(resObject)
       return { response: resObject, shouldEncrypt: true }
+    }
+  }
+
+  function _logResponseObject (responseObject) {
+    const msgType = responseObject['@type']
+    if (msgType === MSGTYPE_MSGS) {
+      const msgCount = responseObject.msgs.length
+      logger.info(`${whoami} Sending response of type ${msgType}, retrieved ${msgCount} messages.`)
+    } else {
+      logger.info(`${whoami} Sending response: ${JSON.stringify(responseObject)}`)
     }
   }
 
@@ -172,7 +183,13 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
     const statusCode = 'MS-103'
     await serviceStorage.storeMessage(agentDid, agentConnectionDid, msgUid, statusCode, msgObject.msg)
     serviceNewMessages.flagNewMessage(agentDid)
+      .catch(err => {
+        logger.error(`Failed to set new-message flag, agentDid=${agentDid}, agentConnectionDid=${agentConnectionDid}, msgUid=${msgUid} Error: ${err.stack}`)
+      })
     trySendNotification(msgUid, statusCode)
+      .catch(err => {
+        logger.error(`Failed trying to send new-message notification, agentDid=${agentDid}, agentConnectionDid=${agentConnectionDid}, msgUid=${msgUid} Error: ${err.stack}`)
+      })
   }
 
   async function _handleGetMsgs (msgObject) {

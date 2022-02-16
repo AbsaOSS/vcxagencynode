@@ -18,7 +18,7 @@
 
 const winston = require('winston')
 const path = require('path')
-const { characterTruncater, jsonFormatter, tryAddRequestId } = require('./logger-common')
+const { jsonFormatter, tryAddRequestId } = require('./logger-common')
 
 const prettyFormatter = winston.format.combine(
   winston.format.colorize({ all: true }),
@@ -36,7 +36,6 @@ function createConsoleLogger (mainLoggerName, formatter, logLevel, makeItSilent 
         silent: makeItSilent,
         level: logLevel,
         format: winston.format.combine(
-          characterTruncater(5000),
           winston.format.timestamp({
             format: 'YYYY-MM-DD HH:mm:ss.SSS'
           }),

@@ -42,6 +42,8 @@ const configValidation = Joi.object().keys({
   LOG_LEVEL: Joi.string().valid('silly', 'debug', 'info', 'warn', 'error'),
   LOG_ENABLE_INDYSDK: Joi.string().valid('true', 'false'),
   LOG_JSON_TO_CONSOLE: Joi.string().valid('true', 'false'),
+  LOG_HEALTH_REQUESTS: Joi.string().valid('true', 'false').default('false'),
+
   SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
   SERVER_HOSTNAME: Joi.string().default('0.0.0.0'),
   SERVER_MAX_REQUEST_SIZE_KB: Joi.number().integer().min(1).max(MB_AS_KB * 10).default(512),

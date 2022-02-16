@@ -128,8 +128,18 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     } else {
       logger.info(`${whoami} Handling message ${JSON.stringify(msgObject)}`)
       const responseObject = await _handleAuthorizedAgentMessage(msgObject, senderVerkey)
-      logger.debug(`${whoami} Sending response: ${JSON.stringify(responseObject)}`)
+      _logResponseObject(responseObject)
       return { response: responseObject, wasEncrypted: false }
+    }
+  }
+
+  function _logResponseObject (responseObject) {
+    const msgType = responseObject['@type']
+    if (msgType === MSGTYPE_GET_MSGS_BY_CONNS) {
+      const msgCount = responseObject.msgs.length
+      logger.info(`${whoami} Sending response of type ${msgType}, retrieved ${msgCount} messages.`)
+    } else {
+      logger.info(`${whoami} Sending response: ${JSON.stringify(responseObject)}`)
     }
   }
 

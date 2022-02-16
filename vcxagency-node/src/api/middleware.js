@@ -28,7 +28,7 @@ module.exports.finalExpressHandlers = function finalExpressHandlers (app) {
     res.status(404).send({ message: `Your request: '${req.originalUrl}' didn't reach any handler.` })
   })
 
-  app.use(function (err, req, res, next) {
+  app.use(function (err, req, res) {
     if (err instanceof ValidationError) {
       return res.status(err.statusCode).json(err)
     }
@@ -42,25 +42,19 @@ module.exports.asyncHandler = function asyncHandler (fn) {
     const result = Promise
       .resolve(fn(req, res, next))
       .catch(function (err) {
-        const traceId = httpContext.get('reqId')
-        const responsePayload = { 'trace-id': traceId }
+        const errorTraceId = httpContext.get('reqId')
+        const responsePayload = { errorTraceId }
         if (err instanceof ErrorFeatureDisabled) {
           responsePayload.message = err.message
-          logger.error(`ErrorFeatureDisabled. Error: ${JSON.stringify(responsePayload)}`)
-          res.status(409).send({ error: responsePayload })
+          logger.error(`ErrorFeatureDisabled error, errorTraceId=${errorTraceId} error=${err.stack}`)
+          res.status(409).send(responsePayload)
         } else {
-          logger.error(`Unexpected error: '${traceId}'. Unhandled error from async express handler. Error details:`)
-          logger.error(err.stack)
-          res.status(500).send({ message: `Something went wrong unexpectedly. traceId=${traceId}`, errorId: traceId })
+          logger.error(`Unhandled error from async express handler, errorTraceId=${errorTraceId} error=${err.stack}`)
+          res.status(500).send(responsePayload)
         }
       })
     return result
   }
-}
-
-module.exports.logRequestsWithoutBody = function logRequestsWithoutBody (req, res, next) {
-  logger.info(`${req.method} ${req.originalUrl}`)
-  next()
 }
 
 module.exports.logRequestsWithBody = function logRequestsWithBody (req, res, next) {

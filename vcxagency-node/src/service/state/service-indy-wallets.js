@@ -17,6 +17,7 @@
 'use strict'
 
 const { indyGenerateWalletKey, indyCreateAndStoreMyDid, indyCreateWallet, indyAssureWallet, indyOpenWallet } = require('easy-indysdk')
+const logger = require('../../logging/logger-builder')(__filename)
 
 /**
  * Creates object for managing indy wallet handles. As a consumer of this interface you should not preserve wallet handles
@@ -25,6 +26,7 @@ const { indyGenerateWalletKey, indyCreateAndStoreMyDid, indyCreateWallet, indyAs
  */
 async function createServiceIndyWallets (storageType = 'default', storageConfig, storageCredentials) {
   const openWalletHandlesCache = {}
+  let cacheHandlesCount = 0
 
   async function assureWallet (walletName, walletKey, keyDerivationMethod) {
     await indyAssureWallet(walletName, walletKey, keyDerivationMethod, storageType, storageConfig, storageCredentials)
@@ -35,16 +37,22 @@ async function createServiceIndyWallets (storageType = 'default', storageConfig,
   on long inactivity, deletion of agent and its wallet etc.)
    */
   async function getWalletHandle (walletName, walletKey, keyDerivationMethod) {
+    logger.info(`Getting wallet handle for wallet ${walletName}, whCache contains ${cacheHandlesCount} handles.`)
     let wh = openWalletHandlesCache[walletName]
     if (wh) {
       return wh
+    } else {
+      logger.info(`Opening wallet ${walletName}`)
+      wh = await indyOpenWallet(walletName, walletKey, keyDerivationMethod, storageType, storageConfig, storageCredentials)
+      openWalletHandlesCache[walletName] = wh
+      cacheHandlesCount += 1
+      logger.info(`Opened wallet ${walletName}, wh=${wh}`)
+      return wh
     }
-    wh = await indyOpenWallet(walletName, walletKey, keyDerivationMethod, storageType, storageConfig, storageCredentials)
-    openWalletHandlesCache[walletName] = wh
-    return wh
   }
 
   async function createNewRawWalletForEntity (walletName) {
+    logger.info(`Creating new entity wallet, walletName=${walletName}`)
     const keyDerivationMethod = 'RAW'
     const walletKey = await indyGenerateWalletKey()
     await indyCreateWallet(walletName, walletKey, keyDerivationMethod, storageType, storageConfig, storageCredentials)

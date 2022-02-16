@@ -26,26 +26,11 @@ const tryAddRequestId = winston.format.combine(
   })
 )
 
-const characterTruncater = lengthLimit => {
-  return winston.format.combine(
-    winston.format.printf(info => {
-      const m = info.message
-      if (typeof m === 'string') {
-        const tailLength = Math.floor(lengthLimit / 2)
-        const filler = `[${Math.floor(m.length - lengthLimit)} chars]`
-        info.message = (m.length < lengthLimit) ? m : (m.substring(0, tailLength) + filler + m.substring(m.length - tailLength, m.length))
-      }
-      return info
-    })
-  )
-}
-
 const jsonFormatter = winston.format.combine(
   winston.format.printf(
-    info => JSON.stringify(info).replace(/\\n/g, '\\n').replace(/\\t/g, '\\t')
+    info => JSON.stringify(info)
   )
 )
 
-module.exports.characterTruncater = characterTruncater
 module.exports.jsonFormatter = jsonFormatter
 module.exports.tryAddRequestId = tryAddRequestId

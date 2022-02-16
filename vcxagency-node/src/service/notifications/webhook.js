@@ -17,12 +17,24 @@
 'use strict'
 
 const axios = require('axios')
+const uuid = require('uuid')
+const httpContext = require('express-http-context')
+const logger = require('../../logging/logger-builder')(__filename)
 
 async function sendNotification (webhookUrl, msgUid, msgStatusCode, notificationId, pwDid) {
   const notification = {
     msgUid, msgType: 'aries', theirPwDid: '', msgStatusCode, notificationId, pwDid
   }
-  await axios.post(webhookUrl, notification)
+  const headers = {}
+  const xRequestId = httpContext.get('reqId')
+  if (xRequestId) {
+    headers['X-Request-ID'] = xRequestId
+  } else {
+    const xRequestId = uuid.v4()
+    headers['X-Request-ID'] = xRequestId
+    logger.error(`Sending webhook notification but reqId was not found in httpContext. Setting X-Request-ID to '${xRequestId}'.`)
+  }
+  await axios.post(webhookUrl, notification, { headers })
 }
 
 module.exports = { sendNotification }

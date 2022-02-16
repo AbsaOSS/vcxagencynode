@@ -67,18 +67,18 @@ async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWall
       agencyVerkey = await assureFwaWalletWasSetUp(serviceIndyWallets, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
       break
     } catch (err) {
-      console.warn(`Failed to build FWA agent: ${err}\nRemaining attempts: ${attempts - attempt - 1}`)
+      logger.error(`Failed to build FWA agent: ${err}\nRemaining attempts: ${attempts - attempt - 1}`)
       await sleep(waitTime)
     }
   }
 
-  const whoami = `[ForwardAgent ${agencyDid}]`
+  const whoami = '[FwaAgent]'
 
-  async function setResolver (resolverObject) {
+  function setResolver (resolverObject) {
     resolver = resolverObject
   }
 
-  async function setRouter (routerObject) {
+  function setRouter (routerObject) {
     router = routerObject
   }
 
@@ -118,7 +118,6 @@ async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWall
     if (fromDIDVerKey !== senderVerkey) {
       throw Error(`VCX A2AMessageV2::Connect message declares verkey ${fromDIDVerKey} but sender used verkey ${senderVerkey}. These must match.`)
     }
-    // todo: here we would integrate KYC based authorization - the user vkey will have to authorized in prior to establishing connection
     const { agentDid } = await createAgentData(fromDID, fromDIDVerKey, serviceIndyWallets, serviceStorage)
     const agent = await resolver.resolveEntityAO(agentDid)
     const agentInfo = await agent.loadInfo()
@@ -128,25 +127,38 @@ async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWall
   }
 
   async function handleIncomingMessage (msgBuffer) {
+    logger.info(`${whoami} Received a message`)
+    let wh
     try {
-      logger.info(`${whoami} Agency received message.`)
-      logger.silly(`${whoami} Agency received message. Buffer Utf8: ${msgBuffer.toString('utf8')}`)
-      const wh = await serviceIndyWallets.getWalletHandle(agencyWalletName, agencyWalletKey, FWA_KDF)
+      wh = await serviceIndyWallets.getWalletHandle(agencyWalletName, agencyWalletKey, FWA_KDF)
+      logger.debug(`${whoami} Retrieved wallet handle for fwa wallet, wh=${wh}`)
+    } catch (err) {
+      const errorTraceId = uuid.v4()
+      const errorMsg = `${whoami} Error accessing FWA wallet, agencyWalletName=${agencyWalletName}, error=${err.stack}`
+      logger.error(errorMsg)
+      return { errorTraceId, errorMsg }
+    }
+    try {
+      logger.info(`${whoami} Decrypting message of ${msgBuffer.length} bytes.`)
       const message = await parseAnoncrypted(wh, msgBuffer)
       const msgType = message['@type']
       if (msgType === MSG_TYPE_AGENCY_FWD) {
-        logger.info(`${whoami} Received AgencyFWD message`)
+        logger.info(`${whoami} Received message of msgType=${msgType}`)
         return await processMsgVcxV2Fwd(message)
       } else if (msgType === MSGTYPE_ARIES_FWD) {
-        logger.info(`${whoami} Received AriesFWD message`)
+        logger.info(`${whoami} Received message of msgType=${msgType}`)
         return await processMsgAriesFwd(message)
       } else {
-        throw Error(`${whoami} Can't handle message of type ${msgType}`)
+        const errorTraceId = uuid.v4()
+        const errorMsg = `${whoami} Received message of unsupported msgType=${msgType}, errorTraceId=${errorTraceId}`
+        logger.error(errorMsg)
+        return { errorTraceId, errorMsg }
       }
-    } catch (err) {
+    } catch (err) { /// todo : in tests we relied that we'd return errorMsg from here
       const errorTraceId = uuid.v4()
-      logger.error(`${whoami} Error thrown while processing received message. ErrorTraceId ${errorTraceId} Error: ${util.inspect(err)}`)
-      return { errorMsg: err.message, errorTraceId }
+      const errorMsg = `${whoami} Error processing received message, errorTraceId=${errorTraceId}, error=${err.stack}`
+      logger.error(errorMsg)
+      return { errorTraceId, errorMsg }
     }
   }
 
