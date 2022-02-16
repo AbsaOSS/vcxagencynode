@@ -161,19 +161,18 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
     }
   }
 
-  async function trySendNotification (msgUid, statusCode) {
+  async function trySendNotification (msgUid) {
     const webhookUrl = await serviceStorage.getAgentWebhook(agentDid)
     logger.info(`Agent ${agentDid} received aries message and resolved webhook ${webhookUrl}`)
     if (webhookUrl) {
-      const notificationId = uuid.v4()
-      sendNotification(webhookUrl, msgUid, statusCode, notificationId, userPairwiseDid)
-        .then(() => {
-          logger.info(`Notification ${notificationId} from agentConnectionDid ${agentConnectionDid} sent to ${webhookUrl} successfully.`)
-        }, reason => {
-          const respData = reason.response && reason.response.data
-            ? ` Response data ${JSON.stringify(reason.response.data)}`
-            : ''
-          logger.warn(`Notification ${notificationId} from agentConnectionDid ${agentConnectionDid} sent to ${webhookUrl} encountered problem. Reason: ${reason}. ${respData}`)
+      sendNotification(webhookUrl, msgUid, userPairwiseDid)
+        .catch(err => {
+          if (err.message.includes('timeout')) {
+            logger.debug(`Webhook url didn't respond quickly enough, err=${err.stack}`)
+            // we don't log timeout errors, webhook integrators are expected to respond quickly
+          } else {
+            logger.warn(`Error sending webhook notification, err=${err.stack}`)
+          }
         })
     }
   }
@@ -186,7 +185,7 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
       .catch(err => {
         logger.error(`Failed to set new-message flag, agentDid=${agentDid}, agentConnectionDid=${agentConnectionDid}, msgUid=${msgUid} Error: ${err.stack}`)
       })
-    trySendNotification(msgUid, statusCode)
+    trySendNotification(msgUid)
       .catch(err => {
         logger.error(`Failed trying to send new-message notification, agentDid=${agentDid}, agentConnectionDid=${agentConnectionDid}, msgUid=${msgUid} Error: ${err.stack}`)
       })
