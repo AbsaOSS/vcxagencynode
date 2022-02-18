@@ -163,15 +163,15 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
 
   async function trySendNotification (msgUid) {
     const webhookUrl = await serviceStorage.getAgentWebhook(agentDid)
-    logger.info(`Agent ${agentDid} received aries message and resolved webhook ${webhookUrl}`)
+    logger.info(`${whoami} Received aries message and resolved webhook ${webhookUrl}`)
     if (webhookUrl) {
       sendNotification(webhookUrl, msgUid, userPairwiseDid)
         .catch(err => {
           if (err.message.includes('timeout')) {
-            logger.debug(`Webhook url didn't respond quickly enough, err=${err.stack}`)
+            logger.debug(`${whoami} Webhook url didn't respond quickly enough, err=${err.stack}`)
             // we don't log timeout errors, webhook integrators are expected to respond quickly
           } else {
-            logger.warn(`Error sending webhook notification, err=${err.stack}`)
+            logger.warn(`${whoami} Error sending webhook notification, err=${err.stack}`)
           }
         })
     }
@@ -183,11 +183,11 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
     await serviceStorage.storeMessage(agentDid, agentConnectionDid, msgUid, statusCode, msgObject.msg)
     serviceNewMessages.flagNewMessage(agentDid)
       .catch(err => {
-        logger.error(`Failed to set new-message flag, agentDid=${agentDid}, agentConnectionDid=${agentConnectionDid}, msgUid=${msgUid} Error: ${err.stack}`)
+        logger.error(`${whoami} Failed to set new-message flag, agentDid=${agentDid}, msgUid=${msgUid} Error: ${err.stack}`)
       })
     trySendNotification(msgUid)
       .catch(err => {
-        logger.error(`Failed trying to send new-message notification, agentDid=${agentDid}, agentConnectionDid=${agentConnectionDid}, msgUid=${msgUid} Error: ${err.stack}`)
+        logger.error(`${whoami} Failed trying to send webhook notification, agentDid=${agentDid}, msgUid=${msgUid} Error: ${err.stack}`)
       })
   }
 

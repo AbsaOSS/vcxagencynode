@@ -16,8 +16,8 @@
 
 'use strict'
 
-const http = require("http")
-const https = require("https")
+const http = require('http')
+const https = require('https')
 const axios = require('axios')
 const uuid = require('uuid')
 const httpContext = require('express-http-context')
