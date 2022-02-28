@@ -163,7 +163,6 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
 
   async function trySendNotification (msgUid) {
     const webhookUrl = await serviceStorage.getAgentWebhook(agentDid)
-    logger.info(`${whoami} Received aries message and resolved webhook ${webhookUrl}`)
     if (webhookUrl) {
       sendNotification(webhookUrl, msgUid, userPairwiseDid)
         .catch(err => {
@@ -180,7 +179,9 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
   async function _handleAriesFwd (msgObject) {
     const msgUid = uuid.v4()
     const statusCode = 'MS-103'
+    logger.info(`${whoami} Received new Aries message msgUid=${msgUid}.`)
     await serviceStorage.storeMessage(agentDid, agentConnectionDid, msgUid, statusCode, msgObject.msg)
+    logger.info(`${whoami} Stored message msgUid=${msgUid}.`)
     serviceNewMessages.flagNewMessage(agentDid)
       .catch(err => {
         logger.error(`${whoami} Failed to set new-message flag, agentDid=${agentDid}, msgUid=${msgUid} Error: ${err.stack}`)

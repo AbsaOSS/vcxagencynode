@@ -25,7 +25,7 @@ const logger = require('../../logging/logger-builder')(__filename)
 
 // default timeout is low; webhook integrators should reply quickly,
 // otherwise agency might end up having too many connections open
-const WEBHOOK_RESPONSE_TIMEOUT_MS = process.env.WEBHOOK_RESPONSE_TIMEOUT_MS || 5
+const WEBHOOK_RESPONSE_TIMEOUT_MS = process.env.WEBHOOK_RESPONSE_TIMEOUT_MS || 50
 const httpAgent = new http.Agent({ keepAlive: true })
 const httpsAgent = new https.Agent({ keepAlive: true })
 
@@ -33,6 +33,8 @@ const axiosInstance = axios.create({
   httpAgent,
   httpsAgent
 })
+
+let pendingResponseCount = 0
 
 async function sendNotification (webhookUrl, msgUid, pwDid) {
   const notification = { msgUid, pwDid }
@@ -42,10 +44,16 @@ async function sendNotification (webhookUrl, msgUid, pwDid) {
   if (!requestId) {
     logger.error(`Sending webhook notification but reqId was not found in httpContext. Setting X-Request-ID to '${headers['X-Request-ID']}'.`)
   }
-  await axiosInstance.post(webhookUrl, notification, {
-    headers,
-    timeout: WEBHOOK_RESPONSE_TIMEOUT_MS
-  })
+  pendingResponseCount += 1
+  logger.info(`Sending callback to url ${webhookUrl}, pendingResponseCount=${pendingResponseCount}`)
+  try {
+    await axiosInstance.post(webhookUrl, notification, {
+      headers,
+      timeout: WEBHOOK_RESPONSE_TIMEOUT_MS
+    })
+  } finally {
+    pendingResponseCount -= 1
+  }
 }
 
 module.exports = { sendNotification }
