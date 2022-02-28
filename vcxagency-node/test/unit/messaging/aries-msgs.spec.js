@@ -208,7 +208,7 @@ describe('onboarding', () => {
       // wait a bit and check alice has received notification about received message on her dummy server
       await sleep(1000)
       expect(serverReceivedNotification.msgUid).toBeDefined()
-      expect(serverReceivedNotificationHeaders['X-Request-ID']).toBeDefined()
+      expect(serverReceivedNotificationHeaders['x-request-id']).toBeDefined()
       expect(serverReceivedNotification.pwDid).toBe(aliceToBobDid)
     } finally {
       if (testServer) {
@@ -256,7 +256,7 @@ describe('onboarding', () => {
       // wait a bit and check alice has received notification about received message on her dummy server
       await sleep(1000)
       expect(serverReceivedNotification.msgUid).toBeDefined()
-      expect(serverReceivedNotificationHeaders['X-Request-ID']).toBeDefined()
+      expect(serverReceivedNotificationHeaders['x-request-id']).toBeDefined()
       expect(serverReceivedNotification.pwDid).toBe(aliceToBobDid)
     } finally {
       if (testServer) {
