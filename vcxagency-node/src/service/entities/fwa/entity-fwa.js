@@ -28,9 +28,9 @@ const { pack, indyCreateAndStoreMyDid, indyDidExists, indyKeyForLocalDid } = req
 const logger = require('../../../logging/logger-builder')(__filename)
 const util = require('util')
 const { objectToBuffer } = require('../../util')
-const uuid = require('uuid')
 const { createAgentData } = require('../agent/agent')
 const sleep = require('sleep-promise')
+const httpContext = require('express-http-context')
 
 const FWA_KDF = 'ARGON2I_MOD'
 
@@ -133,7 +133,7 @@ async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWall
       wh = await serviceIndyWallets.getWalletHandle(agencyWalletName, agencyWalletKey, FWA_KDF)
       logger.debug(`${whoami} Retrieved wallet handle for fwa wallet, wh=${wh}`)
     } catch (err) {
-      const errorTraceId = uuid.v4()
+      const errorTraceId = httpContext.get('reqId')
       const errorMsg = `${whoami} Error accessing FWA wallet, agencyWalletName=${agencyWalletName}, error=${err.stack}`
       logger.error(errorMsg)
       return { errorTraceId, errorMsg }
@@ -149,13 +149,13 @@ async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWall
         logger.info(`${whoami} Received message of msgType=${msgType}`)
         return await processMsgAriesFwd(message)
       } else {
-        const errorTraceId = uuid.v4()
+        const errorTraceId = httpContext.get('reqId')
         const errorMsg = `${whoami} Received message of unsupported msgType=${msgType}, errorTraceId=${errorTraceId}`
         logger.error(errorMsg)
         return { errorTraceId, errorMsg }
       }
-    } catch (err) { /// todo : in tests we relied that we'd return errorMsg from here
-      const errorTraceId = uuid.v4()
+    } catch (err) {
+      const errorTraceId = httpContext.get('reqId')
       const errorMsg = `${whoami} Error processing received message, errorTraceId=${errorTraceId}, error=${err.stack}`
       logger.error(errorMsg)
       return { errorTraceId, errorMsg }

@@ -37,7 +37,6 @@ async function createServiceIndyWallets (storageType = 'default', storageConfig,
   on long inactivity, deletion of agent and its wallet etc.)
    */
   async function getWalletHandle (walletName, walletKey, keyDerivationMethod) {
-    logger.info(`Getting wallet handle for wallet ${walletName}, whCache contains ${cacheHandlesCount} handles.`)
     let wh = openWalletHandlesCache[walletName]
     if (wh) {
       return wh
@@ -46,7 +45,7 @@ async function createServiceIndyWallets (storageType = 'default', storageConfig,
       wh = await indyOpenWallet(walletName, walletKey, keyDerivationMethod, storageType, storageConfig, storageCredentials)
       openWalletHandlesCache[walletName] = wh
       cacheHandlesCount += 1
-      logger.info(`Opened wallet ${walletName}, wh=${wh}`)
+      logger.info(`Opened wallet ${walletName}, wh=${wh}, cacheHandlesCount=${cacheHandlesCount}`)
       return wh
     }
   }

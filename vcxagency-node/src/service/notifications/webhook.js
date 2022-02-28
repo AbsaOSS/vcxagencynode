@@ -26,13 +26,10 @@ async function sendNotification (webhookUrl, msgUid, msgStatusCode, notification
     msgUid, msgType: 'aries', theirPwDid: '', msgStatusCode, notificationId, pwDid
   }
   const headers = {}
-  const xRequestId = httpContext.get('reqId')
-  if (xRequestId) {
-    headers['X-Request-ID'] = xRequestId
-  } else {
-    const xRequestId = uuid.v4()
-    headers['X-Request-ID'] = xRequestId
-    logger.error(`Sending webhook notification but reqId was not found in httpContext. Setting X-Request-ID to '${xRequestId}'.`)
+  const requestId = httpContext.get('reqId')
+  headers['X-Request-ID'] = requestId || uuid.v4()
+  if (!requestId) {
+    logger.error(`Sending webhook notification but reqId was not found in httpContext. Setting X-Request-ID to '${headers['X-Request-ID']}'.`)
   }
   await axios.post(webhookUrl, notification, { headers })
 }
