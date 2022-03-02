@@ -19,36 +19,21 @@
 const { unpack } = require('easy-indysdk')
 
 async function parseAnoncrypted (walletHandle, buffer) {
-  const agencyMode = '2.0'
-  if (agencyMode === '1.0') {
-    throw Error('Not implemented')
-  } else {
-    const { message } = await unpack(walletHandle, buffer)
-    return JSON.parse(message)
-  }
+  const { message } = await unpack(walletHandle, buffer)
+  return JSON.parse(message)
 }
 
 async function parseAuthcrypted (walletHandle, buffer) {
-  const agencyMode = '2.0'
-  if (agencyMode === '1.0') {
-    throw Error('Not implemented')
-  } else {
-    const { message, sender_verkey: senderVerkey } = await unpack(walletHandle, buffer)
-    if (!senderVerkey) {
-      throw Error('Authcrypted message was expected but sender_verkey is unknown after unpack.')
-    }
-    return { message: JSON.parse(message), senderVerkey }
+  const { message, sender_verkey: senderVerkey } = await unpack(walletHandle, buffer)
+  if (!senderVerkey) {
+    throw Error('Authcrypted message was expected but sender_verkey is unknown after unpack.')
   }
+  return { message: JSON.parse(message), senderVerkey }
 }
 
 async function tryParseAuthcrypted (walletHandle, buffer) {
-  const agencyMode = '2.0'
-  if (agencyMode === '1.0') {
-    throw Error('Not implemented')
-  } else {
-    const { message, sender_verkey: senderVerkey } = await unpack(walletHandle, buffer)
-    return { message: JSON.parse(message), senderVerkey }
-  }
+  const { message, sender_verkey: senderVerkey } = await unpack(walletHandle, buffer)
+  return { message: JSON.parse(message), senderVerkey }
 }
 
 module.exports = {

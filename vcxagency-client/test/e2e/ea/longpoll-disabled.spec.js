@@ -80,6 +80,6 @@ describe('longpoll', () => {
       thrown = err
     }
     expect(thrown.response.status).toBe(409)
-    expect(thrown.response.data.error.message).toBe('Feature is not enabled.')
+    expect(thrown.response.data.errorTraceId).toBeDefined()
   })
 })

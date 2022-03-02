@@ -29,7 +29,6 @@ const apiMessaging = require('../api/api-messaging')
 const apiHealth = require('../api/api-health')
 const {
   logRequestsWithBody,
-  logResponsesWithBody,
   setReqId,
   finalExpressHandlers
 } = require('../api/middleware')
@@ -61,39 +60,45 @@ function reloadTrustedCerts (logger) {
 async function setupExpressApp (expressApp, application, appConfig) {
   const { entityForwardAgent, serviceNewMessages } = application
   logger.info('Setting up express endpoints and middleware.')
-  const loggingExcludedRoutes = ['/', '/api/health']
-  const expressWinstonLogger = createExpressWinstonLogger(loggingExcludedRoutes)
-  expressApp.use(expressWinstonLogger)
 
   if (appConfig.DANGEROUS_HTTP_DETAILS === 'true') {
     logger.warn('** DANGEROUS, FULL HTTP REQUESTS WILL BE LOGGED **')
     expressApp.use(logRequestsWithBody)
-    expressApp.use(logResponsesWithBody)
   }
+
+  let loggingExcludedRoutes = ['/', '/api/health']
+  if (appConfig.LOG_HEALTH_REQUESTS === 'true') {
+    logger.warn('Health requests will be logged.')
+    loggingExcludedRoutes = []
+  }
+  const expressWinstonLogger = createExpressWinstonLogger(loggingExcludedRoutes)
+  expressApp.use(expressWinstonLogger)
 
   const healthRouter = express.Router()
   expressApp.use(['/api/health', '/'], healthRouter)
   apiHealth(healthRouter)
 
-  expressApp.use(httpContext.middleware)
-  expressApp.use(setReqId)
-
-  logger.info('Setting up express dicomm endpoints.')
+  logger.info('Setting up express Aries API.')
   const maxRequestSizeKb = appConfig.SERVER_MAX_REQUEST_SIZE_KB
-  const appAgentMsg = express.Router()
-  appAgentMsg.use(bodyParser.raw({
+  const expressAppAriesApi = express.Router()
+  expressAppAriesApi.use(bodyParser.raw({
     inflate: true,
     limit: `${maxRequestSizeKb}kb`,
     type: '*/*'
   }))
-  apiMessaging(appAgentMsg, entityForwardAgent)
-  expressApp.use('/agency/msg', appAgentMsg)
+  // it seems if httpContext.middleware / setReqId are before bodyParser.raw(), it's causing reqId getting deleted from httpContext
+  expressAppAriesApi.use(httpContext.middleware)
+  expressAppAriesApi.use(setReqId)
+  apiMessaging(expressAppAriesApi, entityForwardAgent)
+  expressApp.use('/agency/msg', expressAppAriesApi)
 
-  logger.info('Setting up express JSON endpoints.')
-  const appAgentJson = express.Router()
-  appAgentJson.use(bodyParser.json())
-  apiAgency(appAgentJson, entityForwardAgent, serviceNewMessages)
-  expressApp.use('/', appAgentJson)
+  logger.info('Setting up express JSON API.')
+  const expressAppJsonApi = express.Router()
+  expressAppJsonApi.use(httpContext.middleware)
+  expressAppJsonApi.use(setReqId)
+  expressAppJsonApi.use(bodyParser.json())
+  apiAgency(expressAppJsonApi, entityForwardAgent, serviceNewMessages)
+  expressApp.use('/', expressAppJsonApi)
 
   finalExpressHandlers(expressApp)
   logger.info('Express app endpoints and middleware has been configured.')

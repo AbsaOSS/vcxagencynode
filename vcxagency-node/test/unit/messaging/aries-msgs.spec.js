@@ -176,6 +176,7 @@ describe('onboarding', () => {
     try {
       // set up dummy server for alice to receive notifications from agency
       let serverReceivedNotification = {}
+      let serverReceivedNotificationHeaders = {}
       const TEST_SERVER_PORT = 49412
 
       const appNotifications = express()
@@ -183,6 +184,7 @@ describe('onboarding', () => {
       appNotifications.post('/notifications',
         async function (req, res) {
           serverReceivedNotification = req.body
+          serverReceivedNotificationHeaders = req.headers
           res.status(200).send()
         })
       testServer = appNotifications.listen(TEST_SERVER_PORT)
@@ -206,7 +208,7 @@ describe('onboarding', () => {
       // wait a bit and check alice has received notification about received message on her dummy server
       await sleep(1000)
       expect(serverReceivedNotification.msgUid).toBeDefined()
-      expect(serverReceivedNotification.notificationId).toBeDefined()
+      expect(serverReceivedNotificationHeaders['x-request-id']).toBeDefined()
       expect(serverReceivedNotification.pwDid).toBe(aliceToBobDid)
     } finally {
       if (testServer) {
@@ -220,13 +222,15 @@ describe('onboarding', () => {
     try {
       // set up dummy server for alice to receive notifications from agency
       let serverReceivedNotification = {}
-      const TEST_SERVER_PORT = 49412
+      let serverReceivedNotificationHeaders = {}
+      const TEST_SERVER_PORT = 49413
 
       const appNotifications = express()
       appNotifications.use(bodyParser.json())
       appNotifications.post('/notifications',
         async function (req, res) {
           serverReceivedNotification = req.body
+          serverReceivedNotificationHeaders = req.headers
           res.status(200).send()
         })
       testServer = appNotifications.listen(TEST_SERVER_PORT)
@@ -252,7 +256,7 @@ describe('onboarding', () => {
       // wait a bit and check alice has received notification about received message on her dummy server
       await sleep(1000)
       expect(serverReceivedNotification.msgUid).toBeDefined()
-      expect(serverReceivedNotification.notificationId).toBeDefined()
+      expect(serverReceivedNotificationHeaders['x-request-id']).toBeDefined()
       expect(serverReceivedNotification.pwDid).toBe(aliceToBobDid)
     } finally {
       if (testServer) {

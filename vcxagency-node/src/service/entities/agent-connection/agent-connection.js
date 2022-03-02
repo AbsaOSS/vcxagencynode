@@ -19,6 +19,7 @@
 const {
   MSGTYPE_ARIES_FWD,
   MSGTYPE_GET_MSGS,
+  MSGTYPE_MSGS,
   tryParseAuthcrypted,
   buildMsgVcxV2Msgs
 } = require('vcxagency-client')
@@ -136,8 +137,18 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
       }
       logger.info(`${whoami} Handling message ${JSON.stringify(msgObject)}`)
       const resObject = await _handleAuthorizedAgentConnectionMsg(msgObject)
-      logger.debug(`${whoami} Sending response: ${JSON.stringify(resObject)}`)
+      _logResponseObject(resObject)
       return { response: resObject, shouldEncrypt: true }
+    }
+  }
+
+  function _logResponseObject (responseObject) {
+    const msgType = responseObject['@type']
+    if (msgType === MSGTYPE_MSGS) {
+      const msgCount = responseObject.msgs.length
+      logger.info(`${whoami} Sending response of type ${msgType}, retrieved ${msgCount} messages.`)
+    } else {
+      logger.info(`${whoami} Sending response: ${JSON.stringify(responseObject)}`)
     }
   }
 
@@ -150,19 +161,17 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
     }
   }
 
-  async function trySendNotification (msgUid, statusCode) {
+  async function trySendNotification (msgUid) {
     const webhookUrl = await serviceStorage.getAgentWebhook(agentDid)
-    logger.info(`Agent ${agentDid} received aries message and resolved webhook ${webhookUrl}`)
     if (webhookUrl) {
-      const notificationId = uuid.v4()
-      sendNotification(webhookUrl, msgUid, statusCode, notificationId, userPairwiseDid)
-        .then(() => {
-          logger.info(`Notification ${notificationId} from agentConnectionDid ${agentConnectionDid} sent to ${webhookUrl} successfully.`)
-        }, reason => {
-          const respData = reason.response && reason.response.data
-            ? ` Response data ${JSON.stringify(reason.response.data)}`
-            : ''
-          logger.warn(`Notification ${notificationId} from agentConnectionDid ${agentConnectionDid} sent to ${webhookUrl} encountered problem. Reason: ${reason}. ${respData}`)
+      sendNotification(webhookUrl, msgUid, userPairwiseDid)
+        .catch(err => {
+          if (err.message.includes('timeout')) {
+            logger.debug(`${whoami} Webhook url didn't respond quickly enough, err=${err.stack}`)
+            // we don't log timeout errors, webhook integrators are expected to respond quickly
+          } else {
+            logger.warn(`${whoami} Error sending webhook notification, err=${err.stack}`)
+          }
         })
     }
   }
@@ -170,9 +179,17 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
   async function _handleAriesFwd (msgObject) {
     const msgUid = uuid.v4()
     const statusCode = 'MS-103'
+    logger.info(`${whoami} Received new Aries message msgUid=${msgUid}.`)
     await serviceStorage.storeMessage(agentDid, agentConnectionDid, msgUid, statusCode, msgObject.msg)
+    logger.info(`${whoami} Stored message msgUid=${msgUid}.`)
     serviceNewMessages.flagNewMessage(agentDid)
-    trySendNotification(msgUid, statusCode)
+      .catch(err => {
+        logger.error(`${whoami} Failed to set new-message flag, agentDid=${agentDid}, msgUid=${msgUid} Error: ${err.stack}`)
+      })
+    trySendNotification(msgUid)
+      .catch(err => {
+        logger.error(`${whoami} Failed trying to send webhook notification, agentDid=${agentDid}, msgUid=${msgUid} Error: ${err.stack}`)
+      })
   }
 
   async function _handleGetMsgs (msgObject) {
