@@ -223,7 +223,7 @@ describe('onboarding', () => {
       // set up dummy server for alice to receive notifications from agency
       let serverReceivedNotification = {}
       let serverReceivedNotificationHeaders = {}
-      const TEST_SERVER_PORT = 49412
+      const TEST_SERVER_PORT = 49413
 
       const appNotifications = express()
       appNotifications.use(bodyParser.json())
