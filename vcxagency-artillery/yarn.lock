@@ -1943,7 +1943,7 @@ duplexer3@^0.1.4:
   integrity sha1-7gHdHKwO08vH/b6jfcCo8c4ALOI=
 
 "easy-indysdk@file:../easy-indysdk":
-  version "0.3.1"
+  version "1.2.0"
   dependencies:
     indy-sdk "1.15.0"
     mysql "^2.18.1"
@@ -4303,9 +4303,9 @@ minimatch@^3.0.4:
     brace-expansion "^1.1.7"
 
 minimist@^1.1.1, minimist@^1.2.0, minimist@^1.2.5:
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.5.tgz#67d66014b66a6a8aaa0c083c5fd58df4e4e97602"
-  integrity sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==
+  version "1.2.6"
+  resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.6.tgz#8637a5b759ea0d6e98702cfb3a9283323c93af44"
+  integrity sha512-Jsjnk4bw3YJqYzbdyBiNsPWHPfO++UGG749Cxs6peCu5Xg4nrena6OVxOYxrQTqww0Jmwt+Ref8rggumkTLz9Q==
 
 minipass@^2.6.0, minipass@^2.9.0:
   version "2.9.0"
@@ -6275,10 +6275,10 @@ validate-npm-package-license@^3.0.1:
     spdx-expression-parse "^3.0.0"
 
 "vcxagency-client@file:../vcxagency-client":
-  version "0.3.1"
+  version "1.2.0"
   dependencies:
     axios "^0.21.1"
-    easy-indysdk "file:../../../../Library/Caches/Yarn/v6/npm-vcxagency-client-0.3.1-b3dc2e48-66ac-422b-88f1-a37fb4993469-1637852188348/node_modules/easy-indysdk"
+    easy-indysdk "file:../easy-indysdk"
     query-string "^6.8.2"
 
 verror@1.10.0:
