@@ -29,7 +29,7 @@ const {
 } = require('../../src')
 const { performance } = require('perf_hooks')
 const sleep = require('sleep-promise')
-const indy = require('indy-sdk')
+const indy = require('vdr-tools')
 const { indyBuildMysqlStorageConfig, indyBuildMysqlStorageCredentials } = require('../../src')
 const { createDbSchemaWallets } = require('../../../dbutils')
 

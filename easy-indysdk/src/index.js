@@ -16,7 +16,7 @@
 
 'use strict'
 
-const indy = require('indy-sdk')
+const indy = require('vdr-tools')
 const crypto = require('./crypto')
 const wallet = require('./wallet')
 

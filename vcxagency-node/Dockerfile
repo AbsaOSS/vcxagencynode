@@ -16,18 +16,18 @@ RUN npm install -g yarn
 USER node
 
 WORKDIR /home/node/dbutils
-COPY ./dbutils ./
+COPY --chown=node:node ./dbutils ./
 RUN yarn install --production
 
 WORKDIR /home/node/easy-indysdk
-COPY ./easy-indysdk ./
+COPY --chown=node:node ./easy-indysdk ./
 RUN yarn install --production
 
 WORKDIR /home/node/vcxagency-client
-COPY ./vcxagency-client ./
+COPY --chown=node:node ./vcxagency-client ./
 
 WORKDIR /home/node/vcxagency-node
-COPY ./vcxagency-node ./
+COPY --chown=node:node ./vcxagency-node ./
 RUN yarn install --production
 
 USER root
