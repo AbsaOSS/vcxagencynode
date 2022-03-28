@@ -23,7 +23,7 @@
     "test:perf:info": "jest --runInBand ./test/perf/info.perf.spec.js"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.26.1",
     "easy-indysdk": "file:../easy-indysdk",
     "query-string": "^6.8.2"
   },

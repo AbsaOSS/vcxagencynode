@@ -1,11 +1,11 @@
-FROM alpine:3.12 AS builder
+FROM alpine:3.14 AS builder
 
 ARG UID=1001
 ARG GID=1001
 
 ARG INDYSDK_PATH=/home/indy/vdr-tools
 ARG INDYSDK_REPO=https://gitlab.com/evernym/verity/vdr-tools.git
-ARG INDYSDK_REVISION=7df4c69b
+ARG INDYSDK_REVISION=v0.8.5
 
 ENV LC_ALL="C.UTF-8"
 ENV LANG="C.UTF-8"
@@ -35,22 +35,17 @@ RUN git clone $INDYSDK_REPO
 RUN cd $INDYSDK_PATH && git --no-pager log --decorate=short --pretty=oneline -n5
 RUN cd $INDYSDK_PATH && git checkout $INDYSDK_REVISION
 
-RUN cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
+RUN cargo build --release --manifest-path=$INDYSDK_PATH/libvdrtools/Cargo.toml
 
 USER root
-RUN mv $INDYSDK_PATH/libindy/target/release/libindy.so /usr/lib
+RUN mv $INDYSDK_PATH/libvdrtools/target/release/libvdrtools.so /usr/lib
 
-FROM alpine:3.12
-
-ARG UID=1001
-ARG GID=1001
+FROM node:17.8.0-alpine3.14
 
 ENV LC_ALL="C.UTF-8"
 ENV LANG="C.UTF-8"
 
-RUN addgroup -g $GID node && adduser -u $UID -D -G node node
-
-COPY --from=builder /usr/lib/libindy.so /usr/lib/
+COPY --from=builder /usr/lib/libvdrtools.so /usr/lib/
 
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
@@ -60,10 +55,9 @@ RUN apk add --no-cache \
         libsodium-dev \
         libzmq \
         make \
-        nodejs \
-        npm \
+        cmake \
         openssl-dev \
-        python2 \
+        python3 \
         sqlite-dev \
         zeromq-dev
 

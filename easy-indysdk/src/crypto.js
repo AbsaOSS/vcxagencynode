@@ -16,7 +16,7 @@
 
 'use strict'
 
-const indy = require('indy-sdk')
+const indy = require('vdr-tools')
 
 async function anonCrypt (wh, messageBuffer, receiverKeys) {
   return pack(wh, messageBuffer, receiverKeys, null)

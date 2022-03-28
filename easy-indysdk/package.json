@@ -18,7 +18,7 @@
     "test:perf": "jest --runInBand  ./test/perf"
   },
   "dependencies": {
-    "indy-sdk": "1.15.0",
+    "vdr-tools": "0.8.5",
     "mysql": "^2.18.1",
     "winston": "^3.2.1"
   },
