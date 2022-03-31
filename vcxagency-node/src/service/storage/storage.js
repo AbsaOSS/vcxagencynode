@@ -22,6 +22,7 @@ const { buildStoredMessage } = require('./storage-utils')
 const sleep = require('sleep-promise')
 const util = require('util')
 const { canConnectToDbSchema } = require('dbutils')
+const { timeOperation } = require('../util')
 
 async function waitUntilConnectsToMysql (user, password, host, port, schema, attemptsThreshold = 10, timeoutMs = 10000) {
   let attempts = 0
@@ -61,20 +62,20 @@ async function createDataStorage (appStorageConfig) {
   // ---- ---- ---- ---- ---- ----  Agent webhooks
   async function createAgentRecord (agentDid) {
     const values = [agentDid, null, null]
-    const insertQuery = 'INSERT INTO agents (agent_did, webhook_url, has_new_message) VALUES(?, ?, ?)'
-    await queryDb(insertQuery, values)
+    const query = 'INSERT INTO agents (agent_did, webhook_url, has_new_message) VALUES(?, ?, ?)'
+    return timeOperation(queryDb, { query, values, opName: 'createAgentRecord' }, query, values)
   }
 
   async function setAgentWebhook (agentDid, webhookUrl) {
     const values = [agentDid, webhookUrl, webhookUrl]
-    const insertQuery = 'INSERT INTO agents (agent_did, webhook_url) VALUES(?, ?) ON DUPLICATE KEY UPDATE webhook_url = ?'
-    await queryDb(insertQuery, values)
+    const query = 'INSERT INTO agents (agent_did, webhook_url) VALUES(?, ?) ON DUPLICATE KEY UPDATE webhook_url = ?'
+    return timeOperation(queryDb, { query, values, opName: 'setAgentWebhook' }, query, values)
   }
 
   async function getAgentWebhook (agentDid) {
-    const insertQuery = 'SELECT * from agents WHERE agent_did = ?'
+    const query = 'SELECT * from agents WHERE agent_did = ?'
     const values = [agentDid]
-    const rows = await queryDb(insertQuery, values)
+    const rows = await timeOperation(queryDb, { query, values, opName: 'getAgentWebhook' }, query, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
     }
@@ -89,9 +90,9 @@ async function createDataStorage (appStorageConfig) {
    * @param {string} agentDid - DID of the agent.
    */
   async function getHasNewMessage (agentDid) {
-    const insertQuery = 'SELECT has_new_message FROM agents WHERE agent_did = ?'
+    const query = 'SELECT has_new_message FROM agents WHERE agent_did = ?'
     const values = [agentDid]
-    const rows = await queryDb(insertQuery, values)
+    const rows = await timeOperation(queryDb, { query, values, opName: 'getHasNewMessage' }, query, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
     }
@@ -111,8 +112,8 @@ async function createDataStorage (appStorageConfig) {
       throw Error('AgentDid or AgentConnDid was not specified.')
     }
     const values = [hasNewMessages, agentDid]
-    const updateStatusQuery = 'UPDATE agents SET has_new_message = ? WHERE agent_did = ?'
-    await queryDb(updateStatusQuery, values)
+    const query = 'UPDATE agents SET has_new_message = ? WHERE agent_did = ?'
+    await timeOperation(queryDb, { query, values, opName: 'setHasNewMessage' }, query, values)
   }
 
   // ---- ---- ---- ---- ---- ----  Messages read/write
@@ -121,9 +122,11 @@ async function createDataStorage (appStorageConfig) {
    * Stores message received by agentConnection
    */
   async function storeMessage (agentDid, agentConnectionDid, uid, statusCode, dataObject) {
-    const insertQuery = 'INSERT INTO messages (agent_did, agent_connection_did, uid, status_code, payload) VALUES(?, ?, ?, ?, ?);'
-    const values = [agentDid, agentConnectionDid, uid, statusCode, Buffer.from(JSON.stringify(dataObject))]
-    await queryDb(insertQuery, values)
+    const query = 'INSERT INTO messages (agent_did, agent_connection_did, uid, status_code, payload) VALUES(?, ?, ?, ?, ?);'
+    const dataBuffer = Buffer.from(JSON.stringify(dataObject))
+    const values = [agentDid, agentConnectionDid, uid, statusCode, dataBuffer]
+    const logValues = [agentDid, agentConnectionDid, uid, statusCode, `data of ${dataBuffer.byteLength} bytes`]
+    await timeOperation(queryDb, { query, values: logValues, opName: 'storeMessage' }, query, values)
   }
 
   function assureValidFilter (filter) {
@@ -146,21 +149,21 @@ async function createDataStorage (appStorageConfig) {
     filterAgentConnDids = assureValidFilter(filterAgentConnDids)
     filterUids = assureValidFilter(filterUids)
     filterStatusCodes = assureValidFilter(filterStatusCodes)
-    let insertQuery = 'SELECT * from messages WHERE agent_did = ?'
+    let query = 'SELECT * from messages WHERE agent_did = ?'
     const values = [agentDid]
     if (filterAgentConnDids.length > 0) {
       values.push(filterAgentConnDids)
-      insertQuery += ' AND agent_connection_did IN(?)'
+      query += ' AND agent_connection_did IN(?)'
     }
     if (filterUids.length > 0) {
       values.push(filterUids)
-      insertQuery += ' AND uid IN(?)'
+      query += ' AND uid IN(?)'
     }
     if (filterStatusCodes.length > 0) {
       values.push(filterStatusCodes)
-      insertQuery += ' AND status_code IN(?)'
+      query += ' AND status_code IN(?)'
     }
-    const rows = await queryDb(insertQuery, values)
+    const rows = await timeOperation(queryDb, { query, values, opName: 'loadMessages' }, query, values)
     return rows.map(row => buildStoredMessage(row.agent_did, row.agent_connection_did, row.uid, row.status_code, JSON.parse(row.payload.toString())))
   }
 
@@ -184,8 +187,8 @@ async function createDataStorage (appStorageConfig) {
     // a strange behaviour. Rather the uid should rather be just included in failedUids portion of response?
     // dummy cloud agency always return empty array for failed uids
     const values = [newStatusCode, agentDid, uids]
-    const updateStatusQuery = 'UPDATE messages SET status_code = ? WHERE agent_did = ? AND uid IN(?)'
-    await queryDb(updateStatusQuery, values)
+    const query = 'UPDATE messages SET status_code = ? WHERE agent_did = ? AND uid IN(?)'
+    await timeOperation(queryDb, { query, values, opName: 'updateStatusCodeAgentConnection' }, query, values)
     const updatedUids = uids // difficult to find out which UIDs were successfully updated with mysql,
     const failedUids = [] // unless we update one by one. With pgsql doable with RETURNING clause.
     return { failedUids, updatedUids }
@@ -225,9 +228,9 @@ async function createDataStorage (appStorageConfig) {
    * Undefined if DID/Verkey is not matching any entity's DID/Verkey.
    */
   async function loadEntityRecordByDidOrVerkey (entityDidOrVerkey) {
-    const insertQuery = 'SELECT * from entities WHERE entity_did = ? OR entity_verkey = ?'
+    const query = 'SELECT * from entities WHERE entity_did = ? OR entity_verkey = ?'
     const values = [entityDidOrVerkey, entityDidOrVerkey]
-    const rows = await queryDb(insertQuery, values)
+    const rows = await timeOperation(queryDb, { query, values, opName: 'loadEntityRecordByDidOrVerkey' }, query, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
     }
@@ -241,9 +244,9 @@ async function createDataStorage (appStorageConfig) {
    * Undefined if DID is not matching any entity's DID.
    */
   async function loadEntityRecordByDid (entityDid) {
-    const insertQuery = 'SELECT * from entities WHERE entity_did = ?'
+    const query = 'SELECT * from entities WHERE entity_did = ?'
     const values = [entityDid]
-    const rows = await queryDb(insertQuery, values)
+    const rows = await timeOperation(queryDb, { query, values, opName: 'loadEntityRecordByDid' }, query, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
     }
@@ -259,9 +262,10 @@ async function createDataStorage (appStorageConfig) {
    */
   async function saveEntityRecord (entityDid, entityVerkey, entityRecord) {
     // const insertQuery = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES(?, ?, ?) RETURNING *;'
-    const insertQuery = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES(?, ?, ?);'
+    const query = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES(?, ?, ?);'
     const values = [entityDid, entityVerkey, JSON.stringify(entityRecord)]
-    await queryDb(insertQuery, values)
+    const logValues = [entityDid, entityVerkey, "utf8-data"]
+    await timeOperation(queryDb, { query, values: logValues, opName: 'saveEntityRecord' }, query, values)
   }
 
   // ---- ---- ---- ---- ---- ----  Agent 2 AgentConn links
@@ -273,9 +277,9 @@ async function createDataStorage (appStorageConfig) {
    * @param {object} userPwDid - The "entity record", can have arbitrary structure
    */
   async function linkAgentToItsConnection (agentDid, agentConnDid, userPwDid) {
-    const insertQuery = 'INSERT INTO agent_connections (agent_connection_did, user_pw_did, agent_did) VALUES(?, ?, ?)'
+    const query = 'INSERT INTO agent_connections (agent_connection_did, user_pw_did, agent_did) VALUES(?, ?, ?)'
     const values = [agentConnDid, userPwDid, agentDid]
-    await queryDb(insertQuery, values)
+    await timeOperation(queryDb, { query, values, opName: 'linkAgentToItsConnection' }, query, values)
   }
 
   /**
@@ -283,9 +287,9 @@ async function createDataStorage (appStorageConfig) {
    * @param {string} agentDid - DID of an Agent owning connection
    */
   async function getAgentLinks (agentDid) {
-    const insertQuery = 'SELECT * from agent_connections WHERE agent_did = ?'
+    const query = 'SELECT * from agent_connections WHERE agent_did = ?'
     const values = [agentDid]
-    const rows = await queryDb(insertQuery, values)
+    const rows = timeOperation(queryDb, { query, values, opName: 'getAgentLinks' }, query, values)
     return rows.map(row => {
       return { agentConnDid: row.agent_connection_did, userPwDid: row.user_pw_did }
     }
