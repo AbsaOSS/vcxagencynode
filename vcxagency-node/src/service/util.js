@@ -39,7 +39,6 @@ async function timeOperation (fn, operationData, ...args) {
   }
 }
 
-
 module.exports = {
   objectToBuffer,
   timeOperation

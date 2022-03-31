@@ -59,7 +59,7 @@ async function createDataStorage (appStorageConfig) {
 
   const queryDb = util.promisify(pool.query).bind(pool)
 
-  function explainQuery(query, values, logValues) {
+  function explainQuery (query, values, logValues) {
     if (!logValues) {
       logValues = values
     }
@@ -287,7 +287,7 @@ async function createDataStorage (appStorageConfig) {
     // const insertQuery = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES(?, ?, ?) RETURNING *;'
     const query = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES(?, ?, ?);'
     const values = [entityDid, entityVerkey, JSON.stringify(entityRecord)]
-    const logValues = [entityDid, entityVerkey, "utf8-data"]
+    const logValues = [entityDid, entityVerkey, 'utf8-data']
     if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, logValues) }
     await timeOperation(queryDb, { query, values: logValues, opName: 'saveEntityRecord' }, query, values)
   }
