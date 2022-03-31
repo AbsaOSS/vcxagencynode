@@ -59,22 +59,38 @@ async function createDataStorage (appStorageConfig) {
 
   const queryDb = util.promisify(pool.query).bind(pool)
 
+  function explainQuery(query, values, logValues) {
+    if (!logValues) {
+      logValues = values
+    }
+    queryDb(`EXPLAIN ${query}`, values)
+      .catch(err => {
+        logger.error(`Failed to execute EXPLAIN mysql query, err: ${err.stack}`)
+      })
+      .then(explanation => {
+        logger.info(`Query explained; query: ${query}, values: ${logValues}, explanation: ${JSON.stringify(explanation)}`, explanation)
+      })
+  }
+
   // ---- ---- ---- ---- ---- ----  Agent webhooks
   async function createAgentRecord (agentDid) {
     const values = [agentDid, null, null]
     const query = 'INSERT INTO agents (agent_did, webhook_url, has_new_message) VALUES(?, ?, ?)'
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     return timeOperation(queryDb, { query, values, opName: 'createAgentRecord' }, query, values)
   }
 
   async function setAgentWebhook (agentDid, webhookUrl) {
     const values = [agentDid, webhookUrl, webhookUrl]
     const query = 'INSERT INTO agents (agent_did, webhook_url) VALUES(?, ?) ON DUPLICATE KEY UPDATE webhook_url = ?'
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     return timeOperation(queryDb, { query, values, opName: 'setAgentWebhook' }, query, values)
   }
 
   async function getAgentWebhook (agentDid) {
     const query = 'SELECT * from agents WHERE agent_did = ?'
     const values = [agentDid]
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     const rows = await timeOperation(queryDb, { query, values, opName: 'getAgentWebhook' }, query, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
@@ -92,6 +108,7 @@ async function createDataStorage (appStorageConfig) {
   async function getHasNewMessage (agentDid) {
     const query = 'SELECT has_new_message FROM agents WHERE agent_did = ?'
     const values = [agentDid]
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     const rows = await timeOperation(queryDb, { query, values, opName: 'getHasNewMessage' }, query, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
@@ -113,6 +130,7 @@ async function createDataStorage (appStorageConfig) {
     }
     const values = [hasNewMessages, agentDid]
     const query = 'UPDATE agents SET has_new_message = ? WHERE agent_did = ?'
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     await timeOperation(queryDb, { query, values, opName: 'setHasNewMessage' }, query, values)
   }
 
@@ -126,6 +144,7 @@ async function createDataStorage (appStorageConfig) {
     const dataBuffer = Buffer.from(JSON.stringify(dataObject))
     const values = [agentDid, agentConnectionDid, uid, statusCode, dataBuffer]
     const logValues = [agentDid, agentConnectionDid, uid, statusCode, `data of ${dataBuffer.byteLength} bytes`]
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values, logValues) }
     await timeOperation(queryDb, { query, values: logValues, opName: 'storeMessage' }, query, values)
   }
 
@@ -163,6 +182,7 @@ async function createDataStorage (appStorageConfig) {
       values.push(filterStatusCodes)
       query += ' AND status_code IN(?)'
     }
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     const rows = await timeOperation(queryDb, { query, values, opName: 'loadMessages' }, query, values)
     return rows.map(row => buildStoredMessage(row.agent_did, row.agent_connection_did, row.uid, row.status_code, JSON.parse(row.payload.toString())))
   }
@@ -188,6 +208,7 @@ async function createDataStorage (appStorageConfig) {
     // dummy cloud agency always return empty array for failed uids
     const values = [newStatusCode, agentDid, uids]
     const query = 'UPDATE messages SET status_code = ? WHERE agent_did = ? AND uid IN(?)'
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     await timeOperation(queryDb, { query, values, opName: 'updateStatusCodeAgentConnection' }, query, values)
     const updatedUids = uids // difficult to find out which UIDs were successfully updated with mysql,
     const failedUids = [] // unless we update one by one. With pgsql doable with RETURNING clause.
@@ -230,6 +251,7 @@ async function createDataStorage (appStorageConfig) {
   async function loadEntityRecordByDidOrVerkey (entityDidOrVerkey) {
     const query = 'SELECT * from entities WHERE entity_did = ? OR entity_verkey = ?'
     const values = [entityDidOrVerkey, entityDidOrVerkey]
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     const rows = await timeOperation(queryDb, { query, values, opName: 'loadEntityRecordByDidOrVerkey' }, query, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
@@ -246,6 +268,7 @@ async function createDataStorage (appStorageConfig) {
   async function loadEntityRecordByDid (entityDid) {
     const query = 'SELECT * from entities WHERE entity_did = ?'
     const values = [entityDid]
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     const rows = await timeOperation(queryDb, { query, values, opName: 'loadEntityRecordByDid' }, query, values)
     if (rows.length > 1) {
       throw Error('Expected to find at most 1 entity.')
@@ -265,6 +288,7 @@ async function createDataStorage (appStorageConfig) {
     const query = 'INSERT INTO entities (entity_did, entity_verkey, entity_record) VALUES(?, ?, ?);'
     const values = [entityDid, entityVerkey, JSON.stringify(entityRecord)]
     const logValues = [entityDid, entityVerkey, "utf8-data"]
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, logValues) }
     await timeOperation(queryDb, { query, values: logValues, opName: 'saveEntityRecord' }, query, values)
   }
 
@@ -279,6 +303,7 @@ async function createDataStorage (appStorageConfig) {
   async function linkAgentToItsConnection (agentDid, agentConnDid, userPwDid) {
     const query = 'INSERT INTO agent_connections (agent_connection_did, user_pw_did, agent_did) VALUES(?, ?, ?)'
     const values = [agentConnDid, userPwDid, agentDid]
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     await timeOperation(queryDb, { query, values, opName: 'linkAgentToItsConnection' }, query, values)
   }
 
@@ -289,7 +314,8 @@ async function createDataStorage (appStorageConfig) {
   async function getAgentLinks (agentDid) {
     const query = 'SELECT * from agent_connections WHERE agent_did = ?'
     const values = [agentDid]
-    const rows = timeOperation(queryDb, { query, values, opName: 'getAgentLinks' }, query, values)
+    if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
+    const rows = await timeOperation(queryDb, { query, values, opName: 'getAgentLinks' }, query, values)
     return rows.map(row => {
       return { agentConnDid: row.agent_connection_did, userPwDid: row.user_pw_did }
     }
