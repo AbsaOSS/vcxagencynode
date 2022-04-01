@@ -38,7 +38,7 @@ const { storedMessageToResponseFormat } = require('../../storage/storage-utils')
 const { createAgentConnectionData } = require('../agent-connection/agent-connection')
 const { createAgentWallet } = require('./agent-internal')
 const logger = require('../../../logging/logger-builder')(__filename)
-const { objectToBuffer } = require('../../util')
+const { objectToBuffer, timeOperation } = require('../../util')
 const { entityType } = require('../entities-common')
 
 const AGENT_WALLET_KDF = 'RAW'
@@ -122,7 +122,7 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     }
     const msgType = msgObject['@type']
     if (msgType === MSG_TYPE_AGENCY_FWD) {
-      logger.info(`${whoami} Handling message type ${msgType}`)
+      logger.info(`${whoami} Handling message ${msgType}`)
       const responseBuffer = await _handleAuthorizedFwdMessage(msgObject)
       return { response: responseBuffer, wasEncrypted: true }
     } else {
@@ -146,17 +146,44 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
   async function _handleAuthorizedAgentMessage (msgObject) {
     const msgType = msgObject['@type']
     if (msgType === MSGTYPE_SIGNUP) {
-      return _handleSignUpMsg(msgObject)
+      return timeOperation(
+        _handleSignUpMsg,
+        null,
+        msgObject
+      )
     } else if (msgType === MSGTYPE_CREATE_AGENT) {
-      return _handleCreateAgent(msgObject)
+      return timeOperation(
+        _handleCreateAgent,
+        null,
+        msgObject
+      )
     } else if (msgType === MSGTYPE_CREATE_KEY) {
-      return _handleCreateKey(msgObject)
+      return timeOperation(
+        _handleCreateKey,
+        null,
+        msgObject
+      )
     } else if (msgType === MSGTYPE_UPDATE_COM_METHOD) {
-      return _handleUpdateComMethod(msgObject)
+      return timeOperation(
+        _handleUpdateComMethod,
+        null,
+        msgObject
+      )
     } else if (msgType === MSGTYPE_GET_MSGS_BY_CONNS) {
-      return _handleGetMsgsByConn(msgObject)
+      const { uids, statusCodes } = msgObject
+      const pairwiseDIDs = msgObject.pairwiseDIDs || []
+      return timeOperation(
+        _handleGetMsgsByConn,
+        { agentDid, uids, statusCodes, pairwiseDIDs },
+        uids, statusCodes, pairwiseDIDs
+      )
     } else if (msgType === MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS) {
-      return _handleUpdateMsgsStatusByConns(msgObject)
+      const { statusCode, uidsByConns } = msgObject
+      return timeOperation(
+        _handleUpdateMsgsStatusByConns,
+        { agentDid, statusCode, uidsByConns: JSON.stringify(uidsByConns) },
+        statusCode, uidsByConns
+      )
     } else {
       throw Error(`${whoami} Message of type '${msgType}' is not recognized VCX Agent message type.`)
     }
@@ -184,9 +211,7 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     }
   }
 
-  async function _handleGetMsgsByConn (msgObject) {
-    const { uids, statusCodes } = msgObject
-    const pairwiseDIDs = msgObject.pairwiseDIDs || []
+  async function _handleGetMsgsByConn (uids, statusCodes, pairwiseDIDs) {
     const didPairs = await serviceStorage.aconnLinkPairsByPwDids(agentDid, pairwiseDIDs)
     const msgsByConns = []
     for (const didPair of didPairs) {
@@ -236,8 +261,7 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
   }
 
   // "failed":[],"updatedUidsByConns":[{"pairwiseDID":"Fp4eVWcjyRawjNWgnJmJWD","uids":["b7vh36XiTe"]}]}
-  async function _handleUpdateMsgsStatusByConns (msgObject) {
-    const { statusCode, uidsByConns } = msgObject
+  async function _handleUpdateMsgsStatusByConns (statusCode, uidsByConns) {
     const uidsByAgentConnDids = await convertToUidsByAgentConnDids(uidsByConns, true)
     const { failed, updated } = await serviceStorage.updateStatusCodes(agentDid, uidsByAgentConnDids, statusCode)
     const updatedUidsByConns = await convertToUidsByPwDids(updated)

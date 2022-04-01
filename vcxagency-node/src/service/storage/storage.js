@@ -68,7 +68,7 @@ async function createDataStorage (appStorageConfig) {
         logger.error(`Failed to execute EXPLAIN mysql query, err: ${err.stack}`)
       })
       .then(explanation => {
-        logger.info(`Query explained; query: ${query}, values: ${logValues}, explanation: ${JSON.stringify(explanation)}`, explanation)
+        logger.info(`Query explained; query: ${query}, values: ${logValues}, explanation: ${JSON.stringify(explanation)}`)
       })
   }
 

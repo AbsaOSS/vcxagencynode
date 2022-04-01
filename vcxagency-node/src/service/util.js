@@ -31,9 +31,11 @@ async function timeOperation (fn, operationData, ...args) {
       operationData,
       operationOrigin: path.parse(module.parent.filename).base
     }
-    const res = await fn(...args)
-    profiler.done(profilerInfo)
-    return res
+    try {
+      return await fn(...args)
+    } finally {
+      profiler.done(profilerInfo)
+    }
   } else {
     return fn(...args)
   }

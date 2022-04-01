@@ -24,7 +24,7 @@ const {
   buildMsgVcxV2Msgs
 } = require('vcxagency-client')
 const { pack } = require('easy-indysdk')
-const { objectToBuffer } = require('../../util')
+const { objectToBuffer, timeOperation } = require('../../util')
 const { createAgentConnectionWallet } = require('./agent-connection-internal')
 const logger = require('../../../logging/logger-builder')(__filename)
 const uuid = require('uuid')
@@ -155,7 +155,14 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
   async function _handleAuthorizedAgentConnectionMsg (msgObject) {
     const msgType = msgObject['@type']
     if (msgType === MSGTYPE_GET_MSGS) {
-      return _handleGetMsgs(msgObject)
+      let { uids, statusCodes } = msgObject
+      uids = uids || []
+      statusCodes = statusCodes || []
+      return timeOperation(
+        _handleGetMsgs,
+        { agentDid, agentConnectionDid, uids, statusCodes },
+        agentDid, agentConnectionDid, uids, statusCodes
+      )
     } else {
       throw Error(`${whoami} Message of type '${msgType}' is not recognized VCX Agent Connection message type.`)
     }
@@ -192,10 +199,7 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
       })
   }
 
-  async function _handleGetMsgs (msgObject) {
-    let { uids, statusCodes } = msgObject
-    uids = uids || []
-    statusCodes = statusCodes || []
+  async function _handleGetMsgs (agentDid, agentConnectionDid, uids, statusCodes) {
     const storedMsgs = await serviceStorage.loadMessages(agentDid, agentConnectionDid, uids, statusCodes)
     const responseMsgs = storedMsgs.map(storedMessageToResponseFormat)
     return buildMsgVcxV2Msgs(responseMsgs)
