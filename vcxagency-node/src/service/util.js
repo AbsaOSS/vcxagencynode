@@ -37,7 +37,7 @@ async function timeOperation (fn, operationData, ...args) {
       profiler.done(profilerInfo)
     }
   } else {
-    return fn(...args)
+    return await fn(...args)
   }
 }
 

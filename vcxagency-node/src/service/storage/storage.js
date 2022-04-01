@@ -60,9 +60,7 @@ async function createDataStorage (appStorageConfig) {
   const queryDb = util.promisify(pool.query).bind(pool)
 
   function explainQuery (query, values, logValues) {
-    if (!logValues) {
-      logValues = values
-    }
+    logValues = logValues || values
     queryDb(`EXPLAIN ${query}`, values)
       .catch(err => {
         logger.error(`Failed to execute EXPLAIN mysql query, err: ${err.stack}`)
@@ -170,13 +168,13 @@ async function createDataStorage (appStorageConfig) {
     filterStatusCodes = assureValidFilter(filterStatusCodes)
     let query = 'SELECT * from messages WHERE agent_did = ?'
     const values = [agentDid]
-    if (filterAgentConnDids.length > 0) {
-      values.push(filterAgentConnDids)
-      query += ' AND agent_connection_did IN(?)'
-    }
     if (filterUids.length > 0) {
       values.push(filterUids)
       query += ' AND uid IN(?)'
+    }
+    if (filterAgentConnDids.length > 0) {
+      values.push(filterAgentConnDids)
+      query += ' AND agent_connection_did IN(?)'
     }
     if (filterStatusCodes.length > 0) {
       values.push(filterStatusCodes)

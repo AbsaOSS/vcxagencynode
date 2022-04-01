@@ -148,25 +148,25 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     if (msgType === MSGTYPE_SIGNUP) {
       return timeOperation(
         _handleSignUpMsg,
-        null,
+        { },
         msgObject
       )
     } else if (msgType === MSGTYPE_CREATE_AGENT) {
       return timeOperation(
         _handleCreateAgent,
-        null,
+        { },
         msgObject
       )
     } else if (msgType === MSGTYPE_CREATE_KEY) {
       return timeOperation(
         _handleCreateKey,
-        null,
+        { },
         msgObject
       )
     } else if (msgType === MSGTYPE_UPDATE_COM_METHOD) {
       return timeOperation(
         _handleUpdateComMethod,
-        null,
+        { },
         msgObject
       )
     } else if (msgType === MSGTYPE_GET_MSGS_BY_CONNS) {
