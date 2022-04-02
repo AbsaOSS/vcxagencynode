@@ -16,8 +16,32 @@
 
 'use strict'
 
+const path = require('path')
+const logger = require('../logging/logger-builder')(__filename)
+
 function objectToBuffer (object) {
   return Buffer.from(JSON.stringify(object))
 }
 
-module.exports = { objectToBuffer }
+async function timeOperation (fn, operationData, ...args) {
+  if (process.env.LOG_JSON_TO_CONSOLE === 'true') {
+    const profiler = logger.startTimer()
+    const profilerInfo = {
+      operationName: fn.name,
+      operationData,
+      operationOrigin: path.parse(module.parent.filename).base
+    }
+    try {
+      return await fn(...args)
+    } finally {
+      profiler.done(profilerInfo)
+    }
+  } else {
+    return await fn(...args)
+  }
+}
+
+module.exports = {
+  objectToBuffer,
+  timeOperation
+}
