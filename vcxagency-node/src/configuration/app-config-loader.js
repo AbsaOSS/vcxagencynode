@@ -34,6 +34,7 @@ function buildAppConfigFromEnvVariables () {
     LOG_ENABLE_INDYSDK: process.env.LOG_ENABLE_INDYSDK || 'false',
     LOG_JSON_TO_CONSOLE: process.env.LOG_JSON_TO_CONSOLE,
     LOG_HEALTH_REQUESTS: process.env.LOG_HEALTH_REQUESTS,
+    DEV_MODE: process.env.DEV_MODE,
 
     SERVER_PORT: process.env.SERVER_PORT,
     SERVER_HOSTNAME: process.env.SERVER_HOSTNAME,

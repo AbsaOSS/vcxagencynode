@@ -54,6 +54,7 @@ async function buildApplication (appConfig) {
   const agencyDid = appConfig.AGENCY_DID
   const agencySeed = appConfig.AGENCY_SEED_SECRET
   const agencyWalletKey = appConfig.AGENCY_WALLET_KEY_SECRET
+  const devMode = appConfig.DEV_MODE === 'true'
 
   const appStorageConfig = {
     host: appConfig.MYSQL_HOST,
@@ -89,7 +90,7 @@ async function buildApplication (appConfig) {
   await waitUntilConnectsToMysql(user, password, host, port, database, 5, 2000)
   const serviceStorage = await createDataStorage(appStorageConfig)
   const entityForwardAgent = await buildForwardAgent(serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
-  const resolver = createResolver(serviceIndyWallets, serviceStorage, serviceNewMessages, entityForwardAgent)
+  const resolver = createResolver(serviceIndyWallets, serviceStorage, serviceNewMessages, entityForwardAgent, devMode)
   const router = createRouter(resolver)
   resolver.setRouter(router)
   entityForwardAgent.setRouter(router)

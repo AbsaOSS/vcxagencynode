@@ -78,7 +78,7 @@ describe('agent operations', () => {
   it('should create agent data and retrieve wallet information', async () => {
     const { agentDid: agentDidOnCreate, agentVerkey: agentVkeyOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
     const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentDidOnCreate)
-    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
+    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage, true)
     const { ownerDid, ownerVerkey, agentDid, agentVerkey } = await agentAo.loadInfo()
 
     expect(ownerDid).toBe(clientDid)
@@ -90,7 +90,7 @@ describe('agent operations', () => {
   it('should set and get http/https webhook', async () => {
     const { agentDid: agentDidOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
     const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentDidOnCreate)
-    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
+    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage, true)
 
     await agentAo.setWebhook('http://1.2.3.4:3000')
     expect(await agentAo.getWebhook()).toBe('http://1.2.3.4:3000')
@@ -102,7 +102,7 @@ describe('agent operations', () => {
   it('should unset webhook by using empty string', async () => {
     const { agentDid: agentDidOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
     const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentDidOnCreate)
-    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
+    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage, true)
 
     await agentAo.setWebhook('http://example.org/123213123')
     await agentAo.setWebhook('')
@@ -113,7 +113,7 @@ describe('agent operations', () => {
   it('should throw if webhook is not http or https', async () => {
     const { agentDid: agentDidOnCreate } = await createAgentData(clientDid, clientVerkey, serviceIndyWallets, serviceStorage)
     const entityRecord = await serviceStorage.loadEntityRecordByDidOrVerkey(agentDidOnCreate)
-    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage)
+    const agentAo = await buildAgentAO(entityRecord, serviceIndyWallets, serviceStorage, true)
 
     let thrown
     try {

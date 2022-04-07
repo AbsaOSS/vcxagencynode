@@ -80,7 +80,8 @@ function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWallet
     MYSQL_PASSWORD_SECRET: 'mysecretpassword',
     MYSQL_DATABASE_APPLICATION: applicationDbName,
     MYSQL_DATABASE_WALLET: walletsDbName,
-    MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: 50
+    MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: 50,
+    DEV_MODE: 'true'
 
   }
 }

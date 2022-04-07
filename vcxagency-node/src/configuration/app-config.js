@@ -43,6 +43,7 @@ const configValidation = Joi.object().keys({
   LOG_ENABLE_INDYSDK: Joi.string().valid('true', 'false'),
   LOG_JSON_TO_CONSOLE: Joi.string().valid('true', 'false'),
   LOG_HEALTH_REQUESTS: Joi.string().valid('true', 'false').default('false'),
+  DEV_MODE: Joi.string().valid('true', 'false').default('false'),
 
   SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
   SERVER_HOSTNAME: Joi.string().default('0.0.0.0'),
