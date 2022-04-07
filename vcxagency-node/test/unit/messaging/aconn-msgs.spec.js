@@ -58,6 +58,18 @@ let sendToAgency
 let tmpDbData
 let tmpDbWallet
 
+let msg1Id
+let msg2Id
+let msg3Id
+let msg4Id
+
+function regenerateUuids () {
+  msg1Id = uuid.v4()
+  msg2Id = uuid.v4()
+  msg3Id = uuid.v4()
+  msg4Id = uuid.v4()
+}
+
 beforeAll(async () => {
   try {
     jest.setTimeout(1000 * 120)
@@ -94,6 +106,7 @@ afterAll(async () => {
 })
 
 beforeEach(async () => {
+  regenerateUuids()
   {
     agencyUserWalletKey = await indyGenerateWalletKey()
     agencyUserWalletName = `unit-test-${uuid.v4()}`
@@ -131,11 +144,6 @@ afterEach(async () => {
 let aconnDid
 let aconnVerkey
 let aconnUserPwVkey
-
-const msg1Id = uuid.v4()
-const msg2Id = uuid.v4()
-const msg3Id = uuid.v4()
-const msg4Id = uuid.v4()
 
 let agent1Did
 let agent1Verkey

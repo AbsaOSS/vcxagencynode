@@ -40,6 +40,9 @@ describe('storage', () => {
     const uid1 = uuid.v4()
     const uid2 = uuid.v4()
     const uid3 = uuid.v4()
+    const uid4 = uuid.v4()
+    const uid5 = uuid.v4()
+    const uid6 = uuid.v4()
     const a1Conn1Did = uuid.v4()
     const a1Conn2Did = uuid.v4()
     const a2Conn1Did = uuid.v4()
@@ -51,22 +54,22 @@ describe('storage', () => {
     await storage.storeMessage(agentDid, a1Conn2Did, uid2, 'MS-104', { msg: 'a1hello2' })
     await storage.storeMessage(agentDid, a1Conn2Did, uid3, 'MS-105', { msg: 'a1hello3' })
 
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid1, 'MS-103', { msg: 'a2hello1' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid2, 'MS-104', { msg: 'a2hello2' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid3, 'MS-105', { msg: 'a2hello3' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid4, 'MS-103', { msg: 'a2hello1' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid5, 'MS-104', { msg: 'a2hello2' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid6, 'MS-105', { msg: 'a2hello3' })
 
     // assert
     const agent2Msgs = await storage.loadMessages(agentDid2, [], [], [])
     expect(agent2Msgs.length).toBe(3)
-    const msg1 = agent2Msgs.find(m => m.metadata.uid === uid1)
+    const msg1 = agent2Msgs.find(m => m.metadata.uid === uid4)
     expect(msg1.metadata.statusCode).toBe('MS-103')
     expect(msg1.payload.msg).toBe('a2hello1')
 
-    const msg2 = agent2Msgs.find(m => m.metadata.uid === uid2)
+    const msg2 = agent2Msgs.find(m => m.metadata.uid === uid5)
     expect(msg2.metadata.statusCode).toBe('MS-104')
     expect(msg2.payload.msg).toBe('a2hello2')
 
-    const msg3 = agent2Msgs.find(m => m.metadata.uid === uid3)
+    const msg3 = agent2Msgs.find(m => m.metadata.uid === uid6)
     expect(msg3.metadata.statusCode).toBe('MS-105')
     expect(msg3.payload.msg).toBe('a2hello3')
   })
@@ -76,6 +79,9 @@ describe('storage', () => {
     const uid2 = uuid.v4()
     const uid3 = uuid.v4()
     const uid4 = uuid.v4()
+    const uid5 = uuid.v4()
+    const uid6 = uuid.v4()
+    const uid7 = uuid.v4()
     const a1Conn1Did = uuid.v4()
     const a1Conn2Did = uuid.v4()
     const a2Conn1Did = uuid.v4()
@@ -89,9 +95,9 @@ describe('storage', () => {
     await storage.storeMessage(agentDid, a1Conn2Did, uid3, 'MS-105', { msg: 'a1hello3' })
     await storage.storeMessage(agentDid, a1Conn3Did, uid4, 'MS-105', { msg: 'a1hello4' })
 
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid1, 'MS-103', { msg: 'a2hello1' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid2, 'MS-104', { msg: 'a2hello2' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid3, 'MS-105', { msg: 'a2hello3' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid5, 'MS-103', { msg: 'a2hello1' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid6, 'MS-104', { msg: 'a2hello2' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid7, 'MS-105', { msg: 'a2hello3' })
 
     // assert
     const msgObjects = await storage.loadMessages(agentDid, [a1Conn1Did, a1Conn3Did], [], [])
@@ -104,6 +110,9 @@ describe('storage', () => {
     const uid1 = uuid.v4()
     const uid2 = uuid.v4()
     const uid3 = uuid.v4()
+    const uid4 = uuid.v4()
+    const uid5 = uuid.v4()
+    const uid6 = uuid.v4()
     const a1Conn1Did = uuid.v4()
     const a2Conn1Did = uuid.v4()
     const agentDid = uuid.v4()
@@ -114,9 +123,9 @@ describe('storage', () => {
     await storage.storeMessage(agentDid, a1Conn1Did, uid2, 'MS-104', { msg: 'msg2' })
     await storage.storeMessage(agentDid, a1Conn1Did, uid3, 'MS-105', { msg: 'msg3' })
 
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid1, 'MS-103', { msg: 'xxxxxxx1' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid2, 'MS-104', { msg: 'xxxxxxx2' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid3, 'MS-105', { msg: 'xxxxxxx3' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid4, 'MS-103', { msg: 'xxxxxxx1' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid5, 'MS-104', { msg: 'xxxxxxx2' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid6, 'MS-105', { msg: 'xxxxxxx3' })
 
     // assert
     const msgObjects = await storage.loadMessages(agentDid, [], [uid1, uid3], [])
@@ -131,6 +140,9 @@ describe('storage', () => {
     const uid1 = uuid.v4()
     const uid2 = uuid.v4()
     const uid3 = uuid.v4()
+    const uid4 = uuid.v4()
+    const uid5 = uuid.v4()
+    const uid6 = uuid.v4()
     const a1Conn1Did = uuid.v4()
     const a2Conn1Did = uuid.v4()
     const agentDid = uuid.v4()
@@ -141,9 +153,9 @@ describe('storage', () => {
     await storage.storeMessage(agentDid, a1Conn1Did, uid2, 'MS-104', { msg: 'msg2' })
     await storage.storeMessage(agentDid, a1Conn1Did, uid3, 'MS-105', { msg: 'msg3' })
 
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid1, 'MS-103', { msg: 'xxxxxxx1' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid2, 'MS-104', { msg: 'xxxxxxx2' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid3, 'MS-105', { msg: 'xxxxxxx3' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid4, 'MS-103', { msg: 'xxxxxxx1' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid5, 'MS-104', { msg: 'xxxxxxx2' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid6, 'MS-105', { msg: 'xxxxxxx3' })
 
     // assert
     const msgObjects = await storage.loadMessages(agentDid, [], [], ['MS-105'])
@@ -159,6 +171,12 @@ describe('storage', () => {
     const uid5 = uuid.v4()
     const uid6 = uuid.v4()
     const uid7 = uuid.v4()
+    const uid8 = uuid.v4()
+    const uid9 = uuid.v4()
+    const uid10 = uuid.v4()
+    const uid11 = uuid.v4()
+    const uid12 = uuid.v4()
+    const uid13 = uuid.v4()
     const a1Conn1Did = uuid.v4()
     const a1Conn2Did = uuid.v4()
     const a2Conn1Did = uuid.v4()
@@ -178,12 +196,12 @@ describe('storage', () => {
     await storage.storeMessage(agentDid, a1Conn2Did, uid7, 'MS-105', { msg: 'msg6' })
 
     // agent2
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid1, 'MS-103', { msg: 'xxxxxxx1' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid2, 'MS-104', { msg: 'xxxxxxx2' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid3, 'MS-105', { msg: 'xxxxxxx3' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid4, 'MS-103', { msg: 'xxxxxxx1' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid5, 'MS-104', { msg: 'xxxxxxx2' })
-    await storage.storeMessage(agentDid2, a2Conn1Did, uid6, 'MS-105', { msg: 'xxxxxxx3' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid8, 'MS-103', { msg: 'xxxxxxx1' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid9, 'MS-104', { msg: 'xxxxxxx2' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid10, 'MS-105', { msg: 'xxxxxxx3' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid11, 'MS-103', { msg: 'xxxxxxx1' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid12, 'MS-104', { msg: 'xxxxxxx2' })
+    await storage.storeMessage(agentDid2, a2Conn1Did, uid13, 'MS-105', { msg: 'xxxxxxx3' })
 
     // assert
     const res1 = await storage.loadMessages(agentDid, [a1Conn1Did], [uid1], ['MS-103'])

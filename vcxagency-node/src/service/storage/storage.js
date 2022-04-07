@@ -188,54 +188,20 @@ async function createDataStorage (appStorageConfig) {
   /**
    * Updates statusCodes for messages on particular agent and its particular connection.
    * @param {string} agentDid - DID of the agent.
-   * @param {string} agentConnDid - DID of the agent connection. Must belong to agent.
    * @param {array} uids - list of message UIDs for whom new status should be set.
    * @param {string} newStatusCode - New status code to be set for matched messages.
    */
-  async function updateStatusCodeAgentConnection (agentDid, agentConnDid, uids, newStatusCode) {
-    if (!agentDid || !agentConnDid) {
-      throw Error('AgentDid or AgentConnDid was not specified.')
+  async function updateStatusCodeAgentConnection (agentDid, uids, newStatusCode) {
+    if (!agentDid) {
+      throw Error(`Failed to update status codes for messages ${uids}: AgentDid was not specified.`)
     }
     if (uids.length === 0) {
-      return { failedUids: [], updatedUids: [] }
+      return
     }
-    // todo: before we run actual update, we should port: see dummy's check_if_message_status_can_be_updated
-    // see: https://github.com/hyperledger/indy-sdk/blob/d3057f1e21f01768104ca129de63a15d1b5e302e/vcx/dummy-cloud-agent/src/actors/agent_connection.rs
-    // But Dummy Cloud Agency throws error if a single message in the set cannot be updated which seems like
-    // a strange behaviour. Rather the uid should rather be just included in failedUids portion of response?
-    // dummy cloud agency always return empty array for failed uids
     const values = [newStatusCode, agentDid, uids]
     const query = 'UPDATE messages SET status_code = ? WHERE agent_did = ? AND uid IN(?)'
     if (process.env.EXPLAIN_QUERIES === 'true') { explainQuery(query, values) }
     await timeOperation(queryDb, { query, values, opName: 'updateStatusCodeAgentConnection' }, query, values)
-    const updatedUids = uids // difficult to find out which UIDs were successfully updated with mysql,
-    const failedUids = [] // unless we update one by one. With pgsql doable with RETURNING clause.
-    return { failedUids, updatedUids }
-  }
-
-  /**
-   * Updates statusCodes for messages on particular agent across many connections.
-   * @param {string} agentDid - DID of agent message belongs to
-   * @param {string} statusCode - New status code to be set for matched messages.
-   * @param {array} uidsByAgentConnDids - example: [{"aconnDid":"6FRuB95abcmzz1nURoHyWE","uids":["Br4CoNP4TU"]}, ...]
-   */
-  async function updateStatusCodes (agentDid, uidsByAgentConnDids, statusCode) {
-    const failed = []
-    const updated = []
-    for (const uidsByConn of uidsByAgentConnDids) {
-      const { agentConnDid, uids } = uidsByConn
-      const {
-        failedUids,
-        updatedUids
-      } = await updateStatusCodeAgentConnection(agentDid, agentConnDid, uids, statusCode)
-      if (failedUids.length > 0) {
-        failed.push({ agentConnDid, uids: failedUids })
-      }
-      if (updatedUids.length > 0) {
-        updated.push({ agentConnDid, uids: updatedUids })
-      }
-    }
-    return { failed, updated }
   }
 
   // ---- ---- ---- ---- ---- ----  Entity records read/write
@@ -382,46 +348,6 @@ async function createDataStorage (appStorageConfig) {
     return pairs
   }
 
-  /**
-   * Maps updateByConn by pwDid to updateByConn  by agentConnDid.
-   * Example: maps [{"pairwiseDID":"12346543AAAAEFGHRoHyWE","uids":["Br4CoNP4TU"]}] to [{"agentConnDid":"6FRuB95abcmzz1nURoHyWE","uids":["Br4CoNP4TU"]}]
-   * @param {string} agentDid - DID of an Agent owning connection
-   * @param {array} uidsByUserPwDids - updateByConn by pwDid
-   * If one of the agent connection DIDs cannot be mapped into pairwiseDID, the update record will be omitted in response
-   */
-  async function convertIntoStorageRequest (agentDid, uidsByUserPwDids) {
-    const res = []
-    for (const uidsByUserPwDid of uidsByUserPwDids) {
-      const { pairwiseDID, uids } = uidsByUserPwDid
-      const mapped = await aconnLinkPairsByPwDids(agentDid, [pairwiseDID])
-      if (mapped.length === 1) {
-        const { agentConnDid } = mapped[0]
-        res.push({ agentConnDid, uids })
-      }
-    }
-    return res
-  }
-
-  /**
-   * Maps updateByConn by agentConnDid to updateByConn by pwDid.
-   * Example: maps [{"agentConnDid":"6FRuB95abcmzz1nURoHyWE","uids":["Br4CoNP4TU"]}] to [{"pairwiseDID":"12346543AAAAEFGHRoHyWE","uids":["Br4CoNP4TU"]}]
-   * @param {string} agentDid - DID of an Agent owning connection
-   * @param {array} uidsByUserAgentConnDids - updateByConn by agent connection DIDs
-   * If one of the agent connection DIDs cannot be mapped into pairwiseDID, the update record will be omitted in response
-   */
-  async function convertIntoUserUpdateResponse (agentDid, uidsByUserAgentConnDids) {
-    const res = []
-    for (const uidsByAgentConnDid of uidsByUserAgentConnDids) {
-      const { agentConnDid, uids } = uidsByAgentConnDid
-      const mapped = await aconnLinkPairsByAconnDids(agentDid, [agentConnDid])
-      if (mapped.length === 1) {
-        const { userPwDid: pairwiseDID } = mapped[0]
-        res.push({ pairwiseDID, uids })
-      }
-    }
-    return res
-  }
-
   function cleanUp () {
     pool.end()
   }
@@ -433,7 +359,7 @@ async function createDataStorage (appStorageConfig) {
     saveEntityRecord,
 
     // messaging
-    updateStatusCodes,
+    updateStatusCodeAgentConnection,
     storeMessage,
     loadMessages,
 
@@ -446,8 +372,6 @@ async function createDataStorage (appStorageConfig) {
     linkAgentToItsConnection,
     aconnLinkPairsByPwDids,
     aconnLinkPairsByAconnDids,
-    convertIntoStorageRequest,
-    convertIntoUserUpdateResponse,
     pwDidToAconnDid,
     aconnDidToPwDid,
 
