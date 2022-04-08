@@ -360,8 +360,8 @@ describe('onboarding', () => {
   it('should update statusCodes of messages', async () => {
     // act
     const uidsByConn = [
-      { pairwiseDID: aconn1UserPwDid, uids: [msg1Id, msg2Id] },
-      { pairwiseDID: aconn2UserPwDid, uids: [msg6Id] }
+      { pairwiseDID: 'not-taken-in-consideration', uids: [msg1Id, msg2Id] },
+      { pairwiseDID: 'not-taken-in-consideration', uids: [msg6Id] }
     ]
     const updateRes = await vcxFlowUpdateMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, uidsByConn, 'MS-106')
     expect(updateRes['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS')

@@ -77,9 +77,7 @@ function buildMsgVcxV2UpdateMsgStatusByConns (statusCode, uidsByConns) {
 
 function buildMsgVcxV2MsgStatusUpdatedByConns (failedUidsByConns, updatedUidsByConns) {
   const msg = {
-    '@type': MSGTYPE_MSG_STATUS_UPDATED_BY_CONNS,
-    failed: failedUidsByConns, // [{"pairwiseDID":"Fp4eVWcjyRawjNWgnJmJWD","uids":["aBcDeF1234"]}]}
-    updatedUidsByConns // example: [{"pairwiseDID":"Fp4eVWcjyRawjNWgnJmJWD","uids":["b7vh36XiTe"]}]}
+    '@type': MSGTYPE_MSG_STATUS_UPDATED_BY_CONNS
   }
   return msg
 }
