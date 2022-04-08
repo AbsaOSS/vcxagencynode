@@ -74,7 +74,7 @@ async function createAgentData (ownerDid, ownerVerkey, serviceWallets, serviceSt
  * @param {object} serviceWallets - Service for indy wallet management interface
  * @param {object} serviceStorage - Service for accessing entity storage
  */
-async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, router) {
+async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, router, devMode = false) {
   const { walletName, walletKey } = entityRecord
   const { ownerVerkey, agentDid, agentVerkey } = await loadInfo()
   const wh = await serviceWallets.getWalletHandle(walletName, walletKey, AGENT_WALLET_KDF)
@@ -169,7 +169,7 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
         { },
         msgObject
       )
-    } else if (msgType === MSGTYPE_GET_MSGS_BY_CONNS) {
+    } else if (devMode === true && msgType === MSGTYPE_GET_MSGS_BY_CONNS) {
       const { uids, statusCodes } = msgObject
       const pairwiseDIDs = msgObject.pairwiseDIDs || []
       return timeOperation(
