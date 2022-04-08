@@ -75,9 +75,11 @@ function buildMsgVcxV2UpdateMsgStatusByConns (statusCode, uidsByConns) {
   return msg
 }
 
-function buildMsgVcxV2MsgStatusUpdatedByConns (failedUidsByConns, updatedUidsByConns) {
+function buildMsgVcxV2MsgStatusUpdatedByConns () {
   const msg = {
-    '@type': MSGTYPE_MSG_STATUS_UPDATED_BY_CONNS
+    '@type': MSGTYPE_MSG_STATUS_UPDATED_BY_CONNS,
+    failed: [],
+    updatedUidsByConns: []
   }
   return msg
 }
