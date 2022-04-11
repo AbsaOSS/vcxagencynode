@@ -225,48 +225,23 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     return buildMsgVcxV2MsgsByConns(msgsByConns)
   }
 
-  async function convertToUidsByPwDids (uidsByAconnDids, ignoreNotFound = false) {
-    const uidsByPwDids = []
-    for (const rec of uidsByAconnDids) {
-      const { agentConnDid, uids } = rec
-      const userPwDid = await serviceStorage.aconnDidToPwDid(agentDid, agentConnDid)
-      if (userPwDid) {
-        uidsByPwDids.push({ pairwiseDID: userPwDid, uids })
-      } else if (!ignoreNotFound) {
-        throw Error(`AgentConnectionDid ${agentConnDid} could not be mapped to any userPwDid.`)
-      }
-    }
-    return uidsByPwDids
-  }
-
-  /**
-   * Takes list of "uids by pw dids", example: [{"pairwiseDID":"Fp4eVWcjyRawjNWgnJmJWD","uids":["b7vh36XiTe"]}]}
-   * and converts it to "uids by agent connection dids": [{"agentConnDid":"abcd1234565","uids":["b7vh36XiTe"]}]}
-   * So that each userPairwiseDid is converted to agentConnectionDid
-   * @param {array} uidsByPwDids - Message data
-   * @param {boolean} ignoreNotFound - Message data
-   */
-  async function convertToUidsByAgentConnDids (uidsByPwDids, ignoreNotFound = false) {
-    const uidsByAconnDids = []
-    for (const rec of uidsByPwDids) {
-      const { pairwiseDID, uids } = rec
-      const agentConnDid = await serviceStorage.pwDidToAconnDid(agentDid, pairwiseDID)
-      if (agentConnDid) {
-        uidsByAconnDids.push({ agentConnDid, uids })
-      } else if (!ignoreNotFound) {
-        throw Error(`UserPwDid ${pairwiseDID} could not be mapped to agenConnectionDid.`)
-      }
-    }
-    return uidsByAconnDids
-  }
-
   // "failed":[],"updatedUidsByConns":[{"pairwiseDID":"Fp4eVWcjyRawjNWgnJmJWD","uids":["b7vh36XiTe"]}]}
   async function _handleUpdateMsgsStatusByConns (statusCode, uidsByConns) {
-    const uidsByAgentConnDids = await convertToUidsByAgentConnDids(uidsByConns, true)
-    const { failed, updated } = await serviceStorage.updateStatusCodes(agentDid, uidsByAgentConnDids, statusCode)
-    const updatedUidsByConns = await convertToUidsByPwDids(updated)
-    const failedUidsByConns = await convertToUidsByPwDids(failed)
-    return buildMsgVcxV2MsgStatusUpdatedByConns(failedUidsByConns, updatedUidsByConns)
+    function getUidsFromUidsByConns (uidsByConns) {
+      const uids = []
+      for (const uidsByConn of uidsByConns) {
+        uids.push(...uidsByConn.uids)
+      }
+      return uids
+    }
+
+    if (!uidsByConns || !Array.isArray(uidsByConns)) {
+      logger.warn(`Agent ${agentDid} attempting to update status codes, but uidsByConns ${uidsByConns} is empty or not an array`)
+      return
+    }
+    const uids = getUidsFromUidsByConns(uidsByConns)
+    await serviceStorage.updateStatusCodeAgentConnection(agentDid, uids, statusCode)
+    return buildMsgVcxV2MsgStatusUpdatedByConns()
   }
 
   async function _handleSignUpMsg (_msgObject) {

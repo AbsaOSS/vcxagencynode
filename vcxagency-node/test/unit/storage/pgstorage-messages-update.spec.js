@@ -54,17 +54,9 @@ describe('storage', () => {
     await storage.storeMessage(agentDid, agentConn2Did, uid4, 'MS-105', { msg: 'hello4' })
 
     // act
-    const { failed, updated } =
-      await storage.updateStatusCodes(agentDid, [{ agentConnDid: agentConn2Did, uids: [uid2, uid4] }], 'MS-106')
+    await storage.updateStatusCodeAgentConnection(agentDid, [uid2, uid4], 'MS-106')
 
     // assert
-    expect(failed.length).toBe(0)
-    expect(updated.length).toBe(1)
-    expect(updated[0].agentConnDid).toBe(agentConn2Did)
-    expect(updated[0].uids.length).toBe(2)
-    expect(updated[0].uids.find(uid => uid === uid2)).toBeDefined()
-    expect(updated[0].uids.find(uid => uid === uid4)).toBeDefined()
-
     const msgObjects = await storage.loadMessages(agentDid, agentConn2Did, [], [])
     expect(msgObjects.length).toBe(3)
     const msg2 = msgObjects.find(m => m.metadata.uid === uid2)
@@ -93,11 +85,10 @@ describe('storage', () => {
     await storage.storeMessage(agentDid, agentConn2Did, uid4, 'MS-105', { msg: 'hello4' })
 
     // act
-    const { failed, updated } =
-      await storage.updateStatusCodes(agentDid, [{ agentConnDid: agentConn2Did, uids: [] }], 'MS-106')
+    await storage.updateStatusCodeAgentConnection(agentDid, [], 'MS-106')
 
     // assert
-    expect(failed.length).toBe(0)
-    expect(updated.length).toBe(0)
+    const msgObjects = await storage.loadMessages(agentDid, [agentConn1Did, agentConn2Did], agentConn2Did, [], ['MS-106'])
+    expect(msgObjects.length).toBe(0)
   })
 })

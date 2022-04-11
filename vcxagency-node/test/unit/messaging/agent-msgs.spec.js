@@ -70,6 +70,22 @@ let sendToAgency
 let tmpDbData
 let tmpDbWallet
 
+let msg1Id
+let msg2Id
+let msg3Id
+let msg4Id
+let msg5Id
+let msg6Id
+
+function regenerateUuids () {
+  msg1Id = uuid.v4()
+  msg2Id = uuid.v4()
+  msg3Id = uuid.v4()
+  msg4Id = uuid.v4()
+  msg5Id = uuid.v4()
+  msg6Id = uuid.v4()
+}
+
 beforeAll(async () => {
   try {
     jest.setTimeout(1000 * 120)
@@ -106,6 +122,7 @@ afterAll(async () => {
 })
 
 beforeEach(async () => {
+  regenerateUuids()
   {
     agencyUserWalletKey = await indyGenerateWalletKey()
     agencyUserWalletName = `unit-test-${uuid.v4()}`
@@ -177,13 +194,6 @@ afterEach(async () => {
 let aconn1UserPwDid
 let aconn2UserPwDid
 let aconn3UserPwDid
-
-const msg1Id = uuid.v4()
-const msg2Id = uuid.v4()
-const msg3Id = uuid.v4()
-const msg4Id = uuid.v4()
-const msg5Id = uuid.v4()
-const msg6Id = uuid.v4()
 
 let agent1Did
 let agent1Verkey
@@ -350,24 +360,11 @@ describe('onboarding', () => {
   it('should update statusCodes of messages', async () => {
     // act
     const uidsByConn = [
-      { pairwiseDID: aconn1UserPwDid, uids: [msg1Id, msg2Id] },
-      { pairwiseDID: aconn2UserPwDid, uids: [msg6Id] }
+      { pairwiseDID: 'not-taken-in-consideration', uids: [msg1Id, msg2Id] },
+      { pairwiseDID: 'not-taken-in-consideration', uids: [msg6Id] }
     ]
     const updateRes = await vcxFlowUpdateMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, uidsByConn, 'MS-106')
     expect(updateRes['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS')
-
-    expect(updateRes.updatedUidsByConns.length).toBe(2)
-    const updated1 = updateRes.updatedUidsByConns.find(update => update.pairwiseDID === aconn1UserPwDid)
-    const updated2 = updateRes.updatedUidsByConns.find(update => update.pairwiseDID === aconn2UserPwDid)
-
-    expect(updated1).toBeDefined()
-    expect(updated1.uids.length).toBe(2)
-    expect(updated1.uids.includes(msg1Id)).toBeTruthy()
-    expect(updated1.uids.includes(msg2Id)).toBeTruthy()
-
-    expect(updated2).toBeDefined()
-    expect(updated2.uids.length).toBe(1)
-    expect(updated2.uids.includes(msg6Id)).toBeTruthy()
 
     let msgReply = await vcxFlowGetMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, [aconn1UserPwDid, aconn2UserPwDid], [], [])
     let { msgsByConns } = msgReply
@@ -414,8 +411,6 @@ describe('onboarding', () => {
     ]
     const updateRes = await vcxFlowUpdateMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, uidsByConn, 'MS-106')
     expect(updateRes['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS')
-    expect(updateRes.failed.length).toBe(0)
-    expect(updateRes.updatedUidsByConns.length).toBe(0)
   })
 
   function assertMsgsByConHasMessageWithStatus (msgsByConn, msgId, expectedStatusCode) {

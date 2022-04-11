@@ -91,42 +91,4 @@ describe('storage', () => {
     const res4 = await storage.aconnLinkPairsByAconnDids(A1, ['12321321312312'])
     expect(res4.length).toBe(0)
   })
-
-  it('should convert uidsByAconnDids to uidsByPwDids', async () => {
-    // arrange
-    const uidsByAconnDids = [{ agentConnDid: A1Conn1, uids: ['foo'] }, { agentConnDid: A1Conn2, uids: ['bar'] }]
-
-    // act
-    const uidsByPwDids = await storage.convertIntoUserUpdateResponse(A1, uidsByAconnDids)
-
-    // assert
-    expect(uidsByPwDids.length).toBe(2)
-
-    const r1 = uidsByPwDids.find(r => r.pairwiseDID === A1Conn1Pw)
-    expect(r1).toBeDefined()
-    expect(r1.uids.includes('foo')).toBeTruthy()
-
-    const r2 = uidsByPwDids.find(r => r.pairwiseDID === A1Conn2Pw)
-    expect(r2).toBeDefined()
-    expect(r2.uids.includes('bar')).toBeTruthy()
-  })
-
-  it('should convert uidsByPwDids to uidsByAconnDids', async () => {
-    // arrange
-    const uidsByAconnDids = [{ pairwiseDID: A1Conn1Pw, uids: ['foo'] }, { pairwiseDID: A1Conn2Pw, uids: ['bar'] }]
-
-    // act
-    const uidsByPwDids = await storage.convertIntoStorageRequest(A1, uidsByAconnDids)
-
-    // assert
-    expect(uidsByPwDids.length).toBe(2)
-
-    const r1 = uidsByPwDids.find(r => r.agentConnDid === A1Conn1)
-    expect(r1).toBeDefined()
-    expect(r1.uids.includes('foo')).toBeTruthy()
-
-    const r2 = uidsByPwDids.find(r => r.agentConnDid === A1Conn2)
-    expect(r2).toBeDefined()
-    expect(r2.uids.includes('bar')).toBeTruthy()
-  })
 })
