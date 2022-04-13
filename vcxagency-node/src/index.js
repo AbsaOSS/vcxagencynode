@@ -19,6 +19,7 @@
 const express = require('express')
 const logger = require('./logging/logger-builder')(__filename)
 const { fetchCertsFromS3 } = require('./scripts/download-certs')
+const { fetchEcsTaskMetadata } = require('./scripts/fetch-ecs-task-metadata')
 const { validateFinalConfig } = require('./configuration/app-config')
 const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
 const { validateAppConfig } = require('./configuration/app-config')
@@ -42,6 +43,9 @@ process.on('SIGINT', signal => {
 
 async function run () {
   try {
+    logger.info('Attempting to fetch and store ECS task metadata')
+    global.ecsTaskMetadata = await fetchEcsTaskMetadata()
+
     logger.debug('Going to try reload trusted certificates.')
     reloadTrustedCerts(logger)
 
