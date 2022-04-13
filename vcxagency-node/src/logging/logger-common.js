@@ -21,7 +21,14 @@ const httpContext = require('express-http-context')
 
 const tryAddRequestId = winston.format.combine(
   winston.format.printf(info => {
-    info.expressRequestId = httpContext.get('reqId')
+    info.requestId = httpContext.get('reqId')
+    return info
+  })
+)
+
+const tryAddEcsTaskMetadata = winston.format.combine(
+  winston.format.printf(info => {
+    info.ecsTaskMetadata = global.ecsTaskMetadata
     return info
   })
 )
@@ -34,3 +41,4 @@ const jsonFormatter = winston.format.combine(
 
 module.exports.jsonFormatter = jsonFormatter
 module.exports.tryAddRequestId = tryAddRequestId
+module.exports.tryAddEcsTaskMetadata = tryAddEcsTaskMetadata

@@ -18,14 +18,14 @@
 
 const winston = require('winston')
 const expressWinston = require('express-winston')
-const { jsonFormatter, tryAddRequestId } = require('./logger-common')
+const { jsonFormatter, tryAddRequestId, tryAddEcsTaskMetadata } = require('./logger-common')
 const assert = require('assert')
 
 const prettyFormatterForExpress = winston.format.combine(
   winston.format.colorize({ all: true }),
   winston.format.printf(
     info => {
-      return `[${info.timestamp}] [${info.filename}] [${info.level}] [expressRequestId=${info.expressRequestId}]: ${info.message}`
+      return `[${info.timestamp}] [${info.filename}] [${info.level}] [requestId=${info.requestId}]: ${info.message}`
     }
   )
 )
@@ -44,6 +44,7 @@ function createExpressWinstonLogger (ignoredRoutes) {
         format: 'YYYY-MM-DD HH:mm:ss.SSS'
       }),
       tryAddRequestId,
+      tryAddEcsTaskMetadata,
       formatter
     ),
     meta: true,

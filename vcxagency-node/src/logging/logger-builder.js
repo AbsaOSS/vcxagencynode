@@ -18,13 +18,13 @@
 
 const winston = require('winston')
 const path = require('path')
-const { jsonFormatter, tryAddRequestId } = require('./logger-common')
+const { jsonFormatter, tryAddRequestId, tryAddEcsTaskMetadata } = require('./logger-common')
 
 const prettyFormatter = winston.format.combine(
   winston.format.colorize({ all: true }),
   winston.format.printf(
     msg => {
-      return `[${msg.timestamp}] [${msg.filename}] [${msg.level}] [expressRequestId=${msg.expressRequestId}]: ${msg.message}`
+      return `[${msg.timestamp}] [${msg.filename}] [${msg.level}] [requestId=${msg.requestId}]: ${msg.message}`
     }
   )
 )
@@ -40,6 +40,7 @@ function createConsoleLogger (mainLoggerName, formatter, logLevel, makeItSilent 
             format: 'YYYY-MM-DD HH:mm:ss.SSS'
           }),
           tryAddRequestId,
+          tryAddEcsTaskMetadata,
           formatter
         )
       })
