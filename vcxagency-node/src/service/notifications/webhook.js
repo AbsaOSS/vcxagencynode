@@ -22,6 +22,7 @@ const axios = require('axios')
 const uuid = require('uuid')
 const httpContext = require('express-http-context')
 const logger = require('../../logging/logger-builder')(__filename)
+const util = require('util')
 
 // default timeout is low; webhook integrators should reply quickly,
 // otherwise agency might end up having too many connections open
@@ -35,7 +36,7 @@ const axiosInstance = axios.create({
 
 let pendingResponseCount = 0
 
-async function sendNotification (webhookUrl, msgUid, pwDid) {
+function sendNotification (webhookUrl, msgUid, pwDid) {
   const notification = { msgUid, pwDid }
   const headers = {}
   const requestId = httpContext.get('reqId')
@@ -45,14 +46,28 @@ async function sendNotification (webhookUrl, msgUid, pwDid) {
   }
   pendingResponseCount += 1
   logger.info(`Sending callback to url ${webhookUrl}, pendingResponseCount=${pendingResponseCount}`)
-  try {
-    await axiosInstance.post(webhookUrl, notification, {
-      headers,
-      timeout: global.WEBHOOK_RESPONSE_TIMEOUT_MS
+  const startHrTime = process.hrtime()
+  let wasThrown = false
+  axiosInstance.post(webhookUrl, notification, {
+    headers,
+    timeout: global.WEBHOOK_RESPONSE_TIMEOUT_MS
+  })
+    .catch(err => {
+      wasThrown = true
+      if (err.response) {
+        logger.error(`Error response received from callback endpoint: ${err.response.status} ${err.response.statusText}`)
+        logger.debug(`Error details: ${util.inspect(err.response)}`)
+      } else {
+        logger.error(`Error calling callback endpoint ${JSON.stringify(err.stack)}`)
+      }
     })
-  } finally {
-    pendingResponseCount -= 1
-  }
+    .finally(() => {
+      pendingResponseCount -= 1
+      const elapsedHrTime = process.hrtime(startHrTime)
+      const elapsedTimeInMs = elapsedHrTime[0] * 1000 + elapsedHrTime[1] / 1e6
+      const status = wasThrown ? 'failure' : 'success'
+      logger.debug(`Finished axios call with ${status} after ${elapsedTimeInMs}ms.`)
+    })
 }
 
 module.exports = { sendNotification }
