@@ -21,7 +21,7 @@ const path = require('path')
 const { jsonFormatter, tryAddRequestId, tryAddEcsTaskMetadata } = require('./logger-common')
 
 const prettyFormatter = winston.format.combine(
-  winston.format.colorize({ all: true }),
+  (process.env.DISABLE_COLOR_LOGS !== 'true') ? winston.format.colorize({ all: true }) : winston.format.uncolorize({}),
   winston.format.printf(
     msg => {
       return `[${msg.timestamp}] [${msg.filename}] [${msg.level}] [requestId=${msg.requestId}]: ${msg.message}`
