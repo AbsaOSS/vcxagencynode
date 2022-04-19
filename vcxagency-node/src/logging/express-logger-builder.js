@@ -22,7 +22,7 @@ const { jsonFormatter, tryAddRequestId, tryAddEcsTaskMetadata } = require('./log
 const assert = require('assert')
 
 const prettyFormatterForExpress = winston.format.combine(
-  winston.format.colorize({ all: true }),
+  (process.env.DISABLE_COLOR_LOGS !== 'true') ? winston.format.colorize({ all: true }) : winston.format.uncolorize({}),
   winston.format.printf(
     info => {
       return `[${info.timestamp}] [${info.filename}] [${info.level}] [requestId=${info.requestId}]: ${info.message}`
