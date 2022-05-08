@@ -25,7 +25,7 @@ async function fetchAwsAsset (bucketName, key, filePath, clientConfig = { region
 }
 
 module.exports.fetchCertsFromS3 = async function fetchCertsFromS3 (appConfig) {
-  if (appConfig.SERVER_ENABLE_TLS === 'false') {
+  if (appConfig.SERVER_ENABLE_TLS === false) {
     logger.info('TLS disabled, skipping downloading certificates from S3')
     return
   } else if (appConfig.CERTIFICATE_PATH && appConfig.CERTIFICATE_KEY_PATH &&

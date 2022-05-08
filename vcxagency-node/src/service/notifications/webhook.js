@@ -25,7 +25,6 @@ const logger = require('../../logging/logger-builder')(__filename)
 
 // default timeout is low; webhook integrators should reply quickly,
 // otherwise agency might end up having too many connections open
-const WEBHOOK_RESPONSE_TIMEOUT_MS = process.env.WEBHOOK_RESPONSE_TIMEOUT_MS || 50
 const httpAgent = new http.Agent({ keepAlive: true })
 const httpsAgent = new https.Agent({ keepAlive: true })
 
@@ -49,7 +48,7 @@ async function sendNotification (webhookUrl, msgUid, pwDid) {
   try {
     await axiosInstance.post(webhookUrl, notification, {
       headers,
-      timeout: WEBHOOK_RESPONSE_TIMEOUT_MS
+      timeout: global.WEBHOOK_RESPONSE_TIMEOUT_MS
     })
   } finally {
     pendingResponseCount -= 1

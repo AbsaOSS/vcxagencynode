@@ -30,15 +30,15 @@ if (appConfigName) {
 
 function buildAppConfigFromEnvVariables () {
   const appConfig = {
-    LOG_LEVEL: process.env.LOG_LEVEL || 'info',
-    LOG_ENABLE_INDYSDK: process.env.LOG_ENABLE_INDYSDK || 'false',
+    LOG_LEVEL: process.env.LOG_LEVEL,
+    LOG_ENABLE_INDYSDK: process.env.LOG_ENABLE_INDYSDK,
     LOG_JSON_TO_CONSOLE: process.env.LOG_JSON_TO_CONSOLE,
     LOG_HEALTH_REQUESTS: process.env.LOG_HEALTH_REQUESTS,
     DEV_MODE: process.env.DEV_MODE,
 
     SERVER_PORT: process.env.SERVER_PORT,
     SERVER_HOSTNAME: process.env.SERVER_HOSTNAME,
-    SERVER_MAX_REQUEST_SIZE_KB: process.env.SERVER_MAX_REQUEST_SIZE_KB || '300',
+    SERVER_MAX_REQUEST_SIZE_KB: process.env.SERVER_MAX_REQUEST_SIZE_KB,
     SERVER_ENABLE_TLS: process.env.SERVER_ENABLE_TLS,
     CERTIFICATE_PATH: process.env.CERTIFICATE_PATH,
     CERTIFICATE_KEY_PATH: process.env.CERTIFICATE_KEY_PATH,
@@ -61,7 +61,11 @@ function buildAppConfigFromEnvVariables () {
 
     AWS_S3_PATH_CERT: process.env.AWS_S3_PATH_CERT,
     AWS_S3_BUCKET_CERT: process.env.AWS_S3_BUCKET_CERT,
-    AWS_S3_PATH_CERT_KEY: process.env.AWS_S3_PATH_CERT_KEY
+    AWS_S3_PATH_CERT_KEY: process.env.AWS_S3_PATH_CERT_KEY,
+
+    ECS_CONTAINER_METADATA_URI_V4: process.env.ECS_CONTAINER_METADATA_URI_V4,
+    WEBHOOK_RESPONSE_TIMEOUT_MS: process.env.WEBHOOK_RESPONSE_TIMEOUT_MS,
+    EXPLAIN_QUERIES: process.env.EXPLAIN_QUERIES
   }
   appConfig.SERVER_MAX_REQUEST_SIZE_KB = parseInt(appConfig.SERVER_MAX_REQUEST_SIZE_KB)
   appConfig.MYSQL_DATABASE_WALLET_CONNECTION_LIMIT = parseInt(appConfig.MYSQL_DATABASE_WALLET_CONNECTION_LIMIT)

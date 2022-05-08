@@ -55,7 +55,7 @@ function addChildLogger (mainLoggerName, fullPath) {
 }
 
 const mainLoggerName = 'main'
-const formatter = process.env.LOG_JSON_TO_CONSOLE === 'true' ? jsonFormatter : prettyFormatter
+const formatter = global.LOG_JSON_TO_CONSOLE === 'true' ? jsonFormatter : prettyFormatter
 const logLevel = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info'
 console.log(`Building logger with log level ${logLevel}`)
 createConsoleLogger(mainLoggerName, formatter, logLevel)

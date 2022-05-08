@@ -61,13 +61,13 @@ async function setupExpressApp (expressApp, application, appConfig) {
   const { entityForwardAgent, serviceNewMessages } = application
   logger.info('Setting up express endpoints and middleware.')
 
-  if (appConfig.DANGEROUS_HTTP_DETAILS === 'true') {
+  if (appConfig.DANGEROUS_HTTP_DETAILS === true) {
     logger.warn('** DANGEROUS, FULL HTTP REQUESTS WILL BE LOGGED **')
     expressApp.use(logRequestsWithBody)
   }
 
   let loggingExcludedRoutes = ['/', '/api/health']
-  if (appConfig.LOG_HEALTH_REQUESTS === 'true') {
+  if (appConfig.LOG_HEALTH_REQUESTS === true) {
     logger.warn('Health requests will be logged.')
     loggingExcludedRoutes = []
   }

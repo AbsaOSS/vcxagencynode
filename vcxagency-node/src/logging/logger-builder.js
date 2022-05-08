@@ -21,7 +21,7 @@ const path = require('path')
 const { jsonFormatter, tryAddRequestId, tryAddEcsTaskMetadata } = require('./logger-common')
 
 const prettyFormatter = winston.format.combine(
-  winston.format.colorize({ all: true }),
+  (global.DISABLE_COLOR_LOGS) ? winston.format.uncolorize({}) : winston.format.colorize({ all: true }),
   winston.format.printf(
     msg => {
       return `[${msg.timestamp}] [${msg.filename}] [${msg.level}] [requestId=${msg.requestId}]: ${msg.message}`
@@ -56,8 +56,8 @@ function addChildLogger (mainLoggerName, fullPath) {
 
 const mainLoggerName = 'main'
 
-const formatter = process.env.LOG_JSON_TO_CONSOLE === 'true' ? jsonFormatter : prettyFormatter
-const logLevel = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : 'info'
+const formatter = global.LOG_JSON_TO_CONSOLE ? jsonFormatter : prettyFormatter
+const logLevel = global.LOG_LEVEL
 createConsoleLogger(mainLoggerName, formatter, logLevel, process.env.SILENT_WINSTON === 'true')
 
 module.exports = function (fullPath) {

@@ -56,14 +56,13 @@ function parseEcsTaskMetadata (response) {
   }
 }
 
-async function fetchEcsTaskMetadata () {
-  const ecsMetaUrl = process.env.ECS_CONTAINER_METADATA_URI_V4
-  if (!ecsMetaUrl) {
-    logger.warn('ECS_CONTAINER_METADATA_URI_V4 environment variable is undefined, will not log ECS task metadata')
+async function fetchEcsTaskMetadata (ecsContainerMetadataUriV4) {
+  if (!ecsContainerMetadataUriV4) {
+    logger.warn('Container metadata URI was not provided, will not log ECS task metadata')
     return
   }
   try {
-    const res = await axios.default.get(ecsMetaUrl)
+    const res = await axios.default.get(ecsContainerMetadataUriV4)
     if (res.status !== 200) {
       logger.warn(`Received other than 200 response status code (${res.status}) when fetching ECS task metadata, will not log ECS task metadata`)
       return
