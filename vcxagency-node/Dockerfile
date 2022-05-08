@@ -1,4 +1,4 @@
-ARG AGENCY_BASE_IMAGE=vcxagency-base:1.15.0
+ARG AGENCY_BASE_IMAGE
 FROM ${AGENCY_BASE_IMAGE}
 
 RUN npm install -g yarn

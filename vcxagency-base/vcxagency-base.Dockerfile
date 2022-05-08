@@ -63,7 +63,7 @@ RUN apk add --no-cache \
         cmake \
         npm \
         openssl-dev \
-        python2 \
+        python3 \
         sqlite-dev \
         zeromq-dev
 
