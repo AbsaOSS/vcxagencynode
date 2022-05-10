@@ -1,4 +1,4 @@
-FROM alpine:3.12 AS builder
+FROM alpine:3.15.4 AS builder
 
 ARG UID=1001
 ARG GID=1001
@@ -21,8 +21,8 @@ RUN apk update && apk upgrade && \
         libsodium-dev \
         libzmq \
         openssl-dev \
-        sqlite-dev \
-        zeromq-dev
+        zeromq-dev \
+        sqlite-dev
 
 USER indy
 WORKDIR /home/indy
@@ -40,7 +40,7 @@ RUN cargo build --release --manifest-path=$INDYSDK_PATH/libindy/Cargo.toml
 USER root
 RUN mv $INDYSDK_PATH/libindy/target/release/libindy.so /usr/lib
 
-FROM alpine:3.12
+FROM alpine:3.15.4
 
 ARG UID=1001
 ARG GID=1001
@@ -60,12 +60,15 @@ RUN apk add --no-cache \
         libsodium-dev \
         libzmq \
         make \
-        nodejs \
+        cmake \
         npm \
         openssl-dev \
         python2 \
         sqlite-dev \
         zeromq-dev
+
+RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.12/main' >> /etc/apk/repositories
+RUN apk add --no-cache nodejs=12.22.12-r0
 
 LABEL org.label-schema.schema-version="1.0"
 LABEL org.label-schema.name="indy-sdk"
