@@ -68,7 +68,7 @@ function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWallet
     AGENCY_SEED_SECRET: agencySeed,
     AGENCY_WALLET_KEY_SECRET: agencyWalletKey,
 
-    LOG_ENABLE_INDYSDK: true,
+    LOG_ENABLE_INDYSDK: false,
     LOG_LEVEL: 'trace',
 
     REDIS_URL: redisUrl,
@@ -81,8 +81,7 @@ function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWallet
     MYSQL_DATABASE_APPLICATION: applicationDbName,
     MYSQL_DATABASE_WALLET: walletsDbName,
     MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: 50,
-    DEV_MODE: 'true'
-
+    DEV_MODE: true
   }
 }
 

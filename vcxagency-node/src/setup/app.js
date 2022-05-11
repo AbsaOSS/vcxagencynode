@@ -62,7 +62,7 @@ async function buildApplication (appConfig) {
     password: appConfig.MYSQL_PASSWORD_SECRET,
     database: appConfig.MYSQL_DATABASE_APPLICATION
   }
-  if (appConfig.LOG_ENABLE_INDYSDK) {
+  if (appConfig.LOG_ENABLE_INDYSDK === true) {
     logger.info('Enabling indy logs.')
     indySetDefaultLogger('trace')
   }
