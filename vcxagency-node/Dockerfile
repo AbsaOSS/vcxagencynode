@@ -1,6 +1,14 @@
 ARG AGENCY_BASE_IMAGE
 FROM ${AGENCY_BASE_IMAGE}
 
+RUN apk add --no-cache \
+        npm \
+        bash \
+        g++ \
+        gcc \
+        make \
+        cmake \
+        python2
 RUN npm install -g yarn
 
 USER node

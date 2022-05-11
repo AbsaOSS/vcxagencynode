@@ -54,16 +54,9 @@ COPY --from=LIBINDY_BUILD /usr/lib/libindy.so /usr/lib/
 
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
-        bash \
-        g++ \
-        gcc \
         libsodium-dev \
         libzmq \
-        make \
-        cmake \
-        npm \
         openssl-dev \
-        python3 \
         sqlite-dev \
         zeromq-dev
 
