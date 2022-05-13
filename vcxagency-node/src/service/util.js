@@ -24,7 +24,7 @@ function objectToBuffer (object) {
 }
 
 async function timeOperation (fn, operationData, ...args) {
-  if (process.env.LOG_JSON_TO_CONSOLE === 'true') {
+  if (global.LOG_JSON_TO_CONSOLE === true) {
     const profiler = logger.startTimer()
     const profilerInfo = {
       operationName: fn.name,

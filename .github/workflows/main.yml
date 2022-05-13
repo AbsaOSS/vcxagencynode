@@ -100,7 +100,7 @@ jobs:
 
           # change REBUILD_SEED if you want to manually enforce rebuilding all images
           REBUILD_SEED_REDIS="1"
-          REBUILD_SEED_BASE="2"
+          REBUILD_SEED_BASE="3"
           REBUILD_SEED_AGENCY="1"
 
           export CODE_AGENCY_HASH=${{ hashFiles('vcxagency-node') }}

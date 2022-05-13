@@ -17,7 +17,6 @@
 'use strict'
 
 const Joi = require('joi')
-const fs = require('fs')
 
 function stringifyAndHideSensitive (appConfig) {
   function hideSecrets (key, value) {
@@ -40,22 +39,22 @@ const MB_AS_KB = 1024
 
 const configValidation = Joi.object().keys({
   LOG_LEVEL: Joi.string().valid('silly', 'debug', 'info', 'warn', 'error'),
-  LOG_ENABLE_INDYSDK: Joi.string().valid('true', 'false'),
-  LOG_JSON_TO_CONSOLE: Joi.string().valid('true', 'false'),
-  LOG_HEALTH_REQUESTS: Joi.string().valid('true', 'false').default('false'),
-  DEV_MODE: Joi.string().valid('true', 'false').default('false'),
+  LOG_ENABLE_INDYSDK: Joi.boolean().default(false),
+  LOG_JSON_TO_CONSOLE: Joi.boolean().default(true),
+  LOG_HEALTH_REQUESTS: Joi.boolean().default(false),
+  DEV_MODE: Joi.boolean().default(false),
 
-  SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
   SERVER_HOSTNAME: Joi.string().default('0.0.0.0'),
+  SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
+  SERVER_ENABLE_TLS: Joi.boolean().default(true),
   SERVER_MAX_REQUEST_SIZE_KB: Joi.number().integer().min(1).max(MB_AS_KB * 10).default(512),
-  SERVER_ENABLE_TLS: Joi.string().valid('true', 'false').default('true'),
   CERTIFICATE_PATH: Joi.string(),
   CERTIFICATE_KEY_PATH: Joi.string(),
 
   AGENCY_WALLET_NAME: Joi.string().required(),
-  AGENCY_DID: Joi.string().required(),
-  AGENCY_SEED_SECRET: Joi.string().min(20).required(),
   AGENCY_WALLET_KEY_SECRET: Joi.string().min(20).required(),
+  AGENCY_SEED_SECRET: Joi.string().min(20).required(),
+  AGENCY_DID: Joi.string().required(),
 
   REDIS_URL: Joi.string(),
   AGENCY_TYPE: Joi.string().valid('enterprise', 'client').required(),
@@ -70,47 +69,26 @@ const configValidation = Joi.object().keys({
 
   AWS_S3_PATH_CERT: Joi.string(),
   AWS_S3_BUCKET_CERT: Joi.string(),
-  AWS_S3_PATH_CERT_KEY: Joi.string()
+  AWS_S3_PATH_CERT_KEY: Joi.string(),
+
+  ECS_CONTAINER_METADATA_URI_V4: Joi.string().uri(),
+  WEBHOOK_RESPONSE_TIMEOUT_MS: Joi.number().default(1000),
+  EXPLAIN_QUERIES: Joi.boolean().default(false)
 })
 
 function validateFinalConfig (appConfig) {
-  function testConfigPathExist (appConfig, key) {
-    const path = appConfig[key]
-    if (!fs.existsSync(path)) {
-      throw new Error(`${key} = ${path} is not a valid path or the path does not exist`)
+  if (appConfig.AGENCY_TYPE === 'client') {
+    if (!appConfig.REDIS_URL) {
+      throw new Error('Configuration for agency of type \'client\' must have REDIS_URL specified.')
     }
   }
-
   function validateTls () {
-    if (appConfig.AGENCY_TYPE === 'client') {
-      if (!appConfig.REDIS_URL) {
-        throw new Error('Configuration for agency of type \'client\' must have REDIS_URL specified.')
-      }
-    }
-    if (appConfig.SERVER_ENABLE_TLS === 'true') {
+    if (appConfig.SERVER_ENABLE_TLS === true) {
       if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
         throw new Error('Valid certificate and key paths must be specified when TLS enabled!')
       }
-      testConfigPathExist(appConfig, 'CERTIFICATE_PATH')
-      testConfigPathExist(appConfig, 'CERTIFICATE_KEY_PATH')
     }
   }
-
-  if (appConfig.WALLET_TYPE === 'pgsql') {
-    throw new Error('WALLET_TYPE "pgsql" is not supported anymore')
-  }
-  if (appConfig.WALLET_TYPE === 'mysql') {
-    if (!appConfig.MYSQL_WALLET_HOST) {
-      throw new Error('"MYSQL_WALLET_HOST" is required')
-    }
-    if (!appConfig.MYSQL_WALLET_ACCOUNT) {
-      throw new Error('"MYSQL_WALLET_ACCOUNT" is required')
-    }
-    if (!appConfig.MYSQL_WALLET_PASSWORD_SECRET) {
-      throw new Error('"MYSQL_WALLET_PASSWORD_SECRET" is required')
-    }
-  }
-
   validateTls()
 }
 

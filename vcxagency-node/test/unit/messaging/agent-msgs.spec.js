@@ -17,6 +17,9 @@
 'use strict'
 
 /* eslint-env jest */
+global.LOG_LEVEL = process.env.LOG_LEVEL || 'info'
+global.LOG_JSON_TO_CONSOLE = process.env.LOG_JSON_TO_CONSOLE === 'true'
+global.SILENT_WINSTON = process.env.SILENT_WINSTON === 'false'
 
 const {
   indyCreateWallet,
@@ -89,7 +92,7 @@ function regenerateUuids () {
 beforeAll(async () => {
   try {
     jest.setTimeout(1000 * 120)
-    if (process.env.ENABLE_VCX_LOGS) {
+    if (process.env.ENABLE_VCX_LOGS === 'true') {
       setupVcxLogging()
     }
     const suiteId = `${uuid.v4()}`.replace(/-/gi, '').substring(0, 6)

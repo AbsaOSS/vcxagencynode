@@ -15,78 +15,92 @@
  */
 
 'use strict'
-
 const express = require('express')
-const logger = require('./logging/logger-builder')(__filename)
-const { fetchCertsFromS3 } = require('./scripts/download-certs')
 const { fetchEcsTaskMetadata } = require('./scripts/fetch-ecs-task-metadata')
-const { validateFinalConfig } = require('./configuration/app-config')
-const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
-const { validateAppConfig } = require('./configuration/app-config')
-const { stringifyAndHideSensitive } = require('./configuration/app-config')
-const { buildApplication } = require('./setup/app')
-const { setupExpressApp, createWebServer, reloadTrustedCerts } = require('./setup/server')
+const { reloadTrustedCerts, createWebServer } = require('./setup/server')
+const { fetchCertsFromS3 } = require('./scripts/download-certs')
 
-process.on('exit', code => {
-  logger.warn(`Process exiting with code: ${code}`)
-})
+/*
+** No logger section **
+*
+* In following section we do not use, or import a file which does, winston logger builder.
+* Logger builder depends on app configuration loaded first, and that's what we do bellow.
+*/
+async function loadConfiguration () {
+  const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
+  const { validateAppConfig } = require('./configuration/app-config')
+  const rawAppConfig = buildAppConfigFromEnvVariables()
+  const appConfig = await validateAppConfig(rawAppConfig)
+  global.DISABLE_COLOR_LOGS = appConfig.DISABLE_COLOR_LOGS
+  global.LOG_JSON_TO_CONSOLE = appConfig.LOG_JSON_TO_CONSOLE
+  global.WEBHOOK_RESPONSE_TIMEOUT_MS = appConfig.WEBHOOK_RESPONSE_TIMEOUT_MS
+  global.LOG_LEVEL = appConfig.LOG_LEVEL
+  global.EXPLAIN_QUERIES = appConfig.EXPLAIN_QUERIES
+  return appConfig
+}
 
-process.on('SIGTERM', signal => {
-  logger.warn(`Process ${process.pid} received a SIGTERM signal.`)
-  process.exit(0)
-})
-
-process.on('SIGINT', signal => {
-  logger.warn(`Process ${process.pid} has been interrupted.`)
-  process.exit(0)
-})
-
-async function run () {
+/*
+ ** App configuration was loaded, global logging variables were set up, from now on, we can safely build logger **
+ */
+async function startApp (appConfig) {
+  const logger = require('./logging/logger-builder')(__filename)
   try {
-    logger.info('Attempting to fetch and store ECS task metadata')
-    global.ecsTaskMetadata = await fetchEcsTaskMetadata()
+    process.on('exit', code => {
+      logger.warn(`Process exiting with code: ${code}`)
+    })
 
-    logger.debug('Going to try reload trusted certificates.')
+    process.on('SIGTERM', signal => {
+      logger.warn(`Process ${process.pid} received a SIGTERM signal.`)
+      process.exit(0)
+    })
+
+    process.on('SIGINT', signal => {
+      logger.warn(`Process ${process.pid} has been interrupted.`)
+      process.exit(0)
+    })
+
+    const { stringifyAndHideSensitive } = require('./configuration/app-config')
+    const { buildApplication } = require('./setup/app')
+    const { setupExpressApp } = require('./setup/server')
+
+    logger.info(`Starting up application with effective config: ${stringifyAndHideSensitive(appConfig)}`)
+
+    logger.info('Attempting to fetch and store ECS task metadata')
+    global.ecsTaskMetadata = await fetchEcsTaskMetadata(appConfig.ECS_CONTAINER_METADATA_URI_V4)
+
+    logger.debug('Going to try reloading trusted certificates.')
     reloadTrustedCerts(logger)
 
-    const appConfigLoaded = buildAppConfigFromEnvVariables()
-    logger.info(`Loaded application config: ${stringifyAndHideSensitive(appConfigLoaded)}`)
+    logger.info(`Loaded effective config: ${stringifyAndHideSensitive(appConfig)}`)
 
-    // Import order is important in this file - first we need to validate config, then set up logger
-    // if we require any other of our files before we load/validate appConfig, that file might happen to require
-    // logger, which relies on environment variables being loaded - which is side effect of calling buildAppConfigFromEnvVariables()
-    // This could be improved if logger-builder wouldn't rely on environment variables, but rather having this information
-    // passed in arguments
     logger.debug('Going to fetch certificates/keys to serve.')
-    await fetchCertsFromS3(appConfigLoaded)
-
-    const appConfig = await validateAppConfig(appConfigLoaded)
-
-    logger.info(`Effective application config: ${stringifyAndHideSensitive(appConfig)}`)
-    await validateFinalConfig(appConfig)
+    await fetchCertsFromS3(appConfig, logger)
 
     logger.debug('Going to build application internals.')
     const application = await buildApplication(appConfig)
 
     const expressApp = express()
-    expressApp.set('app-name', 'agency')
+    expressApp.set('app-name', 'vcxs-api')
 
-    logger.debug('Going to build http/https server.')
-    const enableTls = appConfig.SERVER_ENABLE_TLS === 'true'
-    const tlsCertPath = appConfig.CERTIFICATE_PATH
-    const tlsKeyPath = appConfig.CERTIFICATE_KEY_PATH
-    const httpServer = createWebServer(expressApp, enableTls, tlsCertPath, tlsKeyPath, logger)
-
+    const httpServer = createWebServer(expressApp, appConfig.SERVER_ENABLE_TLS, appConfig.CERTIFICATE_PATH, appConfig.CERTIFICATE_KEY_PATH, logger)
     await setupExpressApp(expressApp, application, appConfig)
 
     const port = appConfig.SERVER_PORT
-    const hostname = appConfig.SERVER_HOSTNAME
     logger.debug(`Going to listen on port ${port}`)
-    httpServer.listen(port, hostname, () => logger.info(`------------ Listening on ${hostname}:${port} ------------`))
+    httpServer.listen(port, () => logger.info(`------------ Listening on port ${port} ------------`))
   } catch (err) {
     logger.error(`Unhandled error. Application will be terminated. ${err.stack}`)
     process.exit(255)
   }
 }
 
+async function run () {
+  const appConfig = await loadConfiguration()
+  return startApp(appConfig)
+}
+
 run()
+  .catch(err => {
+    console.error(`Unhandled error. Application will be terminated. ${err.stack}`)
+    process.exit(255)
+  })

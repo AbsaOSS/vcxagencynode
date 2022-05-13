@@ -172,14 +172,6 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
     const webhookUrl = await serviceStorage.getAgentWebhook(agentDid)
     if (webhookUrl) {
       sendNotification(webhookUrl, msgUid, userPairwiseDid)
-        .catch(err => {
-          if (err.message.includes('timeout')) {
-            logger.debug(`${whoami} Webhook url didn't respond quickly enough, err=${err.stack}`)
-            // we don't log timeout errors, webhook integrators are expected to respond quickly
-          } else {
-            logger.warn(`${whoami} Error sending webhook notification, err=${err.stack}`)
-          }
-        })
     }
   }
 

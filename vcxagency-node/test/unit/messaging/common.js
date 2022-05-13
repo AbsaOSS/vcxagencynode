@@ -15,6 +15,9 @@
  */
 
 'use strict'
+global.LOG_LEVEL = process.env.LOG_LEVEL || 'info'
+global.LOG_JSON_TO_CONSOLE = process.env.LOG_JSON_TO_CONSOLE === 'true'
+global.SILENT_WINSTON = process.env.SILENT_WINSTON === 'false'
 
 const { anonCrypt, indyOpenWallet, indyCreateWallet } = require('easy-indysdk')
 const uuid = require('uuid')
@@ -68,8 +71,8 @@ function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWallet
     AGENCY_SEED_SECRET: agencySeed,
     AGENCY_WALLET_KEY_SECRET: agencyWalletKey,
 
-    LOG_ENABLE_INDYSDK: true,
-    LOG_LEVEL: 'trace',
+    LOG_ENABLE_INDYSDK: false,
+    LOG_LEVEL: 'debug',
 
     REDIS_URL: redisUrl,
     AGENCY_TYPE: redisUrl ? 'client' : 'enterprise',
@@ -81,8 +84,7 @@ function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWallet
     MYSQL_DATABASE_APPLICATION: applicationDbName,
     MYSQL_DATABASE_WALLET: walletsDbName,
     MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: 50,
-    DEV_MODE: 'true'
-
+    DEV_MODE: true
   }
 }
 

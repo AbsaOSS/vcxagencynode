@@ -22,7 +22,7 @@ const { jsonFormatter, tryAddRequestId, tryAddEcsTaskMetadata } = require('./log
 const assert = require('assert')
 
 const prettyFormatterForExpress = winston.format.combine(
-  winston.format.colorize({ all: true }),
+  (global.DISABLE_COLOR_LOGS) ? winston.format.uncolorize({}) : winston.format.colorize({ all: true }),
   winston.format.printf(
     info => {
       return `[${info.timestamp}] [${info.filename}] [${info.level}] [requestId=${info.requestId}]: ${info.message}`
@@ -34,7 +34,7 @@ function createExpressWinstonLogger (ignoredRoutes) {
   if (ignoredRoutes) {
     assert(Array.isArray(ignoredRoutes))
   }
-  const formatter = process.env.LOG_JSON_TO_CONSOLE === 'true' ? jsonFormatter : prettyFormatterForExpress
+  const formatter = global.LOG_JSON_TO_CONSOLE ? jsonFormatter : prettyFormatterForExpress
   return expressWinston.logger({
     transports: [
       new winston.transports.Console()
