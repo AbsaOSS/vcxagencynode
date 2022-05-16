@@ -20,6 +20,7 @@ const winston = require('winston')
 const path = require('path')
 const { jsonFormatter, tryAddRequestId, tryAddEcsTaskMetadata } = require('./logger-common')
 
+console.log(`DISABLE_COLOR_LOGS= ${global.DISABLE_COLOR_LOGS}`)
 const prettyFormatter = winston.format.combine(
   (global.DISABLE_COLOR_LOGS) ? winston.format.uncolorize({}) : winston.format.colorize({ all: true }),
   winston.format.printf(

@@ -47,16 +47,6 @@ function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger
   }
 }
 
-function reloadTrustedCerts (logger) {
-  const TRUSTED_CA_CERTS_PATH = '/etc/ssl/certs/ca-certificates.crt'
-  if (fs.existsSync(TRUSTED_CA_CERTS_PATH)) {
-    https.globalAgent.options.ca = fs.readFileSync(TRUSTED_CA_CERTS_PATH)
-    logger.warn(`Loaded additional trusted CA certificates from ${TRUSTED_CA_CERTS_PATH}`)
-  } else {
-    logger.warn('No additional trusted CA certificates were loaded.')
-  }
-}
-
 async function setupExpressApp (expressApp, application, appConfig) {
   const { entityForwardAgent, serviceNewMessages } = application
   logger.info('Setting up express endpoints and middleware.')
@@ -106,6 +96,5 @@ async function setupExpressApp (expressApp, application, appConfig) {
 
 module.exports = {
   setupExpressApp,
-  createWebServer,
-  reloadTrustedCerts
+  createWebServer
 }

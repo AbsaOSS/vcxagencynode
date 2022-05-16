@@ -17,6 +17,7 @@
 'use strict'
 
 const Joi = require('joi')
+const { loadEnvVariables } = require('./app-config-loader')
 
 function stringifyAndHideSensitive (appConfig) {
   function hideSecrets (key, value) {
@@ -37,72 +38,127 @@ function stringifyAndHideSensitive (appConfig) {
 
 const MB_AS_KB = 1024
 
-const configValidation = Joi.object().keys({
-  LOG_LEVEL: Joi.string().valid('silly', 'debug', 'info', 'warn', 'error'),
-  LOG_ENABLE_INDYSDK: Joi.boolean().default(false),
-  LOG_JSON_TO_CONSOLE: Joi.boolean().default(true),
-  LOG_HEALTH_REQUESTS: Joi.boolean().default(false),
-  DEV_MODE: Joi.boolean().default(false),
+function _getLoggingValidationRules () {
+  return {
+    LOG_LEVEL: Joi.string().valid('trace', 'debug', 'info', 'warn', 'error').default('info'),
+    LOG_JSON_TO_CONSOLE: Joi.boolean().default(true),
+    LOG_ENABLE_INDYSDK: Joi.boolean().default(false),
+    DISABLE_COLOR_LOGS: Joi.boolean().default(false),
+    LOG_HEALTH_REQUESTS: Joi.boolean().default(false),
+    EXPLAIN_QUERIES: Joi.boolean().default(false),
+    DANGEROUS_HTTP_DETAILS: Joi.boolean().default(false),
+    ECS_CONTAINER_METADATA_URI_V4: Joi.string().uri()
+  }
+}
 
-  SERVER_HOSTNAME: Joi.string().default('0.0.0.0'),
-  SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
-  SERVER_ENABLE_TLS: Joi.boolean().default(true),
-  SERVER_MAX_REQUEST_SIZE_KB: Joi.number().integer().min(1).max(MB_AS_KB * 10).default(512),
-  CERTIFICATE_PATH: Joi.string(),
-  CERTIFICATE_KEY_PATH: Joi.string(),
+function _mysqlValidationRules () {
+  return {
+    MYSQL_HOST: Joi.string().required(),
+    MYSQL_PORT: Joi.number().integer().min(1025).max(65535).default(3306).required(),
+    MYSQL_ACCOUNT: Joi.string().required(),
+    MYSQL_PASSWORD_SECRET: Joi.string().required(),
+    MYSQL_DATABASE_APPLICATION: Joi.string().required(),
+    MYSQL_DATABASE_WALLET: Joi.string().required(),
+    MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: Joi.number().integer().min(1).max(100).default(50)
+  }
+}
 
-  AGENCY_WALLET_NAME: Joi.string().required(),
-  AGENCY_WALLET_KEY_SECRET: Joi.string().min(20).required(),
-  AGENCY_SEED_SECRET: Joi.string().min(20).required(),
-  AGENCY_DID: Joi.string().required(),
+function _getTlsValidationRules () {
+  return {
+    SERVER_ENABLE_TLS: Joi.boolean().default(true),
+    AWS_S3_BUCKET_CERT: Joi.string(),
+    CERTIFICATE_PATH: Joi.string(),
+    CERTIFICATE_KEY_PATH: Joi.string(),
+    AWS_S3_PATH_CERT: Joi.string(),
+    AWS_S3_PATH_CERT_KEY: Joi.string()
+  }
+}
 
-  REDIS_URL: Joi.string(),
-  AGENCY_TYPE: Joi.string().valid('enterprise', 'client').required(),
+function _getServerValidationRules () {
+  return {
+    SERVER_PORT: Joi.number().integer().min(1025).max(65535).required(),
+    SERVER_HOSTNAME: Joi.string().default('0.0.0.0'),
+    SERVER_MAX_REQUEST_SIZE_KB: Joi.number().integer().min(1).max(MB_AS_KB * 10).default(512)
+  }
+}
 
-  MYSQL_HOST: Joi.string().required(),
-  MYSQL_PORT: Joi.number().integer().min(1025).max(65535).default(3306).required(),
-  MYSQL_ACCOUNT: Joi.string().required(),
-  MYSQL_PASSWORD_SECRET: Joi.string().required(),
-  MYSQL_DATABASE_APPLICATION: Joi.string().required(),
-  MYSQL_DATABASE_WALLET: Joi.string().required(),
-  MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: Joi.number().integer().min(1).max(100).default(50),
+function _setupWalletValidationRules () {
+  return {
+    AGENCY_SEED_SECRET: Joi.string().min(20).required()
+  }
+}
 
-  AWS_S3_PATH_CERT: Joi.string(),
-  AWS_S3_BUCKET_CERT: Joi.string(),
-  AWS_S3_PATH_CERT_KEY: Joi.string(),
+function _walletValidationRules () {
+  return {
+    AGENCY_WALLET_NAME: Joi.string().required(),
+    AGENCY_WALLET_KEY_SECRET: Joi.string().min(20).required()
+  }
+}
 
-  ECS_CONTAINER_METADATA_URI_V4: Joi.string().uri(),
-  WEBHOOK_RESPONSE_TIMEOUT_MS: Joi.number().default(1000),
-  EXPLAIN_QUERIES: Joi.boolean().default(false)
-})
+function _applicationValidationRules () {
+  return {
+    REDIS_URL: Joi.string().uri(),
+    AGENCY_TYPE: Joi.string().valid('enterprise', 'client').required(),
+    WEBHOOK_RESPONSE_TIMEOUT_MS: Joi.number().default(1000)
+  }
+}
 
-function validateFinalConfig (appConfig) {
+function _extraValidationTls (appConfig) {
+  if (appConfig.SERVER_ENABLE_TLS) {
+    if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
+      throw new Error('Valid certificate and key paths must be specified when TLS enabled!')
+    }
+  }
+}
+
+function _extraValidationByAgencyType (appConfig) {
   if (appConfig.AGENCY_TYPE === 'client') {
     if (!appConfig.REDIS_URL) {
       throw new Error('Configuration for agency of type \'client\' must have REDIS_URL specified.')
     }
   }
-  function validateTls () {
-    if (appConfig.SERVER_ENABLE_TLS === true) {
-      if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
-        throw new Error('Valid certificate and key paths must be specified when TLS enabled!')
-      }
+}
+
+const OP_MODES = {
+  RUN_SERVER: {
+    name: 'run-server',
+    postValidations: [_extraValidationTls, _extraValidationByAgencyType],
+    joiValidationBody: {
+      ..._getLoggingValidationRules(),
+      ..._mysqlValidationRules(),
+      ..._getTlsValidationRules(),
+      ..._getServerValidationRules(),
+      ..._setupWalletValidationRules(),
+      ..._walletValidationRules(),
+      ..._applicationValidationRules(),
+      AGENCY_DID: Joi.string().required(),
+      DEV_MODE: Joi.boolean().default(false),
+      ECS_CONTAINER_METADATA_URI_V4: Joi.string().uri()
     }
   }
-  validateTls()
 }
 
 async function validateAppConfig (appConfig) {
-  const { value: effectiveConfig, error } = configValidation.validate(appConfig)
+  const operationModeInfo = OP_MODES.RUN_SERVER
+  const { postValidations } = operationModeInfo
+  const { value: effectiveConfig, error } = Joi.object().keys(operationModeInfo.joiValidationBody).validate(appConfig)
   if (error) {
     throw new Error(`Application configuration is not valid. Details ${stringifyAndHideSensitive(error)}`)
   }
-  validateFinalConfig(effectiveConfig)
+  for (const postValidation of postValidations) {
+    postValidation(effectiveConfig)
+  }
   return effectiveConfig
+}
+
+async function loadConfiguration () {
+  const envVariables = Object.keys(OP_MODES.RUN_SERVER.joiValidationBody)
+  return loadEnvVariables(envVariables)
 }
 
 module.exports = {
   validateAppConfig,
-  validateFinalConfig,
-  stringifyAndHideSensitive
+  stringifyAndHideSensitive,
+  loadConfiguration,
+  OP_MODES
 }

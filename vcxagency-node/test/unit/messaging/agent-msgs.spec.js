@@ -39,7 +39,7 @@ const os = require('os')
 const { getBaseAppConfig } = require('./common')
 const { createDbSchemaApplication, createDbSchemaWallets, pruneMsgs } = require('dbutils')
 const { setupVcxLogging } = require('../../utils')
-const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
+const { buildApplication, cleanUpApplication } = require('../../../src/execution/app')
 const { buildAgencyClientVirtual } = require('./common')
 
 const agencyWalletName = `vcxagency-node-${uuid.v4()}`

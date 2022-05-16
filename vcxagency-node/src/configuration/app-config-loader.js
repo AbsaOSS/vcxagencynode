@@ -18,58 +18,27 @@
 
 const path = require('path')
 const dotenv = require('dotenv')
+const fs = require('fs')
+const assert = require('assert')
 
 const appConfigName = process.env.APP_CONFIG
 if (appConfigName) {
   const pathToConfig = path.resolve(__dirname, `../../config/${appConfigName}.env`)
+  assert(fs.existsSync(pathToConfig), `File ${pathToConfig} not found.`)
   console.log(`App configuration will be loaded from ${pathToConfig}.`)
   dotenv.config({ path: pathToConfig })
 } else {
   console.log('App configuration will be loaded from supplied environment variables.')
 }
 
-function buildAppConfigFromEnvVariables () {
-  const appConfig = {
-    LOG_LEVEL: process.env.LOG_LEVEL,
-    LOG_ENABLE_INDYSDK: process.env.LOG_ENABLE_INDYSDK,
-    LOG_JSON_TO_CONSOLE: process.env.LOG_JSON_TO_CONSOLE,
-    LOG_HEALTH_REQUESTS: process.env.LOG_HEALTH_REQUESTS,
-    DEV_MODE: process.env.DEV_MODE,
-
-    SERVER_PORT: process.env.SERVER_PORT,
-    SERVER_HOSTNAME: process.env.SERVER_HOSTNAME,
-    SERVER_MAX_REQUEST_SIZE_KB: process.env.SERVER_MAX_REQUEST_SIZE_KB,
-    SERVER_ENABLE_TLS: process.env.SERVER_ENABLE_TLS,
-    CERTIFICATE_PATH: process.env.CERTIFICATE_PATH,
-    CERTIFICATE_KEY_PATH: process.env.CERTIFICATE_KEY_PATH,
-
-    AGENCY_WALLET_NAME: process.env.AGENCY_WALLET_NAME,
-    AGENCY_DID: process.env.AGENCY_DID,
-    AGENCY_SEED_SECRET: process.env.AGENCY_SEED_SECRET,
-    AGENCY_WALLET_KEY_SECRET: process.env.AGENCY_WALLET_KEY_SECRET,
-
-    REDIS_URL: process.env.REDIS_URL,
-    AGENCY_TYPE: process.env.AGENCY_TYPE,
-
-    MYSQL_HOST: process.env.MYSQL_HOST,
-    MYSQL_PORT: process.env.MYSQL_PORT,
-    MYSQL_ACCOUNT: process.env.MYSQL_ACCOUNT,
-    MYSQL_PASSWORD_SECRET: process.env.MYSQL_PASSWORD_SECRET,
-    MYSQL_DATABASE_APPLICATION: process.env.MYSQL_DATABASE_APPLICATION,
-    MYSQL_DATABASE_WALLET: process.env.MYSQL_DATABASE_WALLET,
-    MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: process.env.MYSQL_DATABASE_WALLET_CONNECTION_LIMIT,
-
-    AWS_S3_PATH_CERT: process.env.AWS_S3_PATH_CERT,
-    AWS_S3_BUCKET_CERT: process.env.AWS_S3_BUCKET_CERT,
-    AWS_S3_PATH_CERT_KEY: process.env.AWS_S3_PATH_CERT_KEY,
-
-    ECS_CONTAINER_METADATA_URI_V4: process.env.ECS_CONTAINER_METADATA_URI_V4,
-    WEBHOOK_RESPONSE_TIMEOUT_MS: process.env.WEBHOOK_RESPONSE_TIMEOUT_MS,
-    EXPLAIN_QUERIES: process.env.EXPLAIN_QUERIES
+function loadEnvVariables (envVariables) {
+  const inputConfig = {}
+  for (const envName of envVariables) {
+    inputConfig[envName] = process.env[envName]
   }
-  appConfig.SERVER_MAX_REQUEST_SIZE_KB = parseInt(appConfig.SERVER_MAX_REQUEST_SIZE_KB)
-  appConfig.MYSQL_DATABASE_WALLET_CONNECTION_LIMIT = parseInt(appConfig.MYSQL_DATABASE_WALLET_CONNECTION_LIMIT)
-  return appConfig
+  return inputConfig
 }
 
-module.exports = { buildAppConfigFromEnvVariables }
+module.exports = {
+  loadEnvVariables
+}
