@@ -16,9 +16,6 @@
 
 'use strict'
 const express = require('express')
-const { fetchEcsTaskMetadata } = require('./scripts/fetch-ecs-task-metadata')
-const { reloadTrustedCerts, createWebServer } = require('./setup/server')
-const { fetchCertsFromS3 } = require('./scripts/download-certs')
 
 /*
 ** No logger section **
@@ -39,11 +36,12 @@ async function loadConfiguration () {
   return appConfig
 }
 
-/*
- ** App configuration was loaded, global logging variables were set up, from now on, we can safely build logger **
- */
 async function startApp (appConfig) {
+  // only after global variables have been set we can import files which work with logger
   const logger = require('./logging/logger-builder')(__filename)
+  const { fetchEcsTaskMetadata } = require('./scripts/fetch-ecs-task-metadata')
+  const { reloadTrustedCerts, createWebServer } = require('./setup/server')
+  const { fetchCertsFromS3 } = require('./scripts/download-certs')
   try {
     process.on('exit', code => {
       logger.warn(`Process exiting with code: ${code}`)

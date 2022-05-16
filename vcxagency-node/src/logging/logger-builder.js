@@ -56,7 +56,6 @@ function addChildLogger (mainLoggerName, fullPath) {
 
 const mainLoggerName = 'main'
 
-console.warn(`"BUILDING APP LOGGER...global.LOG_LEVEL=${global.LOG_LEVEL} process.env.SILENT_WINSTON === 'true'`)
 const formatter = global.LOG_JSON_TO_CONSOLE ? jsonFormatter : prettyFormatter
 const logLevel = global.LOG_LEVEL
 createConsoleLogger(mainLoggerName, formatter, logLevel, process.env.SILENT_WINSTON === 'true')
