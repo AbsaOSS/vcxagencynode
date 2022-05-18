@@ -15,10 +15,6 @@
  */
 
 'use strict'
-const express = require('express')
-const { fetchEcsTaskMetadata } = require('./scripts/fetch-ecs-task-metadata')
-const { reloadTrustedCerts, createWebServer } = require('./setup/server')
-const { fetchCertsFromS3 } = require('./scripts/download-certs')
 
 /*
 ** No logger section **
@@ -26,80 +22,69 @@ const { fetchCertsFromS3 } = require('./scripts/download-certs')
 * In following section we do not use, or import a file which does, winston logger builder.
 * Logger builder depends on app configuration loaded first, and that's what we do bellow.
 */
-async function loadConfiguration () {
-  const { buildAppConfigFromEnvVariables } = require('./configuration/app-config-loader')
-  const { validateAppConfig } = require('./configuration/app-config')
-  const rawAppConfig = buildAppConfigFromEnvVariables()
-  const appConfig = await validateAppConfig(rawAppConfig)
+const { stringifyAndHideSensitive, loadConfiguration, validateAppConfig } = require('./configuration/app-config')
+const fs = require('fs')
+const https = require('https')
+
+function setLoggingGlobalSettings (appConfig) {
   global.DISABLE_COLOR_LOGS = appConfig.DISABLE_COLOR_LOGS
   global.LOG_JSON_TO_CONSOLE = appConfig.LOG_JSON_TO_CONSOLE
-  global.WEBHOOK_RESPONSE_TIMEOUT_MS = appConfig.WEBHOOK_RESPONSE_TIMEOUT_MS
   global.LOG_LEVEL = appConfig.LOG_LEVEL
   global.EXPLAIN_QUERIES = appConfig.EXPLAIN_QUERIES
-  return appConfig
 }
 
-/*
- ** App configuration was loaded, global logging variables were set up, from now on, we can safely build logger **
- */
-async function startApp (appConfig) {
-  const logger = require('./logging/logger-builder')(__filename)
-  try {
-    process.on('exit', code => {
-      logger.warn(`Process exiting with code: ${code}`)
-    })
-
-    process.on('SIGTERM', signal => {
-      logger.warn(`Process ${process.pid} received a SIGTERM signal.`)
-      process.exit(0)
-    })
-
-    process.on('SIGINT', signal => {
-      logger.warn(`Process ${process.pid} has been interrupted.`)
-      process.exit(0)
-    })
-
-    const { stringifyAndHideSensitive } = require('./configuration/app-config')
-    const { buildApplication } = require('./setup/app')
-    const { setupExpressApp } = require('./setup/server')
-
-    logger.info(`Starting up application with effective config: ${stringifyAndHideSensitive(appConfig)}`)
-
-    logger.info('Attempting to fetch and store ECS task metadata')
-    global.ecsTaskMetadata = await fetchEcsTaskMetadata(appConfig.ECS_CONTAINER_METADATA_URI_V4)
-
-    logger.debug('Going to try reloading trusted certificates.')
-    reloadTrustedCerts(logger)
-
-    logger.info(`Loaded effective config: ${stringifyAndHideSensitive(appConfig)}`)
-
-    logger.debug('Going to fetch certificates/keys to serve.')
-    await fetchCertsFromS3(appConfig, logger)
-
-    logger.debug('Going to build application internals.')
-    const application = await buildApplication(appConfig)
-
-    const expressApp = express()
-    expressApp.set('app-name', 'vcxs-api')
-
-    const httpServer = createWebServer(expressApp, appConfig.SERVER_ENABLE_TLS, appConfig.CERTIFICATE_PATH, appConfig.CERTIFICATE_KEY_PATH, logger)
-    await setupExpressApp(expressApp, application, appConfig)
-
-    const port = appConfig.SERVER_PORT
-    logger.debug(`Going to listen on port ${port}`)
-    httpServer.listen(port, () => logger.info(`------------ Listening on port ${port} ------------`))
-  } catch (err) {
-    logger.error(`Unhandled error. Application will be terminated. ${err.stack}`)
-    process.exit(255)
-  }
+async function setGlobalVariables (appConfig) {
+  setLoggingGlobalSettings(appConfig)
+  global.WEBHOOK_RESPONSE_TIMEOUT_MS = appConfig.WEBHOOK_RESPONSE_TIMEOUT_MS
+  const { fetchEcsTaskMetadata } = require('./scripts/fetch-ecs-task-metadata')
+  global.ecsTaskMetadata = await fetchEcsTaskMetadata(appConfig.ECS_CONTAINER_METADATA_URI_V4)
 }
 
 async function run () {
-  const appConfig = await loadConfiguration()
-  return startApp(appConfig)
+  const envConfig = await loadConfiguration()
+  const appConfig = await validateAppConfig(envConfig)
+  await setGlobalVariables(appConfig)
+
+  // only after global variables are set we can import files which work with logger
+  const logger = require('./logging/logger-builder')(__filename)
+  logger.info(`Starting up with effective config: ${stringifyAndHideSensitive(appConfig)}`)
+
+  const { startServer } = require('./execution/run')
+
+  process.on('exit', code => {
+    logger.warn(`Process exiting with code: ${code}`)
+  })
+
+  process.on('SIGTERM', signal => {
+    logger.warn(`Process ${process.pid} received a SIGTERM signal.`)
+    process.exit(0)
+  })
+
+  process.on('SIGINT', signal => {
+    logger.warn(`Process ${process.pid} has been interrupted.`)
+    process.exit(0)
+  })
+
+  function reloadTrustedCerts () {
+    const TRUSTED_CA_CERTS_PATH = '/etc/ssl/certs/ca-certificates.crt'
+    if (fs.existsSync(TRUSTED_CA_CERTS_PATH)) {
+      https.globalAgent.options.ca = fs.readFileSync(TRUSTED_CA_CERTS_PATH)
+      logger.warn(`Loaded additional trusted CA certificates from ${TRUSTED_CA_CERTS_PATH}`)
+    } else {
+      logger.warn('No additional trusted CA certificates were loaded.')
+    }
+  }
+  reloadTrustedCerts()
+  await startServer(appConfig)
+  return false
 }
 
 run()
+  .then((shouldExit) => {
+    if (shouldExit) {
+      process.exit(0)
+    }
+  })
   .catch(err => {
     console.error(`Unhandled error. Application will be terminated. ${err.stack}`)
     process.exit(255)

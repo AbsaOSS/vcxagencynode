@@ -1,3 +1,21 @@
+/**
+ * Copyright 2020 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+'use strict'
+
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3')
 const fs = require('fs')
 const logger = require('../logging/logger-builder')(__filename)
@@ -24,20 +42,19 @@ async function fetchAwsAsset (bucketName, key, filePath, clientConfig = { region
   logger.debug(`Downloading of ${bucketName}/${key} finished`)
 }
 
-module.exports.fetchCertsFromS3 = async function fetchCertsFromS3 (appConfig) {
-  if (appConfig.SERVER_ENABLE_TLS === false) {
-    logger.info('TLS disabled, skipping downloading certificates from S3')
-    return
-  } else if (appConfig.CERTIFICATE_PATH && appConfig.CERTIFICATE_KEY_PATH &&
-    fs.existsSync(appConfig.CERTIFICATE_PATH) && fs.existsSync(appConfig.CERTIFICATE_KEY_PATH)) {
+async function fetchServerCertsFromS3 (appConfig) {
+  if (fs.existsSync(appConfig.CERTIFICATE_PATH) && fs.existsSync(appConfig.CERTIFICATE_KEY_PATH)) {
     logger.info('TLS enabled and certificates already present, skipping downloading certificates from S3')
     return
   }
-
-  logger.info('Downloading certificates')
+  logger.info('Downloading server TLS certificates')
   assert(appConfig.AWS_S3_BUCKET_CERT, 'S3 bucket name to download certificates from not specified')
   assert(appConfig.AWS_S3_PATH_CERT, 'Path to certificate in S3 bucket not specified')
   assert(appConfig.AWS_S3_PATH_CERT_KEY, 'Path to certificate key in S3 bucket not specified')
   await fetchAwsAsset(appConfig.AWS_S3_BUCKET_CERT, appConfig.AWS_S3_PATH_CERT, appConfig.CERTIFICATE_PATH)
   await fetchAwsAsset(appConfig.AWS_S3_BUCKET_CERT, appConfig.AWS_S3_PATH_CERT_KEY, appConfig.CERTIFICATE_KEY_PATH)
+}
+
+module.exports = {
+  fetchServerCertsFromS3
 }

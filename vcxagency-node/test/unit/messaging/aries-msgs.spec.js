@@ -47,7 +47,7 @@ const { getBaseAppConfig } = require('./common')
 const { longpollNotifications } = require('../../../src/service/notifications/longpoll')
 const { createDbSchemaApplication } = require('dbutils')
 const { setupVcxLogging } = require('../../utils')
-const { buildApplication, cleanUpApplication } = require('../../../src/setup/app')
+const { buildApplication, cleanUpApplication } = require('../../../src/execution/app')
 const { buildAgencyClientVirtual } = require('./common')
 
 const agencyWalletName = `vcxagency-node-${uuid.v4()}`
