@@ -44,6 +44,7 @@ async function run () {
   const envConfig = await loadConfiguration()
   const appConfig = await validateAppConfig(envConfig)
   await setGlobalVariables(appConfig)
+
   // only after global variables are set we can import files which work with logger
   const logger = require('./logging/logger-builder')(__filename)
   logger.info(`Starting up with effective config: ${stringifyAndHideSensitive(appConfig)}`)
