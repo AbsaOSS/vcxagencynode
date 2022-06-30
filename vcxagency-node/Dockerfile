@@ -8,7 +8,9 @@ RUN apk add --no-cache \
         gcc \
         make \
         cmake \
-        python2
+        python2 \
+        curl
+
 RUN npm install -g yarn
 
 USER node
