@@ -289,24 +289,6 @@ async function createDataStorage (appStorageConfig) {
   /**
    * Returns list of tuples ( "Agent Connection Did", "User pairwise Did"), each representing one connection.
    * @param {string} agentDid - DID of an Agent owning the connection.
-   * @param {array} filterUserPwDids - Filters records by "User Pairwise DIDs". Empty array disables filter.
-   */
-  async function aconnLinkPairsByPwDids (agentDid, filterUserPwDids) {
-    const aconnLinks = await getAgentLinks(agentDid)
-    const pairs = []
-    for (const aconnLink of aconnLinks) {
-      const { userPwDid } = aconnLink
-      if (filterUserPwDids.length === 0 || filterUserPwDids.includes(userPwDid)) {
-        const { agentConnDid } = aconnLink
-        pairs.push({ agentConnDid, userPwDid })
-      }
-    }
-    return pairs
-  }
-
-  /**
-   * Returns list of tuples ( "Agent Connection Did", "User pairwise Did"), each representing one connection.
-   * @param {string} agentDid - DID of an Agent owning the connection.
    * @param {array} filterAgentConnDids - Filters records by "Agent Connection DIDs". Empty array disables filter.
    */
   async function aconnLinkPairsByAconnDids (agentDid, filterAgentConnDids) {
@@ -344,7 +326,6 @@ async function createDataStorage (appStorageConfig) {
 
     // agent - agentConnection links
     linkAgentToItsConnection,
-    aconnLinkPairsByPwDids,
     aconnLinkPairsByAconnDids,
 
     setHasNewMessage,

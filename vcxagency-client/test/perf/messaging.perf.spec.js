@@ -22,8 +22,7 @@ const { indyCreateAndStoreMyDid } = require('easy-indysdk')
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
-const { vcxFlowUpdateMsgsFromAgent } = require('../../src')
-const { vcxFlowGetMsgsFromAgent } = require('../../src')
+const { vcxFlowUpdateMsgsFromAgent, vcxFlowGetMsgsFromAgentConn } = require('../../src')
 const { vcxFlowSendAriesMessage } = require('../../src')
 const { buildAgencyClientNetwork } = require('../common')
 const { vcxFlowCreateAgentConnection } = require('vcxagency-client')
@@ -103,7 +102,8 @@ describe('onboarding', () => {
     const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(clientAlice.wh, sendToAgency, agencyDid, agencyVerkey, clientAlice.client2AgencyDid, clientAlice.client2AgencyVerkey)
     const aliceAconnAlice2Bob = await vcxFlowCreateAgentConnection(
       clientAlice.wh, sendToAgency, aliceAgentDid, aliceAgentVerkey, clientAlice.client2AgencyVerkey, aliceUserPwDid2Bob, aliceUserPwVerkey2Bob)
-    const aliceRoutingKeyAlice2Bob = aliceAconnAlice2Bob.withPairwiseDIDVerKey
+    const aconnAlice2BobDid = aliceAconnAlice2Bob.withPairwiseDID
+    const aconnAlice2BobVk = aliceAconnAlice2Bob.withPairwiseDIDVerKey
 
     const bobsUserPwVkey = clientBob.userPwDids[0].vkey
 
@@ -116,18 +116,16 @@ describe('onboarding', () => {
         }
         const promises = []
         for (let j = 0; j < OPS_IN_ROUND; j++) {
-          promises.push(vcxFlowSendAriesMessage(clientBob.wh, sendToAgency, aliceUserPwVerkey2Bob, aliceRoutingKeyAlice2Bob, bobsUserPwVkey, uuid.v4()))
+          promises.push(vcxFlowSendAriesMessage(clientBob.wh, sendToAgency, aliceUserPwVerkey2Bob, aconnAlice2BobVk, bobsUserPwVkey, uuid.v4()))
         }
         await Promise.all(promises)
         if (i === 0) {
-          // update all messages received so farr to MS-106 statusCode
-          const msgs = await vcxFlowGetMsgsFromAgent(clientAlice.wh, sendToAgency, aliceAgentDid, aliceAgentVerkey, clientAlice.client2AgencyVerkey, [aliceUserPwDid2Bob], [], [])
-          console.log(JSON.stringify(msgs))
-          const receivedMsgUids = msgs.msgsByConns[0].msgs.map(msg => msg.uid)
-          console.log(JSON.stringify(receivedMsgUids))
+          // update all messages received so far to MS-106 statusCode
+          const res = await vcxFlowGetMsgsFromAgentConn(clientAlice.wh, sendToAgency, aconnAlice2BobDid, aconnAlice2BobVk, aliceUserPwVerkey2Bob, [], [])
+          console.log(JSON.stringify(res))
+          const receivedMsgUids = res.msgs.map(msg => msg.uid)
           await vcxFlowUpdateMsgsFromAgent(clientAlice.wh, sendToAgency, aliceAgentDid, aliceAgentVerkey, clientAlice.client2AgencyVerkey,
             [{ pairwiseDID: aliceUserPwDid2Bob, uids: receivedMsgUids }], 'MS-106')
-          // const msgs2 = await vcxFlowGetMsgsFromAgent(clientAlice.wh, sendToAgency, aliceAgentDid, aliceAgentVerkey, clientAlice.client2AgencyVerkey, [aliceUserPwDid2Bob], [], [])
         }
       }
       const tFinish = performance.now()
@@ -147,7 +145,7 @@ describe('onboarding', () => {
         const promises = []
         for (let j = 0; j < OPS_IN_ROUND; j++) {
           promises.push(
-            vcxFlowGetMsgsFromAgent(clientAlice.wh, sendToAgency, aliceAgentDid, aliceAgentVerkey, clientAlice.client2AgencyVerkey, [aliceUserPwDid2Bob], [], ['MS-106'])
+            vcxFlowGetMsgsFromAgentConn(clientAlice.wh, sendToAgency, aconnAlice2BobDid, aconnAlice2BobVk, aliceUserPwVerkey2Bob, ['MS-106'], [])
           )
         }
         await Promise.all(promises)

@@ -25,7 +25,6 @@ const os = require('os')
 const { vcxFlowUpdateMsgsFromAgent } = require('../../../src')
 const { vcxFlowGetMsgsFromAgentConn } = require('../../../src')
 const { vcxFlowSendAriesMessage } = require('../../../src')
-const { vcxFlowGetMsgsFromAgent } = require('../../../src')
 const { buildAgencyClientNetwork } = require('../../common')
 const { vcxFlowCreateAgentConnection } = require('vcxagency-client/src')
 const { vcxFlowFullOnboarding } = require('vcxagency-client/src')
@@ -102,51 +101,56 @@ afterEach(async () => {
 describe('onboarding', () => {
   it('should exchange messages between alice and bob via agency', async () => {
     // arrange
-    const { agentDid: aliceAgentDid, agentVerkey: aliceAgentVerkey } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
+    const {
+      agentDid: aliceAgentDid,
+      agentVerkey: aliceAgentVerkey
+    } = await vcxFlowFullOnboarding(aliceWh, sendToAgency, agencyDid, agencyVerkey, aliceDid, aliceVerkey)
     const { did: aliceUserPairwiseDid, vkey: aliceUserPairwiseVerkey } = await indyCreateAndStoreMyDid(aliceWh)
     console.log('Alice was onboarded.')
 
-    const { agentDid: bobAgentDid, agentVerkey: bobAgentVerkey } = await vcxFlowFullOnboarding(bobWh, sendToAgency, agencyDid, agencyVerkey, bobDid, bobVerkey)
+    const {
+      agentDid: bobAgentDid,
+      agentVerkey: bobAgentVerkey
+    } = await vcxFlowFullOnboarding(bobWh, sendToAgency, agencyDid, agencyVerkey, bobDid, bobVerkey)
     const { did: bobUserPairwiseDid, vkey: bobUserPairwiseVerkey } = await indyCreateAndStoreMyDid(bobWh)
     console.log('Bob was onboarded.')
 
     // create agent connection, both alice and bob
     console.log(`Alice is going to create agent connection. aliceAgentDid=${aliceAgentDid} aliceVerkey=${aliceVerkey} aliceUserPairwiseDid=${aliceUserPairwiseDid} aliceUserPairwiseVerkey=${aliceUserPairwiseVerkey}`)
     const alicesAconn = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceUserPairwiseDid, aliceUserPairwiseVerkey)
-    const alicesRoutingAgentDid = alicesAconn.withPairwiseDID
-    const alicesRoutingAgentVerkey = alicesAconn.withPairwiseDIDVerKey
+    const aconnAlice2BobDid = alicesAconn.withPairwiseDID
+    const aconnAlice2BobVk = alicesAconn.withPairwiseDIDVerKey
     console.log('Alice created agent connection!')
     await vcxFlowCreateAgentConnection(bobWh, sendToAgency, bobAgentDid, bobAgentVerkey, bobVerkey, bobUserPairwiseDid, bobUserPairwiseVerkey)
 
-    const aliceAllMsgs1 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
+    const aliceAllMsgs1 = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, aconnAlice2BobDid, aconnAlice2BobVk, aliceUserPairwiseVerkey, [], [], [])
+    expect(aliceAllMsgs1['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSGS')
+    expect(aliceAllMsgs1.msgs.length).toBe(0)
     console.log(`Alice queries agency for all messages, she should have none. Response = ${JSON.stringify(aliceAllMsgs1)}`)
 
     // bobs sends message to alices routing agent
-    const bobSendMsgRes1 = await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceUserPairwiseVerkey, alicesRoutingAgentVerkey, bobUserPairwiseVerkey, 'This is Bob!')
+    const bobSendMsgRes1 = await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceUserPairwiseVerkey, aconnAlice2BobVk, bobUserPairwiseVerkey, 'This is Bob!')
     console.log(`Bob sends aries message to Alice's agent. Response = ${JSON.stringify(bobSendMsgRes1)}`)
 
     // alice fetches messages
-    const aliceAllMsgs2 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
+    const aliceAllMsgs2 = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, aconnAlice2BobDid, aconnAlice2BobVk, aliceUserPairwiseVerkey, [], [], [])
     console.log(`Alice queries agency for all messages, she should have one. Response = ${JSON.stringify(aliceAllMsgs2)}`)
+    expect(aliceAllMsgs2.msgs.length).toBe(1)
+    expect(aliceAllMsgs2.msgs[0].statusCode).toBe('MS-103')
 
-    const aliceToBoMsgs = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, alicesRoutingAgentDid, alicesRoutingAgentVerkey, aliceUserPairwiseVerkey, [], [])
-    console.log(`Alice queries agency for alice2bob messages, she should have one. Response = ${JSON.stringify(aliceToBoMsgs)}`)
-
-    // alice updates message status
+    // // alice updates message status
     const aliceMsgsByConns = [
-      { pairwiseDID: aliceUserPairwiseDid, uids: [aliceToBoMsgs.msgs[0].uid] }
+      { pairwiseDID: 'unused-attribute', uids: [aliceAllMsgs2.msgs[0].uid] }
     ]
-    const aliceNewMsgStatus = 'MS-104'
+    const aliceNewMsgStatus = 'MS-106'
     const updateResponse = await vcxFlowUpdateMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceMsgsByConns, aliceNewMsgStatus)
     console.log(`Alice run msg status update for msgs ${JSON.stringify(aliceMsgsByConns)} to status ${aliceNewMsgStatus}. Response = ${JSON.stringify(updateResponse)}`)
 
-    // alice tries to update msg status on connection she doesn't have
-    const updateMsgForNonExistingUserPwDid = [
-      { pairwiseDID: '4aA6TyH2Cgq7gg2wGFiRXS', uids: [aliceToBoMsgs.msgs[0].uid] }
-    ]
-    const aliceNewMsgStatus2 = 'MS-105'
-    const updateResponse2 = await vcxFlowUpdateMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, updateMsgForNonExistingUserPwDid, aliceNewMsgStatus2)
-    console.log(`Alice run msg status update for agent connection which does not exists on her agent. Response = ${JSON.stringify(updateResponse2)}`)
+    // alice fetches messages
+    const aliceAllMsgs3 = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, aconnAlice2BobDid, aconnAlice2BobVk, aliceUserPairwiseVerkey, [], [], [])
+    console.log(`Alice queries agency for all messages, she should have one. Response = ${JSON.stringify(aliceAllMsgs3)}`)
+    expect(aliceAllMsgs3.msgs.length).toBe(1)
+    expect(aliceAllMsgs3.msgs[0].statusCode).toBe('MS-106')
   })
 })
 

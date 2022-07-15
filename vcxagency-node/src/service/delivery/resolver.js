@@ -26,7 +26,7 @@ const ENTITY_RECORD_RESOLUTION_STRATEGY = {
   BY_DID: 2
 }
 
-function createResolver (serviceWallets, serviceStorage, serviceNewMessages, forwardAgentEntity, devMode = false) {
+function createResolver (serviceWallets, serviceStorage, serviceNewMessages, forwardAgentEntity) {
   const { did: fwaDid, verkey: fwaVerkey } = forwardAgentEntity.getForwadAgentInfo()
 
   let router
@@ -58,7 +58,7 @@ function createResolver (serviceWallets, serviceStorage, serviceNewMessages, for
   async function _entityRecordToEntityAO (entityRecord) {
     switch (entityRecord.entityType) {
       case entityType.agent: {
-        return buildAgentAO(entityRecord, serviceWallets, serviceStorage, router, devMode)
+        return buildAgentAO(entityRecord, serviceWallets, serviceStorage, router)
       }
       case entityType.agentConnection: {
         return buildAgentConnectionAO(entityRecord, serviceWallets, serviceStorage, serviceNewMessages)

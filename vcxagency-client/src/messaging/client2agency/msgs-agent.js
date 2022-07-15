@@ -16,22 +16,10 @@
 
 'use strict'
 
-const MSGTYPE_GET_MSGS_BY_CONNS = 'did:sov:123456789abcdefghi1234;spec/pairwise/1.0/GET_MSGS_BY_CONNS'
-const MSGTYPE_MSGS_BY_CONNS = 'did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSGS_BY_CONNS'
 const MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS = 'did:sov:123456789abcdefghi1234;spec/pairwise/1.0/UPDATE_MSG_STATUS_BY_CONNS'
 const MSGTYPE_MSG_STATUS_UPDATED_BY_CONNS = 'did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS'
 const MSGTYPE_UPDATE_COM_METHOD = 'did:sov:123456789abcdefghi1234;spec/configs/1.0/UPDATE_COM_METHOD'
 const MSGTYPE_COM_METHOD_UPDATED = 'did:sov:123456789abcdefghi1234;spec/configs/1.0/COM_METHOD_UPDATED'
-
-function buildMsgVcxV2MsgGetMsgsByConns (pairwiseDIDs, uids, statusCodes) {
-  const msg = {
-    '@type': MSGTYPE_GET_MSGS_BY_CONNS,
-    uids, // should be array like ["b7vh36XiTe"]
-    pairwiseDIDs, // array like ["Fp4eVWcjyRawjNWgnJmJWD"]}
-    statusCodes // ["MS-102","MS-103","MS-104","MS-105","MS-106"]
-  }
-  return msg
-}
 
 function buildVcxV2AgencyMsg (payload, senderDID, statusCode, uid) {
   return {
@@ -50,15 +38,6 @@ function buildVcxV2AgencyMsgsByConn (agencyMsgs, pairwiseDid) {
     msgs: agencyMsgs
   }
 }
-
-function buildMsgVcxV2MsgsByConns (msgsByConns) {
-  const msg = {
-    '@type': MSGTYPE_MSGS_BY_CONNS,
-    msgsByConns
-  }
-  return msg
-}
-
 function buildVcxV2UidsByConn (pairwiseDid, uids) {
   return {
     pairwiseDID: pairwiseDid,
@@ -106,10 +85,8 @@ function buildMsgCommMethodUpdated (id) {
 
 module.exports = {
   // get msgs: for many agent-connections (recipient is agent entity)
-  buildMsgVcxV2MsgGetMsgsByConns, // req
   buildVcxV2AgencyMsg,
   buildVcxV2AgencyMsgsByConn,
-  buildMsgVcxV2MsgsByConns, // res
 
   // update by connections (message for agent)
   buildMsgVcxV2UpdateMsgStatusByConns, // req
@@ -118,9 +95,6 @@ module.exports = {
 
   buildMsgVcxV2UpdateWebhookUrl,
   buildMsgCommMethodUpdated,
-
-  MSGTYPE_GET_MSGS_BY_CONNS,
-  MSGTYPE_MSGS_BY_CONNS,
 
   MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS,
   MSGTYPE_MSG_STATUS_UPDATED_BY_CONNS,
