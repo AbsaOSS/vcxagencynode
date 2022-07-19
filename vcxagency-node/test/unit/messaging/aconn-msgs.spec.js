@@ -24,7 +24,8 @@ global.SILENT_WINSTON = process.env.SILENT_WINSTON === 'false'
 const {
   vcxFlowGetMsgsFromAgentConn,
   vcxFlowCreateAgentConnection,
-  vcxFlowFullOnboarding
+  vcxFlowFullOnboarding,
+  vcxFlowUpdateMsgsFromAgent
 } = require('vcxagency-client')
 const { indyCreateWallet, indyCreateAndStoreMyDid, indyOpenWallet, indyGenerateWalletKey } = require('easy-indysdk')
 const uuid = require('uuid')
@@ -153,8 +154,6 @@ let agent1Verkey
 
 describe('message download from agent connection', () => {
   it('should filter messages by status', async () => {
-    // arrange
-    // act & assert 1, filter by status
     const msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, ['MS-103'], [])
     expect(msgReply['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSGS')
     const { msgs } = msgReply
@@ -193,5 +192,63 @@ describe('message download from agent connection', () => {
     const msg2 = msgs.find(msg => msg.uid === msg2Id)
     expect(msg2).toBeDefined()
     expect(msg2.payload.msg).toBe('annyeong')
+  })
+
+  it('should update message status by UID', async () => {
+    {
+      const msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, [], [msg1Id, msg2Id])
+      const { msgs } = msgReply
+      expect(Array.isArray(msgs)).toBeTruthy()
+      expect(msgs.length).toBe(2)
+
+      const msg1 = msgs.find(msg => msg.uid === msg1Id)
+      expect(msg1).toBeDefined()
+      expect(msg1.statusCode).toBe('MS-103')
+      expect(msg1.payload.msg).toBe('hello')
+
+      const msg2 = msgs.find(msg => msg.uid === msg2Id)
+      expect(msg2).toBeDefined()
+      expect(msg2.statusCode).toBe('MS-103')
+      expect(msg2.payload.msg).toBe('annyeong')
+    }
+    const uidsByConn = [
+      { pairwiseDID: 'not-taken-in-consideration', uids: [msg1Id, 'non-existing-uid1'] },
+      { pairwiseDID: 'not-taken-in-consideration', uids: [msg2Id, 'non-existing-uid2'] },
+      { pairwiseDID: 'not-taken-in-consideration', uids: ['non-existing-uid2'] }
+    ]
+    const updateRes = await vcxFlowUpdateMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, uidsByConn, 'MS-106')
+    expect(updateRes['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS')
+    {
+      const msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, [], [msg1Id, msg2Id])
+      const { msgs } = msgReply
+      const msg1 = msgs.find(msg => msg.uid === msg1Id)
+      expect(msg1).toBeDefined()
+      expect(msg1.statusCode).toBe('MS-106')
+      expect(msg1.payload.msg).toBe('hello')
+
+      const msg2 = msgs.find(msg => msg.uid === msg2Id)
+      expect(msg2).toBeDefined()
+      expect(msg2.statusCode).toBe('MS-106')
+      expect(msg2.payload.msg).toBe('annyeong')
+    }
+  })
+
+  it('should not update any message if no UIDs are not matching', async () => {
+    const uidsByConn = [
+      { pairwiseDID: 'not-taken-in-consideration', uids: [] },
+      { pairwiseDID: 'not-taken-in-consideration', uids: ['not-matching-uid'] }
+    ]
+    const updateRes = await vcxFlowUpdateMsgsFromAgent(agencyUserWh, sendToAgency, agent1Did, agent1Verkey, agencyUserVerkey, uidsByConn, 'MS-106')
+    expect(updateRes['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSG_STATUS_UPDATED_BY_CONNS')
+    {
+      const msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, [], [])
+      const { msgs } = msgReply
+      const msg1 = msgs.find(msg => msg.uid === msg1Id)
+      expect(msg1.statusCode).toBe('MS-103')
+      const msg2 = msgs.find(msg => msg.uid === msg2Id)
+      expect(msg2.statusCode).toBe('MS-103')
+      const msg3 = msgs.find(msg => msg.uid === msg3Id)
+      expect(msg3.statusCode).toBe('MS-104')
+    }
   })
 })

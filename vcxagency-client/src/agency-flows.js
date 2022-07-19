@@ -21,7 +21,6 @@ const { buildAriesFwdMessage } = require('./messaging/aries/aries-msg')
 const { buildAriesBasicMessage } = require('./messaging/aries/aries-msg')
 const { buildAgencyFwdMessage } = require('./messaging/client2agency/general')
 const { buildMsgVcxV2UpdateMsgStatusByConns } = require('./messaging/client2agency/msgs-agent')
-const { buildMsgVcxV2MsgGetMsgsByConns } = require('./messaging/client2agency/msgs-agent')
 const { buildMsgVcxV2GetMsgs } = require('./messaging/client2agency/msgs-agentconn')
 const { buildMsgVcxV2CreateKey } = require('./messaging/client2agency/onboarding')
 const { buildMsgVcxV2CreateAgent } = require('./messaging/client2agency/onboarding')
@@ -126,28 +125,6 @@ async function vcxFlowGetMsgsFromAgentConn (clientWh, sendToAgency, recipientAge
 }
 
 /**
- Downloads messages from agent accross multiple agent connections
- * @param {string} clientWh - wallet handle of agency client
- * @param {object} sendToAgency - function which passes final message to an agency
- * @param {string} clientVkey - verkey the client uses to talk to Agency
- * @param {string} recipientAgentDid - DID of the Agent
- * @param {string} recipientAgentVerkey - Verkey of the Agent
- * @param {string} userPwDids - filter connection by these userPwDids
- * @param {array} uids - filter messages by these msg UIDs
- * @param {string} statusCodes - filter messages by status
- */
-async function vcxFlowGetMsgsFromAgent (clientWh, sendToAgency, recipientAgentDid, recipientAgentVerkey, clientVkey, userPwDids, uids, statusCodes) {
-  const msgGetMsgs = await packAsUtf8(
-    clientWh,
-    objectToBuffer(buildMsgVcxV2MsgGetMsgsByConns(userPwDids, uids, statusCodes)),
-    recipientAgentVerkey,
-    clientVkey
-  )
-  const resEncrypted = await sendToAgency(wrapWithAgencyFwd(recipientAgentDid, msgGetMsgs))
-  return parseAgencyResponse(clientWh, resEncrypted)
-}
-
-/**
  Update statusCode of messages specified by UIDs per Agent-Connections
  * @param {string} clientWh - wallet handle of agency client
  * @param {object} sendToAgency - function which passes final message to an agency
@@ -223,7 +200,6 @@ module.exports = {
   vcxFlowGetMsgsFromAgentConn,
 
   // msgs across agent
-  vcxFlowGetMsgsFromAgent,
   vcxFlowUpdateMsgsFromAgent,
 
   // webhooks

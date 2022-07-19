@@ -132,7 +132,6 @@ const OP_MODES = {
       ..._walletValidationRules(),
       ..._applicationValidationRules(),
       AGENCY_DID: Joi.string().required(),
-      DEV_MODE: Joi.boolean().default(false),
       ECS_CONTAINER_METADATA_URI_V4: Joi.string().uri()
     }
   }

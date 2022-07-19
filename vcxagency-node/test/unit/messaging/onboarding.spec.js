@@ -126,25 +126,20 @@ describe('onboarding', () => {
   })
 
   it('agent should send "SignUp" and get response "SignedUp"', async () => {
-    // arrange
     const msgConnected = await vcxFlowConnect(agencyUserWh, sendToAgency, agencyDid, agencyVerkey, agencyUserDid, agencyUserVerkey)
     const tmpAgentDid = msgConnected.withPairwiseDID
     const tmpAgentVerkey = msgConnected.withPairwiseDIDVerKey
 
-    // act
     const msgSingedUp = await vcxFlowSignUp(agencyUserWh, sendToAgency, tmpAgentDid, tmpAgentVerkey, agencyUserVerkey)
 
-    // assert
     expect(msgSingedUp['@type']).toBe('did:sov:123456789abcdefghi1234;spec/onboarding/1.0/SIGNED_UP')
   })
 
   it('should throw authorization error if signUp message is sent from different verkey (attacker Bob)', async () => {
-    // arrange
     const msgConnected = await vcxFlowConnect(agencyUserWh, sendToAgency, agencyDid, agencyVerkey, agencyUserDid, agencyUserVerkey)
     const tmpAgentDid = msgConnected.withPairwiseDID
     const tmpAgentVerkey = msgConnected.withPairwiseDIDVerKey
 
-    // act
     let thrown
     try {
       await vcxFlowSignUp(bobWh, sendToAgency, tmpAgentDid, tmpAgentVerkey, bobVerkey)
@@ -152,35 +147,28 @@ describe('onboarding', () => {
       thrown = err
     }
 
-    // assert
     expect(thrown.message).toMatch(/not authorized/i)
   })
 
   it('should finalize onboarding by sending CreateAgent and get back AgentCreated', async () => {
-    // arrange
     const msgConnected = await vcxFlowConnect(agencyUserWh, sendToAgency, agencyDid, agencyVerkey, agencyUserDid, agencyUserVerkey)
     const tmpAgentDid = msgConnected.withPairwiseDID
     const tmpAgentVerkey = msgConnected.withPairwiseDIDVerKey
     await vcxFlowSignUp(agencyUserWh, sendToAgency, tmpAgentDid, tmpAgentVerkey, agencyUserVerkey)
 
-    // act
     const msgAgentCreated = await vcxFlowCreateAgent(agencyUserWh, sendToAgency, tmpAgentDid, tmpAgentVerkey, agencyUserVerkey)
 
-    // assert
     expect(msgAgentCreated['@type']).toBe('did:sov:123456789abcdefghi1234;spec/onboarding/1.0/AGENT_CREATED')
     expect(msgAgentCreated.withPairwiseDID).toBeDefined()
     expect(msgAgentCreated.withPairwiseDIDVerKey).toBeDefined()
   })
 
   it('should create agent, then create Agent connection - send CreateKey and get KeyCreated message back', async () => {
-    // arrange
     const { agentDid, agentVerkey } = await vcxFlowFullOnboarding(agencyUserWh, sendToAgency, agencyDid, agencyVerkey, agencyUserDid, agencyUserVerkey)
     const { did: userPairwiseDid, vkey: userPairwiseVerkey } = await indyCreateAndStoreMyDid(agencyUserWh)
 
-    // act
     const msgKeyCreated = await vcxFlowCreateAgentConnection(agencyUserWh, sendToAgency, agentDid, agentVerkey, agencyUserVerkey, userPairwiseDid, userPairwiseVerkey)
 
-    // assert
     const agentConnectionDid = msgKeyCreated.withPairwiseDID
     const agentConnectionVerkey = msgKeyCreated.withPairwiseDIDVerKey
     expect(agentConnectionDid).toBeDefined()

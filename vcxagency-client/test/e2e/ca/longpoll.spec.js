@@ -22,8 +22,7 @@ const { indyCreateAndStoreMyDid } = require('easy-indysdk')
 const uuid = require('uuid')
 const rimraf = require('rimraf')
 const os = require('os')
-const { vcxFlowSendAriesMessage } = require('../../../src')
-const { vcxFlowGetMsgsFromAgent } = require('../../../src')
+const { vcxFlowSendAriesMessage, vcxFlowGetMsgsFromAgentConn } = require('../../../src')
 const { buildAgencyClientNetwork } = require('../../common')
 const { vcxFlowCreateAgentConnection } = require('vcxagency-client/src')
 const { vcxFlowFullOnboarding } = require('vcxagency-client/src')
@@ -105,11 +104,13 @@ describe('longpoll', () => {
     // create agent connection, both alice and bob
     console.log(`Alice is going to create agent connection. aliceAgentDid=${aliceAgentDid} aliceVerkey=${aliceVerkey} aliceUserPairwiseDid=${aliceUserPairwiseDid} aliceUserPairwiseVerkey=${aliceUserPairwiseVerkey}`)
     const alicesAconn = await vcxFlowCreateAgentConnection(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, aliceUserPairwiseDid, aliceUserPairwiseVerkey)
+    const alicesRoutingAgentDid = alicesAconn.withPairwiseDID
     const alicesRoutingAgentVerkey = alicesAconn.withPairwiseDIDVerKey
+
     console.log('Alice created agent connection!')
     await vcxFlowCreateAgentConnection(bobWh, sendToAgency, bobAgentDid, bobAgentVerkey, bobVerkey, bobUserPairwiseDid, bobUserPairwiseVerkey)
 
-    const aliceAllMsgs1 = await vcxFlowGetMsgsFromAgent(aliceWh, sendToAgency, aliceAgentDid, aliceAgentVerkey, aliceVerkey, [], [], [])
+    const aliceAllMsgs1 = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, alicesRoutingAgentDid, alicesRoutingAgentVerkey, aliceUserPairwiseVerkey, [], [])
     console.log(`Alice queries agency for all messages, she should have none. Response = ${JSON.stringify(aliceAllMsgs1)}`)
     {
       let hasLongpollTimedOut = false

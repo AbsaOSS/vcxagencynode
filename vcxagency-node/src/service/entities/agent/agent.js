@@ -21,20 +21,16 @@ const {
   MSGTYPE_SIGNUP,
   MSGTYPE_CREATE_AGENT,
   MSGTYPE_CREATE_KEY,
-  MSGTYPE_GET_MSGS_BY_CONNS,
   MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS,
   MSGTYPE_UPDATE_COM_METHOD,
   buildMsgCommMethodUpdated,
   buildMsgVcxV2MsgStatusUpdatedByConns,
-  buildVcxV2AgencyMsgsByConn,
-  buildMsgVcxV2MsgsByConns,
   buildMsgVcxV2KeyCreated,
   buildMsgVcxV2AgentCreated,
   buildMsgVcxV2SignedUp,
   parseAuthcrypted
 } = require('vcxagency-client')
 const { pack } = require('easy-indysdk')
-const { storedMessageToResponseFormat } = require('../../storage/storage-utils')
 const { createAgentConnectionData } = require('../agent-connection/agent-connection')
 const { createAgentWallet } = require('./agent-internal')
 const logger = require('../../../logging/logger-builder')(__filename)
@@ -74,7 +70,7 @@ async function createAgentData (ownerDid, ownerVerkey, serviceWallets, serviceSt
  * @param {object} serviceWallets - Service for indy wallet management interface
  * @param {object} serviceStorage - Service for accessing entity storage
  */
-async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, router, devMode = false) {
+async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, router) {
   const { walletName, walletKey } = entityRecord
   const { ownerVerkey, agentDid, agentVerkey } = await loadInfo()
   const wh = await serviceWallets.getWalletHandle(walletName, walletKey, AGENT_WALLET_KDF)
@@ -128,18 +124,8 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     } else {
       logger.info(`${whoami} Handling message ${JSON.stringify(msgObject)}`)
       const responseObject = await _handleAuthorizedAgentMessage(msgObject, senderVerkey)
-      _logResponseObject(responseObject)
-      return { response: responseObject, wasEncrypted: false }
-    }
-  }
-
-  function _logResponseObject (responseObject) {
-    const msgType = responseObject['@type']
-    if (msgType === MSGTYPE_GET_MSGS_BY_CONNS) {
-      const msgCount = responseObject.msgs.length
-      logger.info(`${whoami} Sending response of type ${msgType}, retrieved ${msgCount} messages.`)
-    } else {
       logger.info(`${whoami} Sending response: ${JSON.stringify(responseObject)}`)
+      return { response: responseObject, wasEncrypted: false }
     }
   }
 
@@ -168,14 +154,6 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
         _handleUpdateComMethod,
         { },
         msgObject
-      )
-    } else if (devMode === true && msgType === MSGTYPE_GET_MSGS_BY_CONNS) {
-      const { uids, statusCodes } = msgObject
-      const pairwiseDIDs = msgObject.pairwiseDIDs || []
-      return timeOperation(
-        _handleGetMsgsByConn,
-        { agentDid, uids, statusCodes, pairwiseDIDs },
-        uids, statusCodes, pairwiseDIDs
       )
     } else if (msgType === MSGTYPE_UPDATE_MSG_STATUS_BY_CONNS) {
       const { statusCode, uidsByConns } = msgObject
@@ -209,20 +187,6 @@ async function buildAgentAO (entityRecord, serviceWallets, serviceStorage, route
     } else {
       throw Error(`${whoami} Unsupported com method type ${type}`)
     }
-  }
-
-  async function _handleGetMsgsByConn (uids, statusCodes, pairwiseDIDs) {
-    const didPairs = await serviceStorage.aconnLinkPairsByPwDids(agentDid, pairwiseDIDs)
-    const msgsByConns = []
-    for (const didPair of didPairs) {
-      const { agentConnDid, userPwDid } = didPair
-      logger.info(`${whoami} Getting messages for pair ${JSON.stringify(didPair)}`)
-      const storedMsgs = await serviceStorage.loadMessages(agentDid, [agentConnDid], uids, statusCodes)
-      logger.info(`${whoami} Found ${storedMsgs.length} messages`)
-      const responseMsgs = storedMsgs.map(storedMessageToResponseFormat)
-      msgsByConns.push(buildVcxV2AgencyMsgsByConn(responseMsgs, userPwDid))
-    }
-    return buildMsgVcxV2MsgsByConns(msgsByConns)
   }
 
   // "failed":[],"updatedUidsByConns":[{"pairwiseDID":"Fp4eVWcjyRawjNWgnJmJWD","uids":["b7vh36XiTe"]}]}
