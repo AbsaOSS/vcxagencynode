@@ -154,8 +154,6 @@ let agent1Verkey
 
 describe('message download from agent connection', () => {
   it('should filter messages by status', async () => {
-    // arrange
-    // act & assert 1, filter by status
     const msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, ['MS-103'], [])
     expect(msgReply['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSGS')
     const { msgs } = msgReply
@@ -197,7 +195,6 @@ describe('message download from agent connection', () => {
   })
 
   it('should update message status by UID', async () => {
-    // arrange
     {
       const msgReply = await vcxFlowGetMsgsFromAgentConn(agencyUserWh, sendToAgency, aconnDid, aconnVerkey, aconnUserPwVkey, [], [msg1Id, msg2Id])
       const { msgs } = msgReply
@@ -237,7 +234,6 @@ describe('message download from agent connection', () => {
   })
 
   it('should not update any message if no UIDs are not matching', async () => {
-    // arrange
     const uidsByConn = [
       { pairwiseDID: 'not-taken-in-consideration', uids: [] },
       { pairwiseDID: 'not-taken-in-consideration', uids: ['not-matching-uid'] }

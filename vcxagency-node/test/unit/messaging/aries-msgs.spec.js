@@ -147,7 +147,6 @@ async function setWebhookUrlForAgent (agentDid, webhookUrl) {
 
 describe('onboarding', () => {
   it('Bob should send aries message, Alice should download it', async () => {
-    // arrange
     const {
       agentDid: aliceAgentDid,
       agentVerkey: aliceAgentVerkey
@@ -161,7 +160,6 @@ describe('onboarding', () => {
 
     await vcxFlowSendAriesMessage(bobWh, sendToAgency, aliceVerkey, aliceToBobAconnVkey, bobToAliceVerkey, 'This is Bob!')
 
-    // act
     const msgReply = await vcxFlowGetMsgsFromAgentConn(aliceWh, sendToAgency, aliceToBobAconnDid, aliceToBobAconnVkey, aliceToBobVkey, ['MS-103'])
     expect(msgReply['@type']).toBe('did:sov:123456789abcdefghi1234;spec/pairwise/1.0/MSGS')
     const { msgs } = msgReply

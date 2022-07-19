@@ -42,7 +42,6 @@ let storage
 describe('storage', () => {
   beforeAll(async () => {
     jest.setTimeout(1000 * 5)
-    // arrange
     const { info } = await createDbSchemaApplication()
     storage = await createDataStorage(info)
 
@@ -58,10 +57,8 @@ describe('storage', () => {
   })
 
   it('should link create Agent-AgentConnection links, then map AgentConnDids to UserPwDids', async () => {
-    // act
     const res1 = await storage.aconnLinkPairsByAconnDids(A1, [A1Conn1, A1Conn3])
 
-    // assert
     expect(res1.length).toBe(2)
     expect(res1.find(link => link.agentConnDid === A1Conn1 && link.userPwDid === A1Conn1Pw)).toBeDefined()
     expect(res1.find(link => link.agentConnDid === A1Conn3 && link.userPwDid === A1Conn3Pw)).toBeDefined()

@@ -138,7 +138,7 @@ describe('onboarding', () => {
     expect(aliceAllMsgs2.msgs.length).toBe(1)
     expect(aliceAllMsgs2.msgs[0].statusCode).toBe('MS-103')
 
-    // // alice updates message status
+    // alice updates message status
     const aliceMsgsByConns = [
       { pairwiseDID: 'unused-attribute', uids: [aliceAllMsgs2.msgs[0].uid] }
     ]
