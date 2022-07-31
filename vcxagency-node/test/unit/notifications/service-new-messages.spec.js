@@ -24,16 +24,16 @@ const redis = require('redis')
 const sleep = require('sleep-promise')
 const { createServiceNewMessages } = require('../../../src/service/notifications/service-new-messages')
 const uuid = require('uuid')
+const { buildRedisAdaptor } = require('../../../src/service/notifications/event-adaptor-redis')
 
 let serviceNewMessages
 let agentDid = 'foobar-123'
-let callbackId = 123
+const callbackId = 123
 let redisClientSubscriber
 let redisClientRw
 
 beforeEach(async () => {
   agentDid = uuid.v4()
-  callbackId = uuid.v4()
   redisClientSubscriber = redis.createClient('redis://localhost:6379/0')
   redisClientRw = redis.createClient('redis://localhost:6379/0')
 
@@ -43,8 +43,10 @@ beforeEach(async () => {
   redisClientRw.on('error', function (err) {
     console.log(`Redis subscription client encountered error: ${err}`)
   })
+
+  const redisAdaptor = buildRedisAdaptor(redisClientSubscriber, redisClientRw)
+  serviceNewMessages = createServiceNewMessages(redisAdaptor)
   await sleep(100)
-  serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
 })
 
 afterEach(async () => {

@@ -25,6 +25,7 @@ const sleep = require('sleep-promise')
 const uuid = require('uuid')
 const { createServiceNewMessages } = require('../../../src/service/notifications/service-new-messages')
 const { longpollNotifications } = require('../../../src/service/notifications/longpoll')
+const { buildRedisAdaptor } = require('../../../src/service/notifications/event-adaptor-redis')
 
 let serviceNewMessages
 let agentDid
@@ -42,8 +43,10 @@ beforeEach(async () => {
   redisClientRw.on('error', function (err) {
     console.log(`Redis subscription client encountered error: ${err}`)
   })
+
+  const redisAdaptor = buildRedisAdaptor(redisClientSubscriber, redisClientRw)
+  serviceNewMessages = createServiceNewMessages(redisAdaptor)
   await sleep(100)
-  serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
 })
 
 afterEach(async () => {

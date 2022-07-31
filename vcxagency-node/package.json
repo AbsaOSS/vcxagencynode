@@ -27,6 +27,8 @@
     "test:unit:messaging:agent": "SILENT_WINSTON=true jest --runInBand ./test/unit/messaging/agent-msgs.spec.js",
     "test:unit:messaging:aconn": "SILENT_WINSTON=true jest --runInBand ./test/unit/messaging/aconn-msgs.spec.js",
     "test:unit:notifications": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications",
+    "test:unit:notifications:longpoll": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications/longpoll.spec.js",
+    "test:unit:notifications:adaptor": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications/event-adaptor-redis.spec.js",
     "test:unit:state": "SILENT_WINSTON=true jest --runInBand ./test/unit/state",
     "test:unit:storage": "SILENT_WINSTON=true jest --runInBand ./test/unit/storage/"
   },

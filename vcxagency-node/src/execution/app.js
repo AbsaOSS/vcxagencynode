@@ -29,6 +29,7 @@ const logger = require('../logging/logger-builder')(__filename)
 const { indySetDefaultLogger } = require('easy-indysdk')
 const { indyBuildMysqlStorageCredentials } = require('../../../easy-indysdk')
 const { indyBuildMysqlStorageConfig } = require('../../../easy-indysdk')
+const { buildRedisAdaptor } = require('../service/notifications/event-adaptor-redis')
 
 function getStorageInfoMysql (appConfig) {
   const walletStorageConfig = indyBuildMysqlStorageConfig(
@@ -79,7 +80,8 @@ async function buildApplication (appConfig) {
       throw Error('Redis URL was not provided.')
     }
     const { redisClientSubscriber, redisClientRw } = buildRedisClients(redisUrl)
-    serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
+    const redisAdapter = buildRedisAdaptor(redisClientSubscriber, redisClientRw)
+    serviceNewMessages = createServiceNewMessages(redisAdapter)
   } else {
     throw Error(`Unknown agency type ${agencyType}`)
   }
