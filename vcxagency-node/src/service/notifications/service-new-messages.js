@@ -18,14 +18,14 @@
 
 const logger = require('../../logging/logger-builder')(__filename)
 
-function createServiceNewMessages (redisAdaptor) {
+function createServiceNewMessages (redisAdapter) {
   const agentSubscriptions = {}
 
   function cleanUp () {
-    redisAdaptor.cleanupResources()
+    redisAdapter.cleanUp()
   }
 
-  redisAdaptor.registerModifiedKeyCallback(async function (agentDid) {
+  redisAdapter.registerModifiedKeyCallback(async function (agentDid) {
     try {
       if (agentSubscriptions[agentDid]) {
         const { onNewMessageCallback } = agentSubscriptions[agentDid]
@@ -44,20 +44,20 @@ function createServiceNewMessages (redisAdaptor) {
   async function _cleanupSubscription (agentDid) {
     logger.debug(`Cleaning up notification subscription for agent ${agentDid}`)
     agentSubscriptions[agentDid] = undefined
-    await redisAdaptor.unsubscribeKey(agentDid)
+    await redisAdapter.unsubscribeKey(agentDid)
   }
 
   async function hasNewMessage (agentDid) {
-    return (await redisAdaptor.getValue(agentDid)) === 'true'
+    return (await redisAdapter.getValue(agentDid)) === 'true'
   }
 
-  async function registerCallback (agentDid, callbackId, onNewMessageCallback) {
+  async function registerNewMessageCallback (agentDid, callbackId, onNewMessageCallback) {
     logger.info(`Registering agent notification callbacks ${agentDid}.`)
     agentSubscriptions[agentDid] = { onNewMessageCallback, callbackId }
-    await redisAdaptor.subscribeKey(agentDid)
+    await redisAdapter.subscribeKey(agentDid)
   }
 
-  async function cleanupCallback (agentDid, callbackId) {
+  async function cleanupNewMessageCallback (agentDid, callbackId) {
     if (agentSubscriptions[agentDid] && agentSubscriptions[agentDid].callbackId === callbackId) {
       await _cleanupSubscription(agentDid)
     } else {
@@ -67,7 +67,7 @@ function createServiceNewMessages (redisAdaptor) {
 
   async function ackNewMessage (agentDid) {
     logger.info(`Agent ${agentDid} acked new message flag`)
-    await redisAdaptor.deleteValue(agentDid)
+    await redisAdapter.deleteValue(agentDid)
     if (agentSubscriptions[agentDid]) {
       await _cleanupSubscription(agentDid)
     }
@@ -75,15 +75,15 @@ function createServiceNewMessages (redisAdaptor) {
 
   async function flagNewMessage (agentDid) {
     logger.info(`Agent ${agentDid} flagged with new message`)
-    await redisAdaptor.setValue(agentDid, 'true')
+    await redisAdapter.setValue(agentDid, 'true')
   }
 
   return {
     ackNewMessage,
     hasNewMessage,
-    registerCallback,
+    registerNewMessageCallback,
     flagNewMessage,
-    cleanupCallback,
+    cleanupNewMessageCallback,
     cleanUp
   }
 }

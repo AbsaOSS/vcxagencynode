@@ -37,7 +37,7 @@ module.exports.longpollNotifications = function longpollNotifications (
           const reactOnNewMessage = async function () {
             if (!wasResponseSent) {
               wasResponseSent = true
-              serviceNewMessages.cleanupCallback(agentDid, callbackId)
+              serviceNewMessages.cleanupNewMessageCallback(agentDid, callbackId)
               resolve(true)
             }
           }
@@ -45,11 +45,11 @@ module.exports.longpollNotifications = function longpollNotifications (
           const reactOnTimeout = async function () {
             if (!wasResponseSent) {
               wasResponseSent = true
-              serviceNewMessages.cleanupCallback(agentDid, callbackId)
+              serviceNewMessages.cleanupNewMessageCallback(agentDid, callbackId)
               resolve(false)
             }
           }
-          serviceNewMessages.registerCallback(agentDid, callbackId, reactOnNewMessage)
+          serviceNewMessages.registerNewMessageCallback(agentDid, callbackId, reactOnNewMessage)
             .then(() => {
               setTimeout(reactOnTimeout, timeoutMs)
             })

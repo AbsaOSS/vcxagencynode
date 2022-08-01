@@ -24,12 +24,11 @@ const { createServiceIndyWallets } = require('../service/state/service-indy-wall
 const { createServiceNewMessages } = require('../service/notifications/service-new-messages')
 const { createServiceNewMessagesUnavailable } = require('../service/notifications/service-new-messages-unavailable')
 const { waitUntilConnectsToMysql } = require('../service/storage/storage')
-const { buildRedisClients } = require('../service/storage/redis-client-builder')
 const logger = require('../logging/logger-builder')(__filename)
 const { indySetDefaultLogger } = require('easy-indysdk')
 const { indyBuildMysqlStorageCredentials } = require('../../../easy-indysdk')
 const { indyBuildMysqlStorageConfig } = require('../../../easy-indysdk')
-const { buildRedisAdaptor } = require('../service/notifications/event-adaptor-redis')
+const { buildRedisAdapter } = require('../service/notifications/event-adapter-redis')
 
 function getStorageInfoMysql (appConfig) {
   const walletStorageConfig = indyBuildMysqlStorageConfig(
@@ -79,8 +78,7 @@ async function buildApplication (appConfig) {
     if (!redisUrl) {
       throw Error('Redis URL was not provided.')
     }
-    const { redisClientSubscriber, redisClientRw } = buildRedisClients(redisUrl)
-    const redisAdapter = buildRedisAdaptor(redisClientSubscriber, redisClientRw)
+    const redisAdapter = buildRedisAdapter(redisUrl)
     serviceNewMessages = createServiceNewMessages(redisAdapter)
   } else {
     throw Error(`Unknown agency type ${agencyType}`)
