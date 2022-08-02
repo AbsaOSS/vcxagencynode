@@ -19,37 +19,38 @@
 const uuid = require('uuid')
 const logger = require('../../logging/logger-builder')(__filename)
 
-module.exports.longpollNotifications = function longpollNotifications (
-  serviceNewMessagesV1,
+module.exports.longpollNotificationsV2 = function longpollNotificationsV2 (
+  serviceNewMessagesV2,
   agentDid,
   timeoutMs
 ) {
-  logger.info(`V1 message notifications for agent ${agentDid} using timeout of ${timeoutMs}ms.`)
+  logger.info(`V2 message notifications for agent ${agentDid} using timeout of ${timeoutMs}ms.`)
   return new Promise((resolve, reject) => {
-    serviceNewMessagesV1.hasUnackedMessage(agentDid)
-      .then((hasUnackedMessage) => {
-        if (hasUnackedMessage) {
-          resolve(true)
+    serviceNewMessagesV2.getUnackedMessageTimestamp(agentDid)
+      .then((lastMsgUtime) => {
+        if (lastMsgUtime) {
+          resolve(lastMsgUtime)
         } else {
           let wasResponseSent
           const callbackId = uuid.v4()
 
-          const reactOnNewMessage = async function () {
+          const reactOnNewMessage = async function (newMsgUtime) {
             if (!wasResponseSent) {
               wasResponseSent = true
-              serviceNewMessagesV1.cleanupNewMessageCallback(agentDid, callbackId)
-              resolve(true)
+              serviceNewMessagesV2.cleanupCallback(agentDid, callbackId)
+              resolve(newMsgUtime)
             }
           }
 
           const reactOnTimeout = async function () {
             if (!wasResponseSent) {
               wasResponseSent = true
-              serviceNewMessagesV1.cleanupNewMessageCallback(agentDid, callbackId)
-              resolve(false)
+              serviceNewMessagesV2.cleanupCallback(agentDid, callbackId)
+              resolve(null)
             }
           }
-          serviceNewMessagesV1.registerNewMessageCallback(agentDid, callbackId, reactOnNewMessage)
+
+          serviceNewMessagesV2.registerCallback(agentDid, callbackId, reactOnNewMessage)
             .then(() => {
               setTimeout(reactOnTimeout, timeoutMs)
             })

@@ -48,7 +48,7 @@ function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger
 }
 
 async function setupExpressApp (expressApp, application, appConfig) {
-  const { entityForwardAgent, serviceNewMessages } = application
+  const { entityForwardAgent, serviceNewMessagesV1 } = application
   logger.info('Setting up express endpoints and middleware.')
 
   if (appConfig.DANGEROUS_HTTP_DETAILS === true) {
@@ -87,7 +87,7 @@ async function setupExpressApp (expressApp, application, appConfig) {
   expressAppJsonApi.use(httpContext.middleware)
   expressAppJsonApi.use(setReqId)
   expressAppJsonApi.use(bodyParser.json())
-  apiAgency(expressAppJsonApi, entityForwardAgent, serviceNewMessages)
+  apiAgency(expressAppJsonApi, entityForwardAgent, serviceNewMessagesV1)
   expressApp.use('/', expressAppJsonApi)
 
   finalExpressHandlers(expressApp)

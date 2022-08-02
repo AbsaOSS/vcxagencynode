@@ -81,7 +81,7 @@ async function createAgentConnectionData (agentDid, ownerDid, ownerVerkey, userP
  * @param {object} serviceWallets - Service for indy wallet management interface
  * @param {object} serviceStorage - Service for accessing entity storage
  */
-async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStorage, serviceNewMessages) {
+async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStorage, serviceNewMessagesV1) {
   const { walletName, walletKey, agentDid } = entityRecord
 
   const { agentConnectionDid, agentConnectionVerkey } = loadInfo()
@@ -181,7 +181,7 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
     logger.info(`${whoami} Received new Aries message msgUid=${msgUid}.`)
     await serviceStorage.storeMessage(agentDid, agentConnectionDid, msgUid, statusCode, msgObject.msg)
     logger.info(`${whoami} Stored message msgUid=${msgUid}.`)
-    serviceNewMessages.flagNewMessage(agentDid)
+    serviceNewMessagesV1.flagNewMessage(agentDid)
       .catch(err => {
         logger.error(`${whoami} Failed to set new-message flag, agentDid=${agentDid}, msgUid=${msgUid} Error: ${err.stack}`)
       })

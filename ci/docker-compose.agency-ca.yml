@@ -28,6 +28,7 @@ services:
 
       - AGENCY_TYPE=client
       - REDIS_URL=redis://redis.absadocker:6379/0
+      - REDIS_URL_NOTIFICATIONS=redis://redis.absadocker:6379/1
 
       - MYSQL_HOST=mysql.absadocker
       - MYSQL_PORT=3306

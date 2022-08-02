@@ -21,7 +21,7 @@ const { ErrorFeatureDisabled } = require('../../errors/error-feature-disabled')
 module.exports.createServiceNewMessagesUnavailable = function createServiceNewMessagesUnavailable () {
   function cleanUp () { }
 
-  async function hasNewMessage (_agentDid) {
+  async function hasUnackedMessage (_agentDid) {
     throw ErrorFeatureDisabled('Feature is not enabled.')
   }
 
@@ -38,11 +38,11 @@ module.exports.createServiceNewMessagesUnavailable = function createServiceNewMe
   async function flagNewMessage (agentDid) { }
 
   return {
-    ackNewMessage,
-    hasNewMessage,
     registerNewMessageCallback,
-    flagNewMessage,
     cleanupNewMessageCallback,
+    flagNewMessage,
+    ackNewMessage,
+    hasUnackedMessage,
     cleanUp
   }
 }

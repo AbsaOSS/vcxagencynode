@@ -47,7 +47,7 @@ function createServiceNewMessages (redisAdapter) {
     await redisAdapter.unsubscribeKey(agentDid)
   }
 
-  async function hasNewMessage (agentDid) {
+  async function hasUnackedMessage (agentDid) {
     return (await redisAdapter.getValue(agentDid)) === 'true'
   }
 
@@ -79,11 +79,11 @@ function createServiceNewMessages (redisAdapter) {
   }
 
   return {
-    ackNewMessage,
-    hasNewMessage,
     registerNewMessageCallback,
-    flagNewMessage,
     cleanupNewMessageCallback,
+    flagNewMessage,
+    ackNewMessage,
+    hasUnackedMessage,
     cleanUp
   }
 }

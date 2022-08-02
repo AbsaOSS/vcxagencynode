@@ -19,8 +19,9 @@
 const { asyncHandler } = require('./middleware')
 const logger = require('../logging/logger-builder')(__filename)
 const { longpollNotifications } = require('../service/notifications/longpoll')
+const { longpollNotificationsV2 } = require('../service/notifications/longpoll-v2')
 
-module.exports = function (app, forwardAgent, serviceNewMessages) {
+module.exports = function (app, forwardAgent, serviceNewMessagesV1, serviceNewMessagesV2) {
   app.get('/agency',
     asyncHandler(async function (req, res) {
       const { did, verkey } = forwardAgent.getForwadAgentInfo()
@@ -33,7 +34,7 @@ module.exports = function (app, forwardAgent, serviceNewMessages) {
       const { agentDid } = req.params
       const timeoutMs = req.body.timeout || 30000
       const start = Date.now()
-      const hasNotifications = await longpollNotifications(serviceNewMessages, agentDid, timeoutMs)
+      const hasNotifications = await longpollNotifications(serviceNewMessagesV1, agentDid, timeoutMs)
       const duration = Date.now() - start
       logger.info(`Returning long-poll after ${duration}ms for agent ${agentDid}. Has new message = ${hasNotifications}.`)
       res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
@@ -44,7 +45,39 @@ module.exports = function (app, forwardAgent, serviceNewMessages) {
   app.post('/experimental/agent/:agentDid/notifications/ack',
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
-      await serviceNewMessages.ackNewMessage(agentDid)
+      await serviceNewMessagesV1.ackNewMessage(agentDid)
+      res.status(200).send()
+    })
+  )
+
+  app.get('/agent/:agentDid/notifications',
+    asyncHandler(async function (req, res) {
+      const { agentDid } = req.params
+      const timeoutMs = req.body.timeout || 30000
+      const start = Date.now()
+      const unackedTimestamp = await longpollNotificationsV2(serviceNewMessagesV1, agentDid, timeoutMs)
+      const duration = Date.now() - start
+      if (unackedTimestamp) {
+        logger.info(`Returning long-poll after ${duration}ms for agent ${agentDid}. Found unacked message with timestamp: ${unackedTimestamp}`)
+      } else {
+        logger.info(`Returning long-poll after ${duration}ms for agent ${agentDid}. No unacked message found.`)
+      }
+      res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate')
+      res.status(200).send({ unackedTimestamp })
+    })
+  )
+
+  app.post('/agent/:agentDid/notifications/ack',
+    asyncHandler(async function (req, res) {
+      const { agentDid } = req.params
+      const { ackTimestamp } = req.body
+      if (!ackTimestamp) {
+        return res.status(404).send("Required body field 'lastMsgUtime' was missing.")
+      }
+      if (typeof ackTimestamp !== 'number') {
+        return res.status(404).send("Required body field 'lastMsgUtime' is expected to be of type number.")
+      }
+      await serviceNewMessagesV2.ackNewMessage(agentDid, ackTimestamp)
       res.status(200).send()
     })
   )
