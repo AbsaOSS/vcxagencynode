@@ -26,7 +26,7 @@ const ENTITY_RECORD_RESOLUTION_STRATEGY = {
   BY_DID: 2
 }
 
-function createResolver (serviceWallets, serviceStorage, serviceNewMessagesV1, forwardAgentEntity) {
+function createResolver (serviceWallets, serviceStorage, serviceNewMessagesV1, serviceNewMessagesV2, forwardAgentEntity) {
   const { did: fwaDid, verkey: fwaVerkey } = forwardAgentEntity.getForwadAgentInfo()
 
   let router
@@ -61,7 +61,7 @@ function createResolver (serviceWallets, serviceStorage, serviceNewMessagesV1, f
         return buildAgentAO(entityRecord, serviceWallets, serviceStorage, router)
       }
       case entityType.agentConnection: {
-        return buildAgentConnectionAO(entityRecord, serviceWallets, serviceStorage, serviceNewMessagesV1)
+        return buildAgentConnectionAO(entityRecord, serviceWallets, serviceStorage, serviceNewMessagesV1, serviceNewMessagesV2)
       }
       default:
         throw Error(`Unknown entity type. Full record: ${JSON.stringify(entityRecord)}`)

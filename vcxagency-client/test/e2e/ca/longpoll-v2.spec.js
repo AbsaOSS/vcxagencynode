@@ -114,7 +114,7 @@ describe('longpoll', () => {
     console.log(`Alice queries agency for all messages, she should have none. Response = ${JSON.stringify(aliceAllMsgs1)}`)
     {
       let hasLongpollTimedOut = false
-      axios.get(`${agencyUrl}/experimental/agent/${aliceAgentDid}/notifications`, { timeout: 2000 })
+      axios.get(`${agencyUrl}/agent/${aliceAgentDid}/notifications`, { timeout: 2000 })
         .then(_result => {
           console.error('Did not expect longpoll to return so early with success!')
           expect(true).toBeFalsy()
@@ -134,13 +134,13 @@ describe('longpoll', () => {
 
     // alice asks for new messages and get right away response with hasNotifications=true
     {
-      const { data: { hasNotifications } } = await axios.get(`${agencyUrl}/experimental/agent/${aliceAgentDid}/notifications`, { timeout: 500 })
-      expect(hasNotifications).toBeTruthy()
-      await axios.post(`${agencyUrl}/experimental/agent/${aliceAgentDid}/notifications/ack`)
+      const { data: { unackedTimestamp } } = await axios.get(`${agencyUrl}/agent/${aliceAgentDid}/notifications`, { timeout: 500 })
+      expect(unackedTimestamp).toBeTruthy()
+      await axios.post(`${agencyUrl}/agent/${aliceAgentDid}/notifications/ack`, { ackTimestamp: unackedTimestamp })
     }
 
-    // since new messages were acked, next time the longpoll should keep hanging, and given short client timeout of 2000ms, we should get timeout error
-    axios.get(`${agencyUrl}/experimental/agent/${aliceAgentDid}/notifications`, { timeout: 2000 })
+    // since new messages were acked, next time the longpoll should keep hanging, and given short client timeout 1000ms, we should get timeout error
+    axios.get(`${agencyUrl}/agent/${aliceAgentDid}/notifications`, { timeout: 100 })
       .then(_result => {
         console.error('Did not expect longpoll to return so early with success!')
         expect(true).toBeFalsy()
@@ -148,7 +148,10 @@ describe('longpoll', () => {
       .catch(_err => {
         console.info('Axios returned error as expected.')
       })
+    await sleep(200)
 
-    await sleep(3000)
+    // if the longpoll timeouts on server side, the response body should be empty
+    const res = await axios.get(`${agencyUrl}/agent/${aliceAgentDid}/notifications?timeout=100`, { timeout: 2000 })
+    expect(res.data.hasNotifications).toBeUndefined()
   })
 })

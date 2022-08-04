@@ -53,9 +53,9 @@ module.exports = function (app, forwardAgent, serviceNewMessagesV1, serviceNewMe
   app.get('/agent/:agentDid/notifications',
     asyncHandler(async function (req, res) {
       const { agentDid } = req.params
-      const timeoutMs = req.body.timeout || 30000
+      const timeoutMs = req.query.timeout ? parseInt(req.query.timeout) : 30000
       const start = Date.now()
-      const unackedTimestamp = await longpollNotificationsV2(serviceNewMessagesV1, agentDid, timeoutMs)
+      const unackedTimestamp = await longpollNotificationsV2(serviceNewMessagesV2, agentDid, timeoutMs)
       const duration = Date.now() - start
       if (unackedTimestamp) {
         logger.info(`Returning long-poll after ${duration}ms for agent ${agentDid}. Found unacked message with timestamp: ${unackedTimestamp}`)
