@@ -25,11 +25,11 @@ module.exports.createServiceNewMessagesUnavailable = function createServiceNewMe
     throw ErrorFeatureDisabled('Feature is not enabled.')
   }
 
-  async function registerCallback (_agentDid, _callbackId, _onNewMessageCallback) {
+  async function registerNewMessageCallback (_agentDid, _callbackId, _onNewMessageCallback) {
     throw ErrorFeatureDisabled('Feature is not enabled.')
   }
 
-  function cleanupCallback (agentDid, callbackId) { }
+  function cleanupNewMessageCallback (agentDid, callbackId) { }
 
   async function ackNewMessage (_agentDid) {
     throw ErrorFeatureDisabled('Feature is not enabled.')
@@ -40,9 +40,9 @@ module.exports.createServiceNewMessagesUnavailable = function createServiceNewMe
   return {
     ackNewMessage,
     hasNewMessage,
-    registerCallback,
+    registerNewMessageCallback,
     flagNewMessage,
-    cleanupCallback,
+    cleanupNewMessageCallback,
     cleanUp
   }
 }

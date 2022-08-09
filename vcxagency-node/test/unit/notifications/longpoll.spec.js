@@ -20,35 +20,24 @@ global.LOG_LEVEL = process.env.LOG_LEVEL || 'info'
 global.LOG_JSON_TO_CONSOLE = process.env.LOG_JSON_TO_CONSOLE === 'true'
 global.SILENT_WINSTON = process.env.SILENT_WINSTON === 'false'
 
-const redis = require('redis')
 const sleep = require('sleep-promise')
 const uuid = require('uuid')
 const { createServiceNewMessages } = require('../../../src/service/notifications/service-new-messages')
 const { longpollNotifications } = require('../../../src/service/notifications/longpoll')
+const { buildRedisAdapter } = require('../../../src/service/notifications/event-adapter-redis')
 
 let serviceNewMessages
 let agentDid
-let redisClientSubscriber
-let redisClientRw
 
 beforeEach(async () => {
   agentDid = uuid.v4()
-  redisClientSubscriber = redis.createClient('redis://localhost:6379/0')
-  redisClientRw = redis.createClient('redis://localhost:6379/0')
-
-  redisClientRw.on('error', function (err) {
-    console.log(`Redis rw client encountered error: ${err}`)
-  })
-  redisClientRw.on('error', function (err) {
-    console.log(`Redis subscription client encountered error: ${err}`)
-  })
+  const redisAdapter = buildRedisAdapter('redis://localhost:6379/0')
+  serviceNewMessages = createServiceNewMessages(redisAdapter)
   await sleep(100)
-  serviceNewMessages = createServiceNewMessages(redisClientSubscriber, redisClientRw)
 })
 
 afterEach(async () => {
-  redisClientSubscriber.quit()
-  redisClientRw.quit()
+  await serviceNewMessages.cleanUp()
 })
 
 describe('longpoll', () => {

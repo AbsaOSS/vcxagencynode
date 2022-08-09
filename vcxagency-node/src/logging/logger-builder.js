@@ -58,7 +58,7 @@ const mainLoggerName = 'main'
 
 const formatter = global.LOG_JSON_TO_CONSOLE ? jsonFormatter : prettyFormatter
 const logLevel = global.LOG_LEVEL
-createConsoleLogger(mainLoggerName, formatter, logLevel, process.env.SILENT_WINSTON === 'true')
+createConsoleLogger(mainLoggerName, formatter, logLevel, global.SILENT_WINSTON === 'true')
 
 module.exports = function (fullPath) {
   return addChildLogger(mainLoggerName, fullPath)

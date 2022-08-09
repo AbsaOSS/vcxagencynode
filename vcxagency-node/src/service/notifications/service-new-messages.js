@@ -17,97 +17,77 @@
 'use strict'
 
 const logger = require('../../logging/logger-builder')(__filename)
-const util = require('util')
 
-function isKeyspaceSetNotification (channel, message) {
-  return (channel.match(/^__keyspace@0__:.*/) && message === 'set')
-}
-
-function _extractKey (keyspaceNotificationChannel) {
-  return keyspaceNotificationChannel.slice(keyspaceNotificationChannel.indexOf(':') + 1)
-}
-
-module.exports.createServiceNewMessages = function createServiceNewMessages (redisClientSubscriber, redisClientRw) {
+function createServiceNewMessages (redisAdapter) {
   const agentSubscriptions = {}
 
-  const redisSet = util.promisify(redisClientRw.set).bind(redisClientRw)
-  const redisGet = util.promisify(redisClientRw.get).bind(redisClientRw)
-  const redisDel = util.promisify(redisClientRw.del).bind(redisClientRw)
-  const redisSubscribe = util.promisify(redisClientSubscriber.subscribe).bind(redisClientSubscriber)
-
   function cleanUp () {
-    redisClientSubscriber.quit()
-    redisClientRw.quit()
+    redisAdapter.cleanUp()
   }
 
-  redisClientSubscriber.on('message', async function (channel, message) {
+  redisAdapter.registerModifiedKeyCallback(async function (agentDid) {
     try {
-      if (isKeyspaceSetNotification(channel, message)) {
-        const modifiedKey = _extractKey(channel)
-        logger.info(`Received keyspace-set notification on key ${message}`)
-        await _processModifiedKeyNotification(modifiedKey)
+      if (agentSubscriptions[agentDid]) {
+        const { onNewMessageCallback } = agentSubscriptions[agentDid]
+        if (!onNewMessageCallback) {
+          throw Error(`Callback object for agent ${agentDid} was missing onNewMessageCallback property`)
+        }
+        onNewMessageCallback()
       } else {
-        logger.warn(`Received notification, but it's not keyspace-set. Will be ignored. Channel=${channel} Message=${message}`)
+        logger.warn(`Received keyspace notification for key ${agentDid} but no associated callback found`)
       }
     } catch (err) {
       logger.error(`Error processing redis notification. ${err.message}`)
     }
   })
 
-  async function _processModifiedKeyNotification (key) {
-    if (agentSubscriptions[key]) {
-      const { onNewMessageCallback } = agentSubscriptions[key]
-      if (!onNewMessageCallback) {
-        throw Error('Agent notification onNewMessageCallback entry was missing onNewMessageCallback value.')
-      }
-      onNewMessageCallback()
-    } else {
-      logger.warn(`Received keyspace notification for key ${key} but no agent onNewMessageCallback exists.`)
-    }
-  }
-
-  function _cleanupSubscription (agentDid) {
-    logger.debug(`Cleaning up notification subscription for agent ${agentDid}.`)
+  async function _cleanupSubscription (agentDid) {
+    logger.debug(`Cleaning up notification subscription for agent ${agentDid}`)
     agentSubscriptions[agentDid] = undefined
-    redisClientSubscriber.unsubscribe(`__keyspace@0__:${agentDid}`)
+    await redisAdapter.unsubscribeKey(agentDid)
   }
 
   async function hasNewMessage (agentDid) {
-    return (await redisGet(agentDid)) === 'true'
+    return (await redisAdapter.getValue(agentDid)) === 'true'
   }
 
-  async function registerCallback (agentDid, callbackId, onNewMessageCallback) {
+  async function registerNewMessageCallback (agentDid, callbackId, onNewMessageCallback) {
     logger.info(`Registering agent notification callbacks ${agentDid}.`)
     agentSubscriptions[agentDid] = { onNewMessageCallback, callbackId }
-    await redisSubscribe(`__keyspace@0__:${agentDid}`)
+    await redisAdapter.subscribeKey(agentDid)
   }
 
-  function cleanupCallback (agentDid, callbackId) {
+  async function cleanupNewMessageCallback (agentDid, callbackId) {
     if (agentSubscriptions[agentDid] && agentSubscriptions[agentDid].callbackId === callbackId) {
-      _cleanupSubscription(agentDid)
+      await _cleanupSubscription(agentDid)
     } else {
-      logger.debug(`Tried to cleanup callback new-message callback ${callbackId} for agent ${agentDid} but it doesn't exist anymore.`)
+      logger.debug(`Tried to cleanup callback new-message callback ${callbackId} for agent ${agentDid} but it doesn't exist anymore`)
     }
   }
 
   async function ackNewMessage (agentDid) {
-    await redisDel(agentDid)
+    logger.info(`Agent ${agentDid} acked new message flag`)
+    await redisAdapter.deleteValue(agentDid)
     if (agentSubscriptions[agentDid]) {
-      _cleanupSubscription(agentDid)
+      await _cleanupSubscription(agentDid)
     }
   }
 
   async function flagNewMessage (agentDid) {
-    logger.info(`Agent ${agentDid} being flagged for new message.`)
-    await redisSet(agentDid, 'true')
+    logger.info(`Agent ${agentDid} flagged with new message`)
+    await redisAdapter.setValue(agentDid, 'true')
   }
 
   return {
     ackNewMessage,
     hasNewMessage,
-    registerCallback,
+    registerNewMessageCallback,
     flagNewMessage,
-    cleanupCallback,
+    cleanupNewMessageCallback,
     cleanUp
   }
+}
+
+module.exports = {
+  createServiceNewMessages
 }

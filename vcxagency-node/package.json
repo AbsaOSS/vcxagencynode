@@ -24,9 +24,12 @@
     "test:unit:configuration": "SILENT_WINSTON=true jest --runInBand ./test/unit/configuration",
     "test:unit:entities": "SILENT_WINSTON=true jest --runInBand ./test/unit/entities",
     "test:unit:messaging": "SILENT_WINSTON=true jest --runInBand ./test/unit/messaging",
+    "test:unit:messaging:aries": "SILENT_WINSTON=true jest --runInBand ./test/unit/messaging/aries-msgs.spec.js",
     "test:unit:messaging:agent": "SILENT_WINSTON=true jest --runInBand ./test/unit/messaging/agent-msgs.spec.js",
     "test:unit:messaging:aconn": "SILENT_WINSTON=true jest --runInBand ./test/unit/messaging/aconn-msgs.spec.js",
     "test:unit:notifications": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications",
+    "test:unit:notifications:longpoll": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications/longpoll.spec.js",
+    "test:unit:notifications:adapter": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications/event-adapter-redis.spec.js",
     "test:unit:state": "SILENT_WINSTON=true jest --runInBand ./test/unit/state",
     "test:unit:storage": "SILENT_WINSTON=true jest --runInBand ./test/unit/storage/"
   },
