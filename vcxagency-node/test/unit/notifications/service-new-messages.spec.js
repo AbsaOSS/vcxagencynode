@@ -25,27 +25,27 @@ const { createServiceNewMessages } = require('../../../src/service/notifications
 const uuid = require('uuid')
 const { buildRedisAdapter } = require('../../../src/service/notifications/event-adapter-redis')
 
-let serviceNewMessages
+let serviceNewMessagesV1
 let agentDid = 'foobar-123'
 const callbackId = 123
 
 beforeEach(async () => {
   agentDid = uuid.v4()
   const redisAdapter = buildRedisAdapter('redis://localhost:6379/0')
-  serviceNewMessages = createServiceNewMessages(redisAdapter)
+  serviceNewMessagesV1 = createServiceNewMessages(redisAdapter)
   await sleep(100)
 })
 
 afterEach(async () => {
-  await serviceNewMessages.cleanUp()
+  await serviceNewMessagesV1.cleanUp()
 })
 
 describe('notifications', () => {
   it('should receive callback when new-message flag is set in redis', async () => {
     let callbackCount = 0
     function onNewMessage () { callbackCount += 1 }
-    await serviceNewMessages.registerNewMessageCallback(agentDid, callbackId, onNewMessage)
-    await serviceNewMessages.flagNewMessage(agentDid)
+    await serviceNewMessagesV1.registerNewMessageCallback(agentDid, callbackId, onNewMessage)
+    await serviceNewMessagesV1.flagNewMessage(agentDid)
     await sleep(50)
     expect(callbackCount).toBe(1)
   })
@@ -53,10 +53,10 @@ describe('notifications', () => {
   it('should callback multiple times if callback is not cleaned or acked', async () => {
     let callbackCount = 0
     function onNewMessage () { callbackCount += 1 }
-    await serviceNewMessages.registerNewMessageCallback(agentDid, callbackId, onNewMessage)
-    await serviceNewMessages.flagNewMessage(agentDid)
-    await serviceNewMessages.flagNewMessage(agentDid)
-    await serviceNewMessages.flagNewMessage(agentDid)
+    await serviceNewMessagesV1.registerNewMessageCallback(agentDid, callbackId, onNewMessage)
+    await serviceNewMessagesV1.flagNewMessage(agentDid)
+    await serviceNewMessagesV1.flagNewMessage(agentDid)
+    await serviceNewMessagesV1.flagNewMessage(agentDid)
     await sleep(50)
     expect(callbackCount).toBe(3)
   })
@@ -64,9 +64,9 @@ describe('notifications', () => {
   it('should not receive callback if it was cleaned up', async () => {
     let callbackCount = 0
     function onNewMessage () { callbackCount += 1 }
-    await serviceNewMessages.registerNewMessageCallback(agentDid, callbackId, onNewMessage)
-    await serviceNewMessages.cleanupNewMessageCallback(agentDid, callbackId)
-    await serviceNewMessages.flagNewMessage(agentDid)
+    await serviceNewMessagesV1.registerNewMessageCallback(agentDid, callbackId, onNewMessage)
+    await serviceNewMessagesV1.cleanupNewMessageCallback(agentDid, callbackId)
+    await serviceNewMessagesV1.flagNewMessage(agentDid)
     await sleep(50)
     expect(callbackCount).toBe(0)
   })
@@ -74,46 +74,33 @@ describe('notifications', () => {
   it('should not callback on new message after message was picked up and no new callback is registered', async () => {
     let callbackCount = 0
     function onNewMessage () { callbackCount += 1 }
-    await serviceNewMessages.registerNewMessageCallback(agentDid, callbackId, onNewMessage)
-    await serviceNewMessages.flagNewMessage(agentDid)
+    await serviceNewMessagesV1.registerNewMessageCallback(agentDid, callbackId, onNewMessage)
+    await serviceNewMessagesV1.flagNewMessage(agentDid)
     await sleep(10)
-    await serviceNewMessages.ackNewMessage(agentDid)
+    await serviceNewMessagesV1.ackNewMessage(agentDid)
     await sleep(10)
-    await serviceNewMessages.flagNewMessage(agentDid)
-    await sleep(10)
-    expect(callbackCount).toBe(1)
-  })
-
-  it('should not callback on new message after message was picked up and no new callback is registered', async () => {
-    let callbackCount = 0
-    function onNewMessage () { callbackCount += 1 }
-    await serviceNewMessages.registerNewMessageCallback(agentDid, callbackId, onNewMessage)
-    await serviceNewMessages.flagNewMessage(agentDid)
-    await sleep(10)
-    await serviceNewMessages.ackNewMessage(agentDid)
-    await sleep(10)
-    await serviceNewMessages.flagNewMessage(agentDid)
+    await serviceNewMessagesV1.flagNewMessage(agentDid)
     await sleep(10)
     expect(callbackCount).toBe(1)
   })
 
-  it('should not have new messages if new-message-flag was not enabled', async () => {
-    const hasMessages = await serviceNewMessages.hasNewMessage(agentDid)
+  it('should not have new messages if new-message-flag was not set', async () => {
+    const hasMessages = await serviceNewMessagesV1.hasUnackedMessage(agentDid)
     expect(hasMessages).toBeFalsy()
   })
 
   it('should have new messages if new-message-flag was enabled', async () => {
-    await serviceNewMessages.flagNewMessage(agentDid)
-    const hasMessages = await serviceNewMessages.hasNewMessage(agentDid)
+    await serviceNewMessagesV1.flagNewMessage(agentDid)
+    const hasMessages = await serviceNewMessagesV1.hasUnackedMessage(agentDid)
     expect(hasMessages).toBeTruthy()
   })
 
   it('should not have new messages after new message was acked', async () => {
-    await serviceNewMessages.flagNewMessage(agentDid)
+    await serviceNewMessagesV1.flagNewMessage(agentDid)
     await sleep(10)
-    await serviceNewMessages.ackNewMessage(agentDid)
+    await serviceNewMessagesV1.ackNewMessage(agentDid)
     await sleep(10)
-    const hasMessages = await serviceNewMessages.hasNewMessage(agentDid)
+    const hasMessages = await serviceNewMessagesV1.hasUnackedMessage(agentDid)
     expect(hasMessages).toBeFalsy()
   })
 })

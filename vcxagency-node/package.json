@@ -29,7 +29,10 @@
     "test:unit:messaging:aconn": "SILENT_WINSTON=true jest --runInBand ./test/unit/messaging/aconn-msgs.spec.js",
     "test:unit:notifications": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications",
     "test:unit:notifications:longpoll": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications/longpoll.spec.js",
+    "test:unit:notifications:longpoll:v2": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications/longpoll-v2.spec.js",
     "test:unit:notifications:adapter": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications/event-adapter-redis.spec.js",
+    "test:unit:notifications:service": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications/service-new-messages.spec.js",
+    "test:unit:notifications:service:v2": "SILENT_WINSTON=true jest --runInBand ./test/unit/notifications/service-new-messages-v2.spec.js",
     "test:unit:state": "SILENT_WINSTON=true jest --runInBand ./test/unit/state",
     "test:unit:storage": "SILENT_WINSTON=true jest --runInBand ./test/unit/storage/"
   },

@@ -29,6 +29,7 @@ const { indySetDefaultLogger } = require('easy-indysdk')
 const { indyBuildMysqlStorageCredentials } = require('../../../easy-indysdk')
 const { indyBuildMysqlStorageConfig } = require('../../../easy-indysdk')
 const { buildRedisAdapter } = require('../service/notifications/event-adapter-redis')
+const { createServiceNewMessagesV2 } = require('../service/notifications/service-new-messages-v2')
 
 function getStorageInfoMysql (appConfig) {
   const walletStorageConfig = indyBuildMysqlStorageConfig(
@@ -69,17 +70,22 @@ async function buildApplication (appConfig) {
   const { walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoMysql(appConfig)
 
   const redisUrl = appConfig.REDIS_URL
+  const redisUrlNotifications = appConfig.REDIS_URL_NOTIFICATIONS
   const agencyType = appConfig.AGENCY_TYPE
 
-  let serviceNewMessages
+  let serviceNewMessagesV1
+  let serviceNewMessagesV2
   if (agencyType === 'enterprise') {
-    serviceNewMessages = createServiceNewMessagesUnavailable()
+    serviceNewMessagesV1 = createServiceNewMessagesUnavailable()
+    serviceNewMessagesV2 = createServiceNewMessagesUnavailable()
   } else if (agencyType === 'client') {
     if (!redisUrl) {
       throw Error('Redis URL was not provided.')
     }
     const redisAdapter = buildRedisAdapter(redisUrl)
-    serviceNewMessages = createServiceNewMessages(redisAdapter)
+    const redisAdapterV2 = buildRedisAdapter(redisUrlNotifications)
+    serviceNewMessagesV1 = createServiceNewMessages(redisAdapter)
+    serviceNewMessagesV2 = createServiceNewMessagesV2(redisAdapterV2)
   } else {
     throw Error(`Unknown agency type ${agencyType}`)
   }
@@ -89,18 +95,19 @@ async function buildApplication (appConfig) {
   await waitUntilConnectsToMysql(user, password, host, port, database, 5, 2000)
   const serviceStorage = await createDataStorage(appStorageConfig)
   const entityForwardAgent = await buildForwardAgent(serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
-  const resolver = createResolver(serviceIndyWallets, serviceStorage, serviceNewMessages, entityForwardAgent)
+  const resolver = createResolver(serviceIndyWallets, serviceStorage, serviceNewMessagesV1, serviceNewMessagesV2, entityForwardAgent)
   const router = createRouter(resolver)
   resolver.setRouter(router)
   entityForwardAgent.setRouter(router)
   entityForwardAgent.setResolver(resolver)
-  const application = { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, serviceNewMessages }
+  const application = { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, serviceNewMessagesV1, serviceNewMessagesV2 }
   return application
 }
 
 async function cleanUpApplication (application) {
   logger.info('Cleaning up application resources.')
-  application.serviceNewMessages.cleanUp()
+  application.serviceNewMessagesV1.cleanUp()
+  application.serviceNewMessagesV2.cleanUp()
   application.serviceStorage.cleanUp()
 }
 

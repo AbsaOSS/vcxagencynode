@@ -22,87 +22,89 @@ global.SILENT_WINSTON = process.env.SILENT_WINSTON === 'false'
 
 const sleep = require('sleep-promise')
 const uuid = require('uuid')
-const { createServiceNewMessages } = require('../../../src/service/notifications/service-new-messages')
-const { longpollNotifications } = require('../../../src/service/notifications/longpoll')
 const { buildRedisAdapter } = require('../../../src/service/notifications/event-adapter-redis')
+const { createServiceNewMessagesV2 } = require('../../../src/service/notifications/service-new-messages-v2')
+const { longpollNotificationsV2 } = require('../../../src/service/notifications/longpoll-v2')
 
-let serviceNewMessagesV1
+let serviceNewMessagesV2
 let agentDid
 
 beforeEach(async () => {
   agentDid = uuid.v4()
-  const redisAdapter = buildRedisAdapter('redis://localhost:6379/0')
-  serviceNewMessagesV1 = createServiceNewMessages(redisAdapter)
+  const redisAdapter = buildRedisAdapter('redis://localhost:6379/1')
+  serviceNewMessagesV2 = createServiceNewMessagesV2(redisAdapter)
   await sleep(100)
 })
 
 afterEach(async () => {
-  await serviceNewMessagesV1.cleanUp()
+  await serviceNewMessagesV2.cleanUp()
 })
+
+function _now () {
+  return Math.floor(+new Date())
+}
 
 describe('longpoll', () => {
   it('should call new-message-callback if new message is flagged for agent', async () => {
-    let countNewMessage = 0
-    let countTimeout = 0
+    const responses = []
     const timeoutMs = 1000
 
-    longpollNotifications(serviceNewMessagesV1, agentDid, timeoutMs)
-      .then((hasMessage) => {
-        if (hasMessage) { countNewMessage += 1 } else { countTimeout += 1 }
+    longpollNotificationsV2(serviceNewMessagesV2, agentDid, timeoutMs)
+      .then((lastMsgUtime) => {
+        responses.push(lastMsgUtime)
       })
 
     await sleep(10) // no callback should be call at this point
-    expect(countNewMessage).toBe(0)
-    expect(countTimeout).toBe(0)
+    expect(responses.length).toBe(0)
 
-    await serviceNewMessagesV1.flagNewMessage(agentDid)
+    const newMsgTimestamp = _now()
+    await serviceNewMessagesV2.flagNewMessage(agentDid, newMsgTimestamp)
 
     await sleep(10) // new-message-callback should be called soon after new message flag is enabled
-    expect(countNewMessage).toBe(1)
-    expect(countTimeout).toBe(0)
+    expect(responses.length).toBe(1)
+    expect(responses[0]).toBeGreaterThanOrEqual(newMsgTimestamp)
+    expect(responses[0]).toBeLessThan(_now())
 
     await sleep(1500) // after timeout duration no callback should be called again
-    expect(countNewMessage).toBe(1)
-    expect(countTimeout).toBe(0)
+    expect(responses.length).toBe(1)
   })
 
   it('should call timeout-callback', async () => {
-    let countNewMessage = 0
-    let countTimeout = 0
+    const responses = []
     const timeoutMs = 1000
 
-    longpollNotifications(serviceNewMessagesV1, agentDid, timeoutMs)
-      .then((hasMessage) => {
-        if (hasMessage) { countNewMessage += 1 } else { countTimeout += 1 }
+    longpollNotificationsV2(serviceNewMessagesV2, agentDid, timeoutMs)
+      .then((lastMsgUtime) => {
+        responses.push(lastMsgUtime)
       })
 
     await sleep(10) // no callback should be call at this point
-    expect(countNewMessage).toBe(0)
-    expect(countTimeout).toBe(0)
+    expect(responses.length).toBe(0)
 
     await sleep(1000) // after timeout duration no callback should be called again
-    expect(countNewMessage).toBe(0)
-    expect(countTimeout).toBe(1)
+    expect(responses.length).toBe(1)
+    expect(responses[0]).toBeNull()
   })
 
   it('should call new-message-callback if new message is flagged before longpoll begins', async () => {
-    let countNewMessage = 0
-    let countTimeout = 0
+    const responses = []
     const timeoutMs = 1000
 
-    await serviceNewMessagesV1.flagNewMessage(agentDid)
+    const newMsgTimestamp = _now()
+    await serviceNewMessagesV2.flagNewMessage(agentDid, newMsgTimestamp)
     await sleep(50)
 
-    longpollNotifications(serviceNewMessagesV1, agentDid, timeoutMs)
-      .then((hasMessage) => {
-        if (hasMessage) { countNewMessage += 1 } else { countTimeout += 1 }
+    longpollNotificationsV2(serviceNewMessagesV2, agentDid, timeoutMs)
+      .then((lastMsgUtime) => {
+        responses.push(lastMsgUtime)
       })
-    await sleep(10)
-    expect(countNewMessage).toBe(1)
-    expect(countTimeout).toBe(0)
 
-    await sleep(1000) // after timeout duration no callback should be called again
-    expect(countNewMessage).toBe(1)
-    expect(countTimeout).toBe(0)
+    await sleep(10) // new-message-callback should be called soon after new message flag is enabled
+    expect(responses.length).toBe(1)
+    expect(responses[0]).toBeGreaterThanOrEqual(newMsgTimestamp)
+    expect(responses[0]).toBeLessThan(_now())
+
+    await sleep(1500) // after timeout duration no callback should be called again
+    expect(responses.length).toBe(1)
   })
 })

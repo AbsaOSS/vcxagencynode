@@ -64,7 +64,7 @@ async function buildAgencyClientVirtual (entityForwardAgent) {
   }
 }
 
-function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, walletsDbName, applicationDbName) {
+function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, redisUrlV2Notification, walletsDbName, applicationDbName) {
   return {
     AGENCY_WALLET_NAME: agencyWalletName,
     AGENCY_DID: agencyDid,
@@ -75,6 +75,7 @@ function getBaseAppConfig (agencyWalletName, agencyDid, agencySeed, agencyWallet
     LOG_LEVEL: 'debug',
 
     REDIS_URL: redisUrl,
+    REDIS_URL_NOTIFICATIONS: redisUrlV2Notification,
     AGENCY_TYPE: redisUrl ? 'client' : 'enterprise',
 
     MYSQL_HOST: 'localhost',

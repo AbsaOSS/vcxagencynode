@@ -43,7 +43,12 @@ function getValidEnterpriseAgencyConfig () {
 }
 
 function getValidClientAgencyConfig () {
-  return { ...BASE_CONFIG, REDIS_URL: 'redis://localhost:6379/0', AGENCY_TYPE: 'client' }
+  return {
+    ...BASE_CONFIG,
+    REDIS_URL: 'redis://localhost:6379/0',
+    REDIS_URL_NOTIFICATIONS: 'redis://localhost:6379/1',
+    AGENCY_TYPE: 'client'
+  }
 }
 
 /* eslint-env jest */

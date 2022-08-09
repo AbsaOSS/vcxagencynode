@@ -98,6 +98,7 @@ function _walletValidationRules () {
 function _applicationValidationRules () {
   return {
     REDIS_URL: Joi.string().uri(),
+    REDIS_URL_NOTIFICATIONS: Joi.string().uri(),
     AGENCY_TYPE: Joi.string().valid('enterprise', 'client').required(),
     WEBHOOK_RESPONSE_TIMEOUT_MS: Joi.number().default(1000)
   }
@@ -115,6 +116,9 @@ function _extraValidationByAgencyType (appConfig) {
   if (appConfig.AGENCY_TYPE === 'client') {
     if (!appConfig.REDIS_URL) {
       throw new Error('Configuration for agency of type \'client\' must have REDIS_URL specified.')
+    }
+    if (!appConfig.REDIS_URL_NOTIFICATIONS) {
+      throw new Error('Configuration for agency of type \'client\' must have REDIS_URL_NOTIFICATIONS specified.')
     }
   }
 }

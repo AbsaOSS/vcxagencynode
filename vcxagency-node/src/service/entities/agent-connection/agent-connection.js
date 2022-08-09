@@ -75,13 +75,17 @@ async function createAgentConnectionData (agentDid, ownerDid, ownerVerkey, userP
   return { agentConnectionDid, agentConnectionVerkey }
 }
 
+function now () {
+  return Math.floor(+new Date())
+}
+
 /**
  * Build Agent Access Object, an object capable of writing and reading data associated with the Agent
  * @param {object} entityRecord - An "Agent Entity Record" containing data necessary to build AgentConnectionAO.
  * @param {object} serviceWallets - Service for indy wallet management interface
  * @param {object} serviceStorage - Service for accessing entity storage
  */
-async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStorage, serviceNewMessages) {
+async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStorage, serviceNewMessagesV1, serviceNewMessagesV2) {
   const { walletName, walletKey, agentDid } = entityRecord
 
   const { agentConnectionDid, agentConnectionVerkey } = loadInfo()
@@ -181,9 +185,13 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
     logger.info(`${whoami} Received new Aries message msgUid=${msgUid}.`)
     await serviceStorage.storeMessage(agentDid, agentConnectionDid, msgUid, statusCode, msgObject.msg)
     logger.info(`${whoami} Stored message msgUid=${msgUid}.`)
-    serviceNewMessages.flagNewMessage(agentDid)
+    serviceNewMessagesV1.flagNewMessage(agentDid)
       .catch(err => {
-        logger.error(`${whoami} Failed to set new-message flag, agentDid=${agentDid}, msgUid=${msgUid} Error: ${err.stack}`)
+        logger.error(`${whoami} Failed to set V1 new-message flag, agentDid=${agentDid}, msgUid=${msgUid} Error: ${err.stack}`)
+      })
+    serviceNewMessagesV2.flagNewMessage(agentDid, now())
+      .catch(err => {
+        logger.error(`${whoami} Failed to set V2 new-message flag, agentDid=${agentDid}, msgUid=${msgUid} Error: ${err.stack}`)
       })
     trySendNotification(msgUid)
       .catch(err => {

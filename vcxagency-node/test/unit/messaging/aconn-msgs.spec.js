@@ -85,7 +85,7 @@ beforeAll(async () => {
     tmpDbData = await createDbSchemaApplication(suiteId)
     tmpDbWallet = await createDbSchemaWallets(suiteId)
 
-    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, tmpDbWallet.info.database, tmpDbData.info.database)
+    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, undefined, undefined, tmpDbWallet.info.database, tmpDbData.info.database)
     app = await buildApplication(appConfig)
     serviceIndyWallets = app.serviceIndyWallets
     entityForwardAgent = app.entityForwardAgent

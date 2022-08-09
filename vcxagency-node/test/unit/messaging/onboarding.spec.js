@@ -50,6 +50,7 @@ let bobWh
 
 const WALLET_KDF = 'RAW'
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379/0'
+const redisUrlV2Notifications = process.env.REDIS_URL_NOTIFICATIONS || 'redis://localhost:6379/1'
 let agencyVerkey
 let sendToAgency
 
@@ -66,7 +67,7 @@ beforeAll(async () => {
     tmpDbData = await createDbSchemaApplication(suiteId)
     tmpDbWallet = await createDbSchemaWallets(suiteId)
 
-    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, tmpDbWallet.info.database, tmpDbData.info.database)
+    const appConfig = getBaseAppConfig(agencyWalletName, agencyDid, agencySeed, agencyWalletKey, redisUrl, redisUrlV2Notifications, tmpDbWallet.info.database, tmpDbData.info.database)
     app = await buildApplication(appConfig)
 
     const entityForwardAgent = app.entityForwardAgent

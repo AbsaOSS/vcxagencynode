@@ -17,7 +17,7 @@
     "test:e2e:ea": "jest --runInBand ./test/e2e/ea ./test/e2e/shared",
     "test:e2e:ca": "jest --runInBand ./test/e2e/ca ./test/e2e/shared",
     "test:e2e:shared": "jest --runInBand ./test/e2e/shared",
-    "test:e2e:ca:longpoll": "jest --runInBand ./test/e2e/ca/longpoll.spec.js",
+    "test:e2e:ca:longpoll": "jest --runInBand ./test/e2e/ca",
     "test:perf": "jest --runInBand ./test/perf",
     "test:perf:onboarding": "jest --runInBand  ./test/perf/onboarding.perf.spec.js",
     "test:perf:msgs": "jest --runInBand ./test/perf/messaging.perf.spec.js",
