@@ -17,7 +17,7 @@
 'use strict'
 global.LOG_LEVEL = process.env.LOG_LEVEL || 'info'
 global.LOG_JSON_TO_CONSOLE = process.env.LOG_JSON_TO_CONSOLE === 'true'
-global.SILENT_WINSTON = process.env.SILENT_WINSTON === 'false'
+global.SILENT_WINSTON = process.env.SILENT_WINSTON === 'true'
 
 /* eslint-env jest */
 const { vcxFlowCreateAgentConnection, vcxFlowFullOnboarding, vcxFlowCreateAgent, vcxFlowSignUp, vcxFlowConnect } = require('vcxagency-client')
