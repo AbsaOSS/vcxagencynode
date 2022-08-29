@@ -169,7 +169,7 @@ describe('onboarding', () => {
     const { message, sender_verkey: senderVerkey } = await unpack(aliceWh, objectToBuffer(msgs[0].payload))
     expect(senderVerkey).toBe(bobToAliceVerkey)
     const messageObject = JSON.parse(message)
-    expect(messageObject['@type']).toBe('did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message')
+    expect(messageObject['@type']).toBe('https://didcomm.org/basicmessage/1.0/message')
     expect(messageObject.sent_time).toBe('2019-01-15 18:42:01Z')
     expect(messageObject.content).toBe('This is Bob!')
   })

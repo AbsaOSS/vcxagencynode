@@ -17,11 +17,11 @@
 'use strict'
 
 const {
-  MSGTYPE_ARIES_FWD,
+  MSGTYPE_ARIES_FWD_LEGACY,
   MSGTYPE_GET_MSGS,
   MSGTYPE_MSGS,
   tryParseAuthcrypted,
-  buildMsgVcxV2Msgs
+  buildMsgVcxV2Msgs, MSGTYPE_ARIES_FWD
 } = require('vcxagency-client')
 const { pack } = require('easy-indysdk')
 const { objectToBuffer, timeOperation } = require('../../util')
@@ -132,7 +132,7 @@ async function buildAgentConnectionAO (entityRecord, serviceWallets, serviceStor
 
   async function _handleDecryptedMsg (msgObject, senderVerkey) {
     const msgType = msgObject['@type']
-    if (msgType === MSGTYPE_ARIES_FWD) {
+    if (msgType === MSGTYPE_ARIES_FWD || msgType === MSGTYPE_ARIES_FWD_LEGACY) {
       await _handleAriesFwd(msgObject)
       return { response: '', shouldEncrypt: false }
     } else {

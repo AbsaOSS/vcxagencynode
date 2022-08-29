@@ -19,6 +19,7 @@
 const {
   MSG_TYPE_AGENCY_FWD,
   MSGTYPE_ARIES_FWD,
+  MSGTYPE_ARIES_FWD_LEGACY,
   parseAuthcrypted,
   parseAnoncrypted,
   buildMsgVcxV2Connected
@@ -145,7 +146,7 @@ async function buildForwardAgent (serviceIndyWallets, serviceStorage, agencyWall
       if (msgType === MSG_TYPE_AGENCY_FWD) {
         logger.info(`${whoami} Received message of msgType=${msgType}`)
         return await processMsgVcxV2Fwd(message)
-      } else if (msgType === MSGTYPE_ARIES_FWD) {
+      } else if (msgType === MSGTYPE_ARIES_FWD || msgType === MSGTYPE_ARIES_FWD_LEGACY) {
         logger.info(`${whoami} Received message of msgType=${msgType}`)
         return await processMsgAriesFwd(message)
       } else {
