@@ -16,8 +16,11 @@
 
 'use strict'
 
-const MSGTYPE_ARIES_FWD = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward'
-const MSGTYPE_ARIES_BASIC_MSG = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message'
+const MSGTYPE_ARIES_FWD_LEGACY = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward'
+const MSGTYPE_ARIES_BASIC_MSG_LEGACY = 'did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message'
+
+const MSGTYPE_ARIES_FWD = 'https://didcomm.org/routing/1.0/forward'
+const MSGTYPE_ARIES_BASIC_MSG = 'https://didcomm.org/basicmessage/1.0/message'
 
 function buildAriesFwdMessage (to, msgObject) {
   const msg = {
@@ -42,6 +45,8 @@ function buildAriesBasicMessage (id, msgString, sentUtime = '2019-01-15 18:42:01
 module.exports = {
   buildAriesFwdMessage,
   buildAriesBasicMessage,
+  MSGTYPE_ARIES_FWD_LEGACY,
+  MSGTYPE_ARIES_BASIC_MSG_LEGACY,
   MSGTYPE_ARIES_FWD,
   MSGTYPE_ARIES_BASIC_MSG
 }
