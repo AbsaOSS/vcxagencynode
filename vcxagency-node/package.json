@@ -61,6 +61,7 @@
     "express-validation": "^3.0.6",
     "express-winston": "^4.0.3",
     "fs-extra": "^4.0.2",
+    "http-proxy-middleware": "^2.0.6",
     "joi": "^17.3.0",
     "lodash": "^4.17.21",
     "redis": "^3.0.2",
