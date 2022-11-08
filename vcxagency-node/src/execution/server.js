@@ -27,6 +27,7 @@ const logger = require('../logging/logger-builder')(__filename)
 const apiAgency = require('../api/api-agency')
 const apiMessaging = require('../api/api-messaging')
 const apiHealth = require('../api/api-health')
+const apiProxy = require('../api/api-proxy')
 const {
   logRequestsWithBody,
   setReqId,
@@ -68,8 +69,20 @@ async function setupExpressApp (expressApp, application, appConfig) {
   expressApp.use(['/api/health', '/'], healthRouter)
   apiHealth(healthRouter)
 
-  logger.info('Setting up express Aries API.')
   const maxRequestSizeKb = appConfig.SERVER_MAX_REQUEST_SIZE_KB
+  if (appConfig.PROXY_TARGET_URL) {
+    const proxyPrefix = '/api/proxy'
+    logger.info(`Requests to ${proxyPrefix} will be forwarded to ${appConfig.PROXY_TARGET_URL}`)
+    const routerProxy = express.Router()
+    routerProxy.use(bodyParser.raw({
+      inflate: false,
+      limit: `${maxRequestSizeKb}kb`
+    }))
+    expressApp.use(proxyPrefix, routerProxy)
+    apiProxy(routerProxy, proxyPrefix, appConfig.PROXY_TARGET_URL)
+  }
+
+  logger.info('Setting up express Aries API.')
   const expressAppAriesApi = express.Router()
   expressAppAriesApi.use(bodyParser.raw({
     inflate: true,

@@ -136,7 +136,8 @@ const OP_MODES = {
       ..._walletValidationRules(),
       ..._applicationValidationRules(),
       AGENCY_DID: Joi.string().required(),
-      ECS_CONTAINER_METADATA_URI_V4: Joi.string().uri()
+      ECS_CONTAINER_METADATA_URI_V4: Joi.string().uri(),
+      PROXY_TARGET_URL: Joi.string().uri()
     }
   }
 }
