@@ -31,7 +31,7 @@ const apiProxy = require('../api/api-proxy')
 const {
   logRequestsWithBody,
   setReqId,
-  finalExpressHandlers
+  finalExpressHandlers, denyQueryStrings, buildDenyQueryStringsMiddleware
 } = require('../api/middleware')
 
 function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger) {
@@ -51,6 +51,7 @@ function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger
 async function setupExpressApp (expressApp, application, appConfig) {
   const { entityForwardAgent, serviceNewMessagesV1, serviceNewMessagesV2 } = application
   logger.info('Setting up express endpoints and middleware.')
+  expressApp.use(buildDenyQueryStringsMiddleware('timeout'))
 
   if (appConfig.DANGEROUS_HTTP_DETAILS === true) {
     logger.warn('** DANGEROUS, FULL HTTP REQUESTS WILL BE LOGGED **')
