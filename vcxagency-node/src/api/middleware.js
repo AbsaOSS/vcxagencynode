@@ -63,8 +63,7 @@ module.exports.buildDenyQueryStringsMiddleware = function buildDenyQueryStringsM
     if (queryKeysCount > 0) {
       if (queryKeysCount === 1 && req.query[allowedQueryKey]) {
         next()
-      }
-      else {
+      } else {
         return res.status(400).send()
       }
     } else {
