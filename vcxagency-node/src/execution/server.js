@@ -31,7 +31,7 @@ const apiProxy = require('../api/api-proxy')
 const {
   logRequestsWithBody,
   setReqId,
-  finalExpressHandlers
+  finalExpressHandlers, buildDenyQueryStringsMiddleware
 } = require('../api/middleware')
 
 function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger) {
@@ -51,6 +51,7 @@ function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger
 async function setupExpressApp (expressApp, application, appConfig) {
   const { entityForwardAgent, serviceNewMessagesV1, serviceNewMessagesV2 } = application
   logger.info('Setting up express endpoints and middleware.')
+  expressApp.use(buildDenyQueryStringsMiddleware(['timeout']))
 
   if (appConfig.DANGEROUS_HTTP_DETAILS === true) {
     logger.warn('** DANGEROUS, FULL HTTP REQUESTS WILL BE LOGGED **')
@@ -71,15 +72,15 @@ async function setupExpressApp (expressApp, application, appConfig) {
 
   const maxRequestSizeKb = appConfig.SERVER_MAX_REQUEST_SIZE_KB
   if (appConfig.PROXY_TARGET_URL) {
-    const proxyPrefix = '/api/proxy'
-    logger.info(`Requests to ${proxyPrefix} will be forwarded to ${appConfig.PROXY_TARGET_URL}`)
+    const proxyPrefixes = ['/api/proxy', '/didcomm']
+    logger.info(`Requests to ${proxyPrefixes} will be forwarded to ${appConfig.PROXY_TARGET_URL}`)
     const routerProxy = express.Router()
     routerProxy.use(bodyParser.raw({
       inflate: false,
       limit: `${maxRequestSizeKb}kb`
     }))
-    expressApp.use(proxyPrefix, routerProxy)
-    apiProxy(routerProxy, proxyPrefix, appConfig.PROXY_TARGET_URL)
+    expressApp.use(proxyPrefixes, routerProxy)
+    apiProxy(routerProxy, proxyPrefixes, appConfig.PROXY_TARGET_URL)
   }
 
   logger.info('Setting up express Aries API.')

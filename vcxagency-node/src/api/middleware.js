@@ -57,6 +57,22 @@ module.exports.asyncHandler = function asyncHandler (fn) {
   }
 }
 
+module.exports.buildDenyQueryStringsMiddleware = function buildDenyQueryStringsMiddleware (allowedQueryKeys) {
+  const allowedQueryKeysSet = new Set(allowedQueryKeys)
+  return function denyQueryStrings (req, res, next) {
+    const queryKeys = Object.keys(req.query)
+    if (queryKeys.length > 0) {
+      if (queryKeys.length === 1 && allowedQueryKeysSet.has(queryKeys[0])) {
+        next()
+      } else {
+        return res.status(400).send()
+      }
+    } else {
+      next()
+    }
+  }
+}
+
 module.exports.logRequestsWithBody = function logRequestsWithBody (req, res, next) {
   logger.info(`${req.method} ${req.originalUrl} Request body: ${JSON.stringify(req.body)}`)
   next()

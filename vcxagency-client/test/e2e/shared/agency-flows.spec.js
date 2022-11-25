@@ -30,6 +30,7 @@ const { vcxFlowCreateAgentConnection } = require('vcxagency-client/src')
 const { vcxFlowFullOnboarding } = require('vcxagency-client/src')
 const { indyGenerateWalletKey } = require('easy-indysdk')
 const { indyOpenWallet } = require('easy-indysdk')
+const axios = require('axios')
 
 let aliceWalletName
 let aliceWalletKey
@@ -158,5 +159,24 @@ describe('healthchecks', () => {
   it('agency should be healthy', async () => {
     const { success } = await agencyClient.isHealthy()
     expect(success).toBe('true')
+  })
+})
+
+describe('query params', () => {
+  it('should return bad request if unknown query parameter is specified', async () => {
+    let err
+    try {
+      await axios.get(`${agencyUrl}/agency?foobar=123`)
+    } catch (error) {
+      err = error
+    }
+    expect(err).toBeDefined()
+    expect(err.response.status === 400)
+  })
+})
+
+describe('query params', () => {
+  it('should return bad request if known query parameter is specified', async () => {
+    await axios.get(`${agencyUrl}/agency?timeout=10`)
   })
 })
