@@ -51,7 +51,7 @@ function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger
 async function setupExpressApp (expressApp, application, appConfig) {
   const { entityForwardAgent, serviceNewMessagesV1, serviceNewMessagesV2 } = application
   logger.info('Setting up express endpoints and middleware.')
-  expressApp.use(buildDenyQueryStringsMiddleware('timeout'))
+  expressApp.use(buildDenyQueryStringsMiddleware(['timeout']))
 
   if (appConfig.DANGEROUS_HTTP_DETAILS === true) {
     logger.warn('** DANGEROUS, FULL HTTP REQUESTS WILL BE LOGGED **')

@@ -57,11 +57,12 @@ module.exports.asyncHandler = function asyncHandler (fn) {
   }
 }
 
-module.exports.buildDenyQueryStringsMiddleware = function buildDenyQueryStringsMiddleware (allowedQueryKey) {
+module.exports.buildDenyQueryStringsMiddleware = function buildDenyQueryStringsMiddleware (allowedQueryKeys) {
+  const allowedQueryKeysSet = new Set(allowedQueryKeys)
   return function denyQueryStrings (req, res, next) {
-    const queryKeysCount = Object.keys(req.query).length
-    if (queryKeysCount > 0) {
-      if (queryKeysCount === 1 && req.query[allowedQueryKey]) {
+    const queryKeys = Object.keys(req.query)
+    if (queryKeys.length > 0) {
+      if (queryKeys.length === 1 && allowedQueryKeysSet.has(queryKeys[0])) {
         next()
       } else {
         return res.status(400).send()
