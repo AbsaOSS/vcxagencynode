@@ -40,7 +40,7 @@ RUN cargo build --release --manifest-path=$INDYSDK_PATH/libvdrtools/Cargo.toml
 USER root
 RUN mv $INDYSDK_PATH/libvdrtools/target/release/libvdrtools.so /usr/lib
 
-FROM node:17.8.0-alpine3.14
+FROM node:12.22.0-alpine3.12
 
 ENV LANG="C.UTF-8"
 ENV LC_ALL="C.UTF-8"
