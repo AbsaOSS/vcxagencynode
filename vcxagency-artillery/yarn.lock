@@ -1985,7 +1985,7 @@ duplexer3@^0.1.4:
   integrity sha512-1A8za6ws41LQgv9HrE/66jyC5yuSjQ3L/KOpFtoBilsAK2iA2wuS5rTt1OCzIvtS2V7nVmedsUU+DGRcjBmOYA==
 
 "easy-indysdk@file:../easy-indysdk":
-  version "2.2.0"
+  version "2.3.0"
   dependencies:
     indy-sdk "1.15.0"
     mysql "^2.18.1"
@@ -5625,9 +5625,9 @@ socket.io-client@^2.1.0:
     to-array "0.1.4"
 
 socket.io-parser@~3.3.0:
-  version "3.3.2"
-  resolved "https://registry.yarnpkg.com/socket.io-parser/-/socket.io-parser-3.3.2.tgz#ef872009d0adcf704f2fbe830191a14752ad50b6"
-  integrity sha512-FJvDBuOALxdCI9qwRrO/Rfp9yfndRtc1jSgVgV8FDraihmSP/MLGD5PEuJrNfjALvcQ+vMDM/33AWOYP/JSjDg==
+  version "3.3.3"
+  resolved "https://registry.yarnpkg.com/socket.io-parser/-/socket.io-parser-3.3.3.tgz#3a8b84823eba87f3f7624e64a8aaab6d6318a72f"
+  integrity sha512-qOg87q1PMWWTeO01768Yh9ogn7chB9zkKtQnya41Y355S0UmpXgpcrFwAgjYJxu9BdKug5r5e9YtVSeWhKBUZg==
   dependencies:
     component-emitter "~1.3.0"
     debug "~3.1.0"
@@ -6348,10 +6348,10 @@ validate-npm-package-license@^3.0.1:
     spdx-expression-parse "^3.0.0"
 
 "vcxagency-client@file:../vcxagency-client":
-  version "2.2.0"
+  version "2.3.0"
   dependencies:
     axios "^0.21.1"
-    easy-indysdk "file:../../../../Library/Caches/Yarn/v6/npm-vcxagency-client-2.2.0-f76af61f-13b5-4c58-b4ba-722464964bbe-1660129221890/node_modules/easy-indysdk"
+    easy-indysdk "file:../easy-indysdk"
     query-string "^6.8.2"
 
 verror@1.10.0:
