@@ -72,15 +72,17 @@ async function setupExpressApp (expressApp, application, appConfig) {
 
   const maxRequestSizeKb = appConfig.SERVER_MAX_REQUEST_SIZE_KB
   if (appConfig.PROXY_TARGET_URL) {
-    const proxyPrefixes = ['/api/proxy', '/didcomm']
-    logger.info(`Requests to ${proxyPrefixes} will be forwarded to ${appConfig.PROXY_TARGET_URL}`)
-    const routerProxy = express.Router()
-    routerProxy.use(bodyParser.raw({
-      inflate: false,
-      limit: `${maxRequestSizeKb}kb`
-    }))
-    expressApp.use(proxyPrefixes, routerProxy)
-    apiProxy(routerProxy, proxyPrefixes, appConfig.PROXY_TARGET_URL)
+    const proxyPrefixes = ['/didcomm', '/api/proxy']
+    for (const proxyPrefix of proxyPrefixes) {
+      logger.info(`Requests to ${proxyPrefix} will be forwarded to ${appConfig.PROXY_TARGET_URL}`)
+      const routerProxy = express.Router()
+      routerProxy.use(bodyParser.raw({
+        inflate: false,
+        limit: `${maxRequestSizeKb}kb`
+      }))
+      expressApp.use(proxyPrefix, routerProxy)
+      apiProxy(routerProxy, proxyPrefix, appConfig.PROXY_TARGET_URL)
+    }
   }
 
   logger.info('Setting up express Aries API.')
