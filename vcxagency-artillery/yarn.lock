@@ -1784,9 +1784,9 @@ decimal.js@^10.2.1:
   integrity sha512-V0pfhfr8suzyPGOx3nmq4aHqabehUZn6Ch9kyFpV79TGDTWFmHqUqXdabR7QHqxzrYolF4+tVmJhUG4OURg5dQ==
 
 decode-uri-component@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/decode-uri-component/-/decode-uri-component-0.2.0.tgz#eb3913333458775cb84cd1a1fae062106bb87545"
-  integrity sha512-hjf+xovcEn31w/EUYdTXQh/8smFL/dzYjohQGEIgjyNavaJfBY2p5F527Bo1VPATxv0VYTUC2bOcXvqFwk78Og==
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/decode-uri-component/-/decode-uri-component-0.2.2.tgz#e69dbe25d37941171dd540e024c444cd5188e1e9"
+  integrity sha512-FqUYQ+8o158GyGTrMFJms9qh3CqTKvAqgqsTnkLI8sKu0028orqBhxNMFkFen0zGyg6epACD32pjVk58ngIErQ==
 
 decompress-response@^6.0.0:
   version "6.0.0"
@@ -1985,7 +1985,7 @@ duplexer3@^0.1.4:
   integrity sha512-1A8za6ws41LQgv9HrE/66jyC5yuSjQ3L/KOpFtoBilsAK2iA2wuS5rTt1OCzIvtS2V7nVmedsUU+DGRcjBmOYA==
 
 "easy-indysdk@file:../easy-indysdk":
-  version "2.2.0"
+  version "2.4.0"
   dependencies:
     indy-sdk "1.15.0"
     mysql "^2.18.1"
@@ -6348,10 +6348,10 @@ validate-npm-package-license@^3.0.1:
     spdx-expression-parse "^3.0.0"
 
 "vcxagency-client@file:../vcxagency-client":
-  version "2.2.0"
+  version "2.4.0"
   dependencies:
     axios "^0.21.1"
-    easy-indysdk "file:../../../../Library/Caches/Yarn/v6/npm-vcxagency-client-2.2.0-f76af61f-13b5-4c58-b4ba-722464964bbe-1660129221890/node_modules/easy-indysdk"
+    easy-indysdk "file:../easy-indysdk"
     query-string "^6.8.2"
 
 verror@1.10.0:
