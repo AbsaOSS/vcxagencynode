@@ -27,7 +27,7 @@ RUN apk update && apk upgrade && \
 USER indy
 WORKDIR /home/indy
 
-ARG RUST_VER="1.52.0"
+ARG RUST_VER="1.65.0"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER --default-host x86_64-unknown-linux-musl
 ENV PATH="/home/indy/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static"
 
@@ -58,6 +58,7 @@ RUN apk add --no-cache \
         libzmq \
         openssl-dev \
         sqlite-dev \
+        python3 \
         zeromq-dev
 
 RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.12/main' >> /etc/apk/repositories
