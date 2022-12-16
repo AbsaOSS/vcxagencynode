@@ -1,11 +1,11 @@
-FROM alpine:3.15.4 AS LIBINDY_BUILD
+FROM alpine:3.15.4 AS builder
 
 ARG UID=1001
 ARG GID=1001
 
 ARG VDRTOOLS_PATH=/home/indy/vdr-tools
 ARG VDRTOOLS_REPO=https://gitlab.com/evernym/verity/vdr-tools.git
-ARG VDRTOOLS_REVISION=7df4c69b
+ARG VDRTOOLS_REVISION=v0.8.5
 
 ENV LC_ALL="C.UTF-8"
 ENV LANG="C.UTF-8"
@@ -27,7 +27,7 @@ RUN apk update && apk upgrade && \
 USER indy
 WORKDIR /home/indy
 
-ARG RUST_VER="1.52.0"
+ARG RUST_VER="1.65.0"
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VER --default-host x86_64-unknown-linux-musl
 ENV PATH="/home/indy/.cargo/bin:$PATH" RUSTFLAGS="-C target-feature=-crt-static"
 
@@ -35,10 +35,10 @@ RUN git clone $VDRTOOLS_REPO
 RUN cd $VDRTOOLS_PATH && git --no-pager log --decorate=short --pretty=oneline -n5
 RUN cd $VDRTOOLS_PATH && git checkout $VDRTOOLS_REVISION
 
-RUN cargo build --release --manifest-path=$VDRTOOLS_PATH/libindy/Cargo.toml
+RUN cargo build --release --manifest-path=$VDRTOOLS_PATH/libvdrtools/Cargo.toml
 
 USER root
-RUN mv $VDRTOOLS_PATH/libindy/target/release/libindy.so /usr/lib
+RUN mv $VDRTOOLS_PATH/libvdrtools/target/release/libvdrtools.so /usr/lib
 
 FROM alpine:3.15.4
 
@@ -50,7 +50,7 @@ ENV LC_ALL="C.UTF-8"
 
 RUN addgroup -g $GID node && adduser -u $UID -D -G node node
 
-COPY --from=LIBINDY_BUILD /usr/lib/libindy.so /usr/lib/
+COPY --from=builder /usr/lib/libvdrtools.so /usr/lib/
 
 RUN apk update && apk upgrade
 RUN apk add --no-cache \
@@ -58,6 +58,7 @@ RUN apk add --no-cache \
         libzmq \
         openssl-dev \
         sqlite-dev \
+        python3 \
         zeromq-dev
 
 RUN echo 'https://dl-cdn.alpinelinux.org/alpine/v3.12/main' >> /etc/apk/repositories

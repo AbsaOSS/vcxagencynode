@@ -16,7 +16,7 @@
 
 'use strict'
 
-const indy = require('indy-sdk')
+const indy = require('vdr-tools')
 const { indyErrorCodeWalletItemNotFound } = require('./indy-errors')
 
 function indyBuildMysqlStorageCredentials (user, pass) {
