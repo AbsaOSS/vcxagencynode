@@ -11,21 +11,23 @@ RUN apk add --no-cache \
         python2 \
         curl
 
+RUN npm install -g yarn
+
 USER node
 
 WORKDIR /home/node/dbutils
-COPY --chown=node:node ./dbutils ./
+COPY ./dbutils ./
 RUN yarn install --production
 
 WORKDIR /home/node/easy-indysdk
-COPY --chown=node:node ./easy-indysdk ./
+COPY ./easy-indysdk ./
 RUN yarn install --production
 
 WORKDIR /home/node/vcxagency-client
-COPY --chown=node:node ./vcxagency-client ./
+COPY ./vcxagency-client ./
 
 WORKDIR /home/node/vcxagency-node
-COPY --chown=node:node ./vcxagency-node ./
+COPY ./vcxagency-node ./
 RUN yarn install --production
 
 USER root
