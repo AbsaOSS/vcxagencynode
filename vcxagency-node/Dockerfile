@@ -11,8 +11,6 @@ RUN apk add --no-cache \
         python2 \
         curl
 
-RUN npm install -g yarn
-
 USER node
 
 WORKDIR /home/node/dbutils
