@@ -56,12 +56,6 @@ const agencyUrl = process.env.AGENCY_URL || 'http://localhost:8080'
 
 beforeAll(async () => {
   jest.setTimeout(1000 * 120)
-  // logger.error = (data) => console.error(data)
-  // logger.warn = (data) => console.warn(data)
-  // logger.info = (data) => console.log(data)
-  // logger.debug = (data) => console.log(data)
-  // logger.silly = (data) => console.log(data)
-  // indySetLogger(logger)
   console.log(`Using agency url ${agencyUrl}`)
   agencyClient = await buildAgencyClientNetwork(agencyUrl)
   sendToAgency = agencyClient.sendToAgency
