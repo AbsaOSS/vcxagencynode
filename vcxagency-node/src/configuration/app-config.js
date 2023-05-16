@@ -51,18 +51,6 @@ function _getLoggingValidationRules () {
   }
 }
 
-function _mysqlValidationRules () {
-  return {
-    MYSQL_HOST: Joi.string().required(),
-    MYSQL_PORT: Joi.number().integer().min(1025).max(65535).default(3306).required(),
-    MYSQL_ACCOUNT: Joi.string().required(),
-    MYSQL_PASSWORD_SECRET: Joi.string().required(),
-    MYSQL_DATABASE_APPLICATION: Joi.string().required(),
-    MYSQL_DATABASE_WALLET: Joi.string().required(),
-    MYSQL_DATABASE_WALLET_CONNECTION_LIMIT: Joi.number().integer().min(1).max(100).default(50)
-  }
-}
-
 function _getTlsValidationRules () {
   return {
     SERVER_ENABLE_TLS: Joi.boolean().default(true),
@@ -82,28 +70,6 @@ function _getServerValidationRules () {
   }
 }
 
-function _setupWalletValidationRules () {
-  return {
-    AGENCY_SEED_SECRET: Joi.string().min(20).required()
-  }
-}
-
-function _walletValidationRules () {
-  return {
-    AGENCY_WALLET_NAME: Joi.string().required(),
-    AGENCY_WALLET_KEY_SECRET: Joi.string().min(20).required()
-  }
-}
-
-function _applicationValidationRules () {
-  return {
-    REDIS_URL: Joi.string().uri(),
-    REDIS_URL_NOTIFICATIONS: Joi.string().uri(),
-    AGENCY_TYPE: Joi.string().valid('enterprise', 'client').required(),
-    WEBHOOK_RESPONSE_TIMEOUT_MS: Joi.number().default(1000)
-  }
-}
-
 function _extraValidationTls (appConfig) {
   if (appConfig.SERVER_ENABLE_TLS) {
     if (!appConfig.CERTIFICATE_PATH || !appConfig.CERTIFICATE_KEY_PATH) {
@@ -112,30 +78,14 @@ function _extraValidationTls (appConfig) {
   }
 }
 
-function _extraValidationByAgencyType (appConfig) {
-  if (appConfig.AGENCY_TYPE === 'client') {
-    if (!appConfig.REDIS_URL) {
-      throw new Error('Configuration for agency of type \'client\' must have REDIS_URL specified.')
-    }
-    if (!appConfig.REDIS_URL_NOTIFICATIONS) {
-      throw new Error('Configuration for agency of type \'client\' must have REDIS_URL_NOTIFICATIONS specified.')
-    }
-  }
-}
-
 const OP_MODES = {
   RUN_SERVER: {
     name: 'run-server',
-    postValidations: [_extraValidationTls, _extraValidationByAgencyType],
+    postValidations: [_extraValidationTls],
     joiValidationBody: {
       ..._getLoggingValidationRules(),
-      ..._mysqlValidationRules(),
       ..._getTlsValidationRules(),
       ..._getServerValidationRules(),
-      ..._setupWalletValidationRules(),
-      ..._walletValidationRules(),
-      ..._applicationValidationRules(),
-      AGENCY_DID: Joi.string().required(),
       ECS_CONTAINER_METADATA_URI_V4: Joi.string().uri(),
       PROXY_TARGET_URL: Joi.string().uri()
     }

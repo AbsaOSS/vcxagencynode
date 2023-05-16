@@ -20,7 +20,6 @@ const uuid = require('uuid')
 const logger = require('../logging/logger-builder')(__filename)
 const httpContext = require('express-http-context')
 const util = require('util')
-const { ErrorFeatureDisabled } = require('../errors/error-feature-disabled')
 const { ValidationError } = require('express-validation')
 
 module.exports.finalExpressHandlers = function finalExpressHandlers (app) {
@@ -44,14 +43,8 @@ module.exports.asyncHandler = function asyncHandler (fn) {
       .catch(function (err) {
         const errorTraceId = httpContext.get('reqId')
         const responsePayload = { errorTraceId }
-        if (err instanceof ErrorFeatureDisabled) {
-          responsePayload.message = err.message
-          logger.error(`ErrorFeatureDisabled error, errorTraceId=${errorTraceId} error=${err.stack}`)
-          res.status(409).send(responsePayload)
-        } else {
-          logger.error(`Unhandled error from async express handler, errorTraceId=${errorTraceId} error=${err.stack}`)
-          res.status(500).send(responsePayload)
-        }
+        logger.error(`Unhandled error from async express handler, errorTraceId=${errorTraceId} error=${err.stack}`)
+        res.status(500).send(responsePayload)
       })
     return result
   }

@@ -24,15 +24,9 @@ const httpContext = require('express-http-context')
 const bodyParser = require('body-parser')
 const { createExpressWinstonLogger } = require('../logging/express-logger-builder')
 const logger = require('../logging/logger-builder')(__filename)
-const apiAgency = require('../api/api-agency')
-const apiMessaging = require('../api/api-messaging')
 const apiHealth = require('../api/api-health')
 const apiProxy = require('../api/api-proxy')
-const {
-  logRequestsWithBody,
-  setReqId,
-  finalExpressHandlers, buildDenyQueryStringsMiddleware
-} = require('../api/middleware')
+const { logRequestsWithBody, finalExpressHandlers, buildDenyQueryStringsMiddleware } = require('../api/middleware')
 
 function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger) {
   if (enableTls) {
@@ -48,8 +42,7 @@ function createWebServer (expressApp, enableTls, tlsCertPath, tlsKeyPath, logger
   }
 }
 
-async function setupExpressApp (expressApp, application, appConfig) {
-  const { entityForwardAgent, serviceNewMessagesV1, serviceNewMessagesV2 } = application
+async function setupExpressApp (expressApp, _application, appConfig) {
   logger.info('Setting up express endpoints and middleware.')
   expressApp.use(buildDenyQueryStringsMiddleware(['timeout']))
 
@@ -84,27 +77,6 @@ async function setupExpressApp (expressApp, application, appConfig) {
       apiProxy(routerProxy, proxyPrefix, appConfig.PROXY_TARGET_URL)
     }
   }
-
-  logger.info('Setting up express Aries API.')
-  const expressAppAriesApi = express.Router()
-  expressAppAriesApi.use(bodyParser.raw({
-    inflate: true,
-    limit: `${maxRequestSizeKb}kb`,
-    type: '*/*'
-  }))
-  // it seems if httpContext.middleware / setReqId are before bodyParser.raw(), it's causing reqId getting deleted from httpContext
-  expressAppAriesApi.use(httpContext.middleware)
-  expressAppAriesApi.use(setReqId)
-  apiMessaging(expressAppAriesApi, entityForwardAgent)
-  expressApp.use('/agency/msg', expressAppAriesApi)
-
-  logger.info('Setting up express JSON API.')
-  const expressAppJsonApi = express.Router()
-  expressAppJsonApi.use(httpContext.middleware)
-  expressAppJsonApi.use(setReqId)
-  expressAppJsonApi.use(bodyParser.json())
-  apiAgency(expressAppJsonApi, entityForwardAgent, serviceNewMessagesV1, serviceNewMessagesV2)
-  expressApp.use('/', expressAppJsonApi)
 
   finalExpressHandlers(expressApp)
   logger.info('Express app endpoints and middleware has been configured.')

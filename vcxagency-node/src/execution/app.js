@@ -16,102 +16,10 @@
 
 'use strict'
 
-const { createDataStorage } = require('../service/storage/storage')
-const { createRouter } = require('../service/delivery/router')
-const { createResolver } = require('../service/delivery/resolver')
-const { buildForwardAgent } = require('../service/entities/fwa/entity-fwa')
-const { createServiceIndyWallets } = require('../service/state/service-indy-wallets')
-const { createServiceNewMessages } = require('../service/notifications/service-new-messages')
-const { createServiceNewMessagesUnavailable } = require('../service/notifications/service-new-messages-unavailable')
-const { waitUntilConnectsToMysql } = require('../service/storage/storage')
-const logger = require('../logging/logger-builder')(__filename)
-const { indySetDefaultLogger } = require('easy-indysdk')
-const { indyBuildMysqlStorageCredentials } = require('../../../easy-indysdk')
-const { indyBuildMysqlStorageConfig } = require('../../../easy-indysdk')
-const { buildRedisAdapter } = require('../service/notifications/event-adapter-redis')
-const { createServiceNewMessagesV2 } = require('../service/notifications/service-new-messages-v2')
-
-function getStorageInfoMysql (appConfig) {
-  const walletStorageConfig = indyBuildMysqlStorageConfig(
-    appConfig.MYSQL_HOST,
-    appConfig.MYSQL_HOST,
-    appConfig.MYSQL_PORT,
-    appConfig.MYSQL_DATABASE_WALLET,
-    appConfig.MYSQL_DATABASE_WALLET_CONNECTION_LIMIT
-  )
-  const walletStorageCredentials = indyBuildMysqlStorageCredentials(
-    appConfig.MYSQL_ACCOUNT,
-    appConfig.MYSQL_PASSWORD_SECRET
-  )
-  return {
-    walletStorageType: 'mysql',
-    walletStorageConfig,
-    walletStorageCredentials
-  }
-}
-
-async function buildApplication (appConfig) {
-  const agencyWalletName = appConfig.AGENCY_WALLET_NAME
-  const agencyDid = appConfig.AGENCY_DID
-  const agencySeed = appConfig.AGENCY_SEED_SECRET
-  const agencyWalletKey = appConfig.AGENCY_WALLET_KEY_SECRET
-
-  const appStorageConfig = {
-    host: appConfig.MYSQL_HOST,
-    port: appConfig.MYSQL_PORT,
-    user: appConfig.MYSQL_ACCOUNT,
-    password: appConfig.MYSQL_PASSWORD_SECRET,
-    database: appConfig.MYSQL_DATABASE_APPLICATION
-  }
-  if (appConfig.LOG_ENABLE_INDYSDK === true) {
-    logger.info('Enabling indy logs.')
-    indySetDefaultLogger('trace')
-  }
-  const { walletStorageType, walletStorageConfig, walletStorageCredentials } = getStorageInfoMysql(appConfig)
-
-  const redisUrl = appConfig.REDIS_URL
-  const redisUrlNotifications = appConfig.REDIS_URL_NOTIFICATIONS
-  const agencyType = appConfig.AGENCY_TYPE
-
-  let serviceNewMessagesV1
-  let serviceNewMessagesV2
-  if (agencyType === 'enterprise') {
-    serviceNewMessagesV1 = createServiceNewMessagesUnavailable()
-    serviceNewMessagesV2 = createServiceNewMessagesUnavailable()
-  } else if (agencyType === 'client') {
-    if (!redisUrl) {
-      throw Error('Redis URL was not provided.')
-    }
-    const redisAdapter = buildRedisAdapter(redisUrl)
-    const redisAdapterV2 = buildRedisAdapter(redisUrlNotifications)
-    serviceNewMessagesV1 = createServiceNewMessages(redisAdapter)
-    serviceNewMessagesV2 = createServiceNewMessagesV2(redisAdapterV2)
-  } else {
-    throw Error(`Unknown agency type ${agencyType}`)
-  }
-
-  const serviceIndyWallets = await createServiceIndyWallets(walletStorageType, walletStorageConfig, walletStorageCredentials)
-  const { user, password, host, port, database } = appStorageConfig
-  await waitUntilConnectsToMysql(user, password, host, port, database, 5, 2000)
-  const serviceStorage = await createDataStorage(appStorageConfig)
-  const entityForwardAgent = await buildForwardAgent(serviceIndyWallets, serviceStorage, agencyWalletName, agencyWalletKey, agencyDid, agencySeed)
-  const resolver = createResolver(serviceIndyWallets, serviceStorage, serviceNewMessagesV1, serviceNewMessagesV2, entityForwardAgent)
-  const router = createRouter(resolver)
-  resolver.setRouter(router)
-  entityForwardAgent.setRouter(router)
-  entityForwardAgent.setResolver(resolver)
-  const application = { serviceIndyWallets, serviceStorage, entityForwardAgent, resolver, router, serviceNewMessagesV1, serviceNewMessagesV2 }
-  return application
-}
-
-async function cleanUpApplication (application) {
-  logger.info('Cleaning up application resources.')
-  application.serviceNewMessagesV1.cleanUp()
-  application.serviceNewMessagesV2.cleanUp()
-  application.serviceStorage.cleanUp()
+async function buildApplication (_appConfig) {
+  return {}
 }
 
 module.exports = {
   buildApplication,
-  cleanUpApplication
 }
