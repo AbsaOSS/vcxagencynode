@@ -1,3 +1,6 @@
+# <span style="color:red;background:white">Decommission notice</span>
+This project has been decommissioned. No further updates or maintenance shall be expected.
+
 # Node VCX Agency
 - Implementation of [AriesVCX](https://github.com/hyperledger/aries-vcx/) compatible 
 [Mediator Agency](https://github.com/hyperledger/aries-rfcs/blob/master/concepts/0046-mediators-and-relays/README.md).
